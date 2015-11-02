@@ -83,7 +83,8 @@ class OrderTest extends \PHPUnit_Framework_TestCase
         /** @var \Magento\Sales\Model\Order $order */
         $order = $this->objectManager->create('Magento\Sales\Model\Order');
         $order->setIncrementId($this->orderIncrementId)
-            ->setState(\Magento\Sales\Model\Order::STATE_PROCESSING, true)
+            ->setState(\Magento\Sales\Model\Order::STATE_PROCESSING)
+            ->setStatus($order->getConfig()->getStateDefaultStatus(\Magento\Sales\Model\Order::STATE_PROCESSING))
             ->setSubtotal(100)
             ->setBaseSubtotal(100)
             ->setBaseGrandTotal(100)
@@ -93,7 +94,7 @@ class OrderTest extends \PHPUnit_Framework_TestCase
             ->setShippingAddress($shippingAddress)
             ->setStoreId(
                 $this->objectManager
-                    ->get('Magento\Framework\Store\StoreManagerInterface')
+                    ->get('Magento\Store\Model\StoreManagerInterface')
                     ->getStore()
                     ->getId()
             )

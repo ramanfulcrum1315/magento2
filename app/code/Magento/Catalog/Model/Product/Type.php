@@ -10,8 +10,9 @@
 namespace Magento\Catalog\Model\Product;
 
 use Magento\Catalog\Model\Product;
+use Magento\Framework\Data\OptionSourceInterface;
 
-class Type
+class Type implements OptionSourceInterface
 {
     /**#@+
      * Available product types
@@ -177,7 +178,7 @@ class Type
     {
         $options = [];
         foreach ($this->getTypes() as $typeId => $type) {
-            $options[$typeId] = __($type['label']);
+            $options[$typeId] = (string)$type['label'];
         }
         return $options;
     }
@@ -239,7 +240,7 @@ class Type
      */
     public function getTypes()
     {
-        if (is_null($this->_types)) {
+        if ($this->_types === null) {
             $productTypes = $this->_config->getAll();
             foreach ($productTypes as $productTypeKey => $productTypeConfig) {
                 $productTypes[$productTypeKey]['label'] = __($productTypeConfig['label']);
@@ -256,7 +257,7 @@ class Type
      */
     public function getCompositeTypes()
     {
-        if (is_null($this->_compositeTypes)) {
+        if ($this->_compositeTypes === null) {
             $this->_compositeTypes = [];
             $types = $this->getTypes();
             foreach ($types as $typeId => $typeInfo) {
@@ -275,7 +276,7 @@ class Type
      */
     public function getTypesByPriority()
     {
-        if (is_null($this->_typesPriority)) {
+        if ($this->_typesPriority === null) {
             $this->_typesPriority = [];
             $simplePriority = [];
             $compositePriority = [];
@@ -301,5 +302,13 @@ class Type
             }
         }
         return $this->_typesPriority;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function toOptionArray()
+    {
+        return $this->getOptions();
     }
 }

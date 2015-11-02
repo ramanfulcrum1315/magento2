@@ -20,12 +20,14 @@ abstract class AbstractInstruction extends \Magento\Payment\Block\Form
     /**
      * Get instructions text from config
      *
-     * @return string
+     * @return null|string
      */
     public function getInstructions()
     {
-        if (is_null($this->_instructions)) {
-            $this->_instructions = $this->getMethod()->getInstructions();
+        if ($this->_instructions === null) {
+            /** @var \Magento\Payment\Model\Method\AbstractMethod $method */
+            $method = $this->getMethod();
+            $this->_instructions = $method->getConfigData('instructions');
         }
         return $this->_instructions;
     }

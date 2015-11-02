@@ -26,40 +26,36 @@ class Resolver extends \Magento\Framework\Locale\Resolver
     protected $_request;
 
     /**
-     * @var \Magento\Framework\Locale\Validator
+     * @var \Magento\Framework\Validator\Locale
      */
     protected $_localeValidator;
 
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\App\CacheInterface $cache
-     * @param \Magento\Framework\LocaleFactory $localeFactory
      * @param string $defaultLocalePath
      * @param string $scopeType
      * @param \Magento\Backend\Model\Session $session
      * @param Manager $localeManager
      * @param \Magento\Framework\App\RequestInterface $request
-     * @param \Magento\Framework\Locale\Validator $localeValidator
+     * @param \Magento\Framework\Validator\Locale $localeValidator
      * @param null $locale
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\App\CacheInterface $cache,
-        \Magento\Framework\LocaleFactory $localeFactory,
         $defaultLocalePath,
         $scopeType,
         \Magento\Backend\Model\Session $session,
         \Magento\Backend\Model\Locale\Manager $localeManager,
         \Magento\Framework\App\RequestInterface $request,
-        \Magento\Framework\Locale\Validator $localeValidator,
+        \Magento\Framework\Validator\Locale $localeValidator,
         $locale = null
     ) {
         $this->_session = $session;
         $this->_localeManager = $localeManager;
         $this->_request = $request;
         $this->_localeValidator = $localeValidator;
-        parent::__construct($scopeConfig, $cache, $localeFactory, $defaultLocalePath, $scopeType, $locale);
+        parent::__construct($scopeConfig, $defaultLocalePath, $scopeType, $locale);
     }
 
     /**
@@ -70,8 +66,6 @@ class Resolver extends \Magento\Framework\Locale\Resolver
      */
     public function setLocale($locale = null)
     {
-        parent::setLocale($locale);
-
         $forceLocale = $this->_request->getParam('locale', null);
         if (!$this->_localeValidator->isValid($forceLocale)) {
             $forceLocale = false;
@@ -83,9 +77,9 @@ class Resolver extends \Magento\Framework\Locale\Resolver
         $localeCodes = array_filter([$forceLocale, $sessionLocale, $userLocale]);
 
         if (count($localeCodes)) {
-            $this->setLocaleCode(reset($localeCodes));
+            $locale = reset($localeCodes);
         }
 
-        return $this;
+        return parent::setLocale($locale);
     }
 }

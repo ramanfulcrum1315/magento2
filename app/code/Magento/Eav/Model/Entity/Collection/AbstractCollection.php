@@ -5,7 +5,10 @@
  */
 namespace Magento\Eav\Model\Entity\Collection;
 
+use Magento\Framework\App\Resource\SourceProviderInterface;
+use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\DB\Select;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Entity/Attribute/Model - collection abstract
@@ -13,8 +16,13 @@ use Magento\Framework\DB\Select;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
+abstract class AbstractCollection extends AbstractDb implements SourceProviderInterface
 {
+    /**
+     * Attribute table alias prefix
+     */
+    const ATTRIBUTE_TABLE_ALIAS_PREFIX = 'at_';
+
     /**
      * Array of items with item id key
      *
@@ -224,7 +232,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      *
      * @param \Magento\Eav\Model\Entity\AbstractEntity $entity
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     public function setEntity($entity)
     {
@@ -233,7 +241,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
         } elseif (is_string($entity) || $entity instanceof \Magento\Framework\App\Config\Element) {
             $this->_entity = $this->_eavEntityFactory->create()->setType($entity);
         } else {
-            throw new \Magento\Eav\Exception(__('Invalid entity supplied: %1', print_r($entity, 1)));
+            throw new LocalizedException(__('Invalid entity supplied: %1', print_r($entity, 1)));
         }
         return $this;
     }
@@ -242,12 +250,12 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * Get collection's entity object
      *
      * @return \Magento\Eav\Model\Entity\AbstractEntity
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     public function getEntity()
     {
         if (empty($this->_entity)) {
-            throw new \Magento\Eav\Exception(__('Entity is not initialized'));
+            throw new LocalizedException(__('Entity is not initialized'));
         }
         return $this->_entity;
     }
@@ -283,12 +291,12 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      *
      * @param \Magento\Framework\Object $object
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     public function addItem(\Magento\Framework\Object $object)
     {
         if (!$object instanceof $this->_itemObjectClass) {
-            throw new \Magento\Eav\Exception(__('Attempt to add an invalid object'));
+            throw new LocalizedException(__('Attempt to add an invalid object'));
         }
         return parent::addItem($object);
     }
@@ -321,7 +329,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param null|string|array $condition
      * @param string $joinType
      * @return $this
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      *
      * @see self::_getConditionSql for $condition
      */
@@ -354,7 +362,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
         if (!empty($conditionSql)) {
             $this->getSelect()->where($conditionSql, null, \Magento\Framework\DB\Select::TYPE_CONDITION);
         } else {
-            throw new \Magento\Framework\Model\Exception(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __('Invalid attribute identifier for filter (%1)', get_class($attribute))
             );
         }
@@ -363,11 +371,11 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
     }
 
     /**
-     * Wrapper for compatibility with \Magento\Framework\Data\Collection\Db
+     * Wrapper for compatibility with \Magento\Framework\Data\Collection\AbstractDb
      *
      * @param mixed $attribute
      * @param mixed $condition
-     * @return $this|\Magento\Framework\Data\Collection\Db
+     * @return $this|AbstractDb
      */
     public function addFieldToFilter($attribute, $condition = null)
     {
@@ -448,12 +456,11 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param array|string|integer|\Magento\Framework\App\Config\Element $attribute
      * @param bool|string $joinType flag for joining attribute
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     public function addAttributeToSelect($attribute, $joinType = false)
     {
         if (is_array($attribute)) {
-            $this->_eavConfig->loadCollectionAttributes($this->getEntity()->getType(), $attribute);
             foreach ($attribute as $a) {
                 $this->addAttributeToSelect($a, $joinType);
             }
@@ -471,10 +478,10 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
             if (isset($this->_joinAttributes[$attribute])) {
                 $attrInstance = $this->_joinAttributes[$attribute]['attribute'];
             } else {
-                $attrInstance = $this->_eavConfig->getCollectionAttribute($this->getEntity()->getType(), $attribute);
+                $attrInstance = $this->_eavConfig->getAttribute($this->getEntity()->getType(), $attribute);
             }
             if (empty($attrInstance)) {
-                throw new \Magento\Eav\Exception(__('Invalid attribute requested: %1', (string)$attribute));
+                throw new LocalizedException(__('Invalid attribute requested: %1', (string)$attribute));
             }
             $this->_selectAttributes[$attrInstance->getAttributeCode()] = $attrInstance->getId();
         }
@@ -520,15 +527,13 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param string $expression
      * @param string $attribute
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     public function addExpressionAttributeToSelect($alias, $expression, $attribute)
     {
         // validate alias
         if (isset($this->_joinFields[$alias])) {
-            throw new \Magento\Eav\Exception(
-                __('Joint field or attribute expression with this alias is already declared')
-            );
+            throw new LocalizedException(__('Joint field or attribute expression with this alias is already declared'));
         }
         if (!is_array($attribute)) {
             $attribute = [$attribute];
@@ -624,7 +629,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param string $joinType inner|left
      * @param null $storeId
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
@@ -632,7 +637,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
     {
         // validate alias
         if (isset($this->_joinAttributes[$alias])) {
-            throw new \Magento\Eav\Exception(__('Invalid alias, already exists in joint attributes'));
+            throw new LocalizedException(__('Invalid alias, already exists in joint attributes'));
         }
 
         $bindAttribute = null;
@@ -642,7 +647,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
         }
 
         if (!$bindAttribute || !$bindAttribute->isStatic() && !$bindAttribute->getId()) {
-            throw new \Magento\Eav\Exception(__('Invalid foreign key'));
+            throw new LocalizedException(__('Invalid foreign key'));
         }
 
         // try to explode combined entity/attribute if supplied
@@ -666,7 +671,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
             }
         }
         if (!$entity || !$entity->getTypeId()) {
-            throw new \Magento\Eav\Exception(__('Invalid entity type'));
+            throw new LocalizedException(__('Invalid entity type'));
         }
 
         // cache entity
@@ -679,7 +684,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
             $attribute = $entity->getAttribute($attribute);
         }
         if (!$attribute) {
-            throw new \Magento\Eav\Exception(__('Invalid attribute type'));
+            throw new LocalizedException(__('Invalid attribute type'));
         }
 
         if (empty($filter)) {
@@ -714,13 +719,13 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param string|array $cond "{{table}}.language_code='en'" OR array('language_code'=>'en')
      * @param string $joinType 'left'
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     public function joinField($alias, $table, $field, $bind, $cond = null, $joinType = 'inner')
     {
         // validate alias
         if (isset($this->_joinFields[$alias])) {
-            throw new \Magento\Eav\Exception(__('A joined field with this alias is already declared.'));
+            throw new LocalizedException(__('A joined field with this alias is already declared.'));
         }
 
         $table = $this->_resource->getTableName($table);
@@ -776,7 +781,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param null|array $cond
      * @param string $joinType
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function joinTable($table, $bind, $fields = null, $cond = null, $joinType = 'inner')
@@ -795,13 +800,11 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
 
         // validate fields and aliases
         if (!$fields) {
-            throw new \Magento\Eav\Exception(__('Invalid joint fields'));
+            throw new LocalizedException(__('Invalid joint fields'));
         }
         foreach ($fields as $alias => $field) {
             if (isset($this->_joinFields[$alias])) {
-                throw new \Magento\Eav\Exception(
-                    __('A joint field with this alias (%1) is already declared.', $alias)
-                );
+                throw new LocalizedException(__('A joint field with this alias (%1) is already declared.', $alias));
             }
             $this->_joinFields[$alias] = ['table' => $tableAlias, 'field' => $field];
         }
@@ -900,6 +903,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
         \Magento\Framework\Profiler::start('set_orig_data');
         foreach ($this->_items as $item) {
             $item->setOrigData();
+            $this->beforeAddLoadedItem($item);
         }
         \Magento\Framework\Profiler::stop('set_orig_data');
 
@@ -1104,6 +1108,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param bool $printQuery
      * @param bool $logQuery
      * @return $this
+     * @throws LocalizedException
      * @throws \Exception
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
@@ -1123,7 +1128,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
             if (!$attributeId) {
                 continue;
             }
-            $attribute = $this->_eavConfig->getCollectionAttribute($entity->getType(), $attributeCode);
+            $attribute = $this->_eavConfig->getAttribute($entity->getType(), $attributeCode);
             if ($attribute && !$attribute->isStatic()) {
                 $tableAttributes[$attribute->getBackendTable()][] = $attributeId;
                 if (!isset($attributeTypes[$attribute->getBackendTable()])) {
@@ -1217,18 +1222,18 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      *
      * @param array $valueInfo
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     protected function _setItemAttributeValue($valueInfo)
     {
         $entityIdField = $this->getEntity()->getEntityIdField();
         $entityId = $valueInfo[$entityIdField];
         if (!isset($this->_itemsById[$entityId])) {
-            throw new \Magento\Eav\Exception(__('Data integrity: No header row found for attribute'));
+            throw new LocalizedException(__('Data integrity: No header row found for attribute'));
         }
         $attributeCode = array_search($valueInfo['attribute_id'], $this->_selectAttributes);
         if (!$attributeCode) {
-            $attribute = $this->_eavConfig->getCollectionAttribute(
+            $attribute = $this->_eavConfig->getAttribute(
                 $this->getEntity()->getType(),
                 $valueInfo['attribute_id']
             );
@@ -1250,7 +1255,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      */
     protected function _getAttributeTableAlias($attributeCode)
     {
-        return $this->getConnection()->getTableName('at_' . $attributeCode);
+        return $this->getConnection()->getTableName(self::ATTRIBUTE_TABLE_ALIAS_PREFIX . $attributeCode);
     }
 
     /**
@@ -1258,7 +1263,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      *
      * @param string $attributeCode
      * @return string
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      */
     protected function _getAttributeFieldName($attributeCode)
     {
@@ -1276,7 +1281,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
 
         $attribute = $this->getAttribute($attributeCode);
         if (!$attribute) {
-            throw new \Magento\Eav\Exception(__('Invalid attribute name: %1', $attributeCode));
+            throw new LocalizedException(__('Invalid attribute name: %1', $attributeCode));
         }
 
         if ($attribute->isStatic()) {
@@ -1298,7 +1303,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
      * @param   string $attributeCode
      * @param   string $joinType inner|left
      * @return $this
-     * @throws \Magento\Eav\Exception
+     * @throws LocalizedException
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     protected function _addAttributeJoin($attributeCode, $joinType = 'inner')
@@ -1336,7 +1341,7 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
         }
 
         if (!$attribute) {
-            throw new \Magento\Eav\Exception(__('Invalid attribute name: %1', $attributeCode));
+            throw new LocalizedException(__('Invalid attribute name: %1', $attributeCode));
         }
 
         if ($attribute->getBackend()->isStatic()) {
@@ -1560,5 +1565,49 @@ abstract class AbstractCollection extends \Magento\Framework\Data\Collection\Db
             unset($this->_itemsById[$this->_items[$key]->getId()]);
         }
         return parent::removeItemByKey($key);
+    }
+
+    /**
+     * Returns main table name - extracted from "module/table" style and
+     * validated by db adapter
+     *
+     * @return string
+     */
+    public function getMainTable()
+    {
+        return $this->getSelect()->getPart(Select::FROM)['e']['tableName'];
+    }
+
+    /**
+     * Wrapper for compatibility with \Magento\Framework\Data\Collection\AbstractDb
+     *
+     * @param string $field
+     * @param string $alias
+     * @return $this|\Magento\Framework\Data\Collection\AbstractDb
+     */
+    public function addFieldToSelect($field, $alias = null)
+    {
+        return $this->addAttributeToSelect($field);
+    }
+
+    /**
+     * Wrapper for compatibility with \Magento\Framework\Data\Collection\AbstractDb
+     *
+     * @param string $field
+     * @return $this|\Magento\Framework\Data\Collection\AbstractDb
+     */
+    public function removeFieldFromSelect($field)
+    {
+        return $this->removeAttributeToSelect($field);
+    }
+
+    /**
+     * Wrapper for compatibility with \Magento\Framework\Data\Collection\AbstractDb
+     *
+     * @return $this|\Magento\Framework\Data\Collection\AbstractDb
+     */
+    public function removeAllFieldsFromSelect()
+    {
+        return $this->removeAttributeToSelect();
     }
 }

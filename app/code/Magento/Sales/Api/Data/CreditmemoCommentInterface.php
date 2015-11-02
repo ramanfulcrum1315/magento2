@@ -12,6 +12,7 @@ namespace Magento\Sales\Api\Data;
  * to refund all or part of the amount paid for any returned or undelivered items. The memo restores funds to the
  * customer account so that the customer can make future purchases. A credit memo usually includes comments that detail
  * why the credit memo amount was credited to the customer.
+ * @api
  */
 interface CreditmemoCommentInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
@@ -53,16 +54,32 @@ interface CreditmemoCommentInterface extends \Magento\Framework\Api\ExtensibleDa
     /**
      * Gets the credit memo created-at timestamp.
      *
-     * @return string Created-at timestamp.
+     * @return string|null Created-at timestamp.
      */
     public function getCreatedAt();
 
     /**
+     * Sets the credit memo created-at timestamp.
+     *
+     * @param string $createdAt timestamp
+     * @return $this
+     */
+    public function setCreatedAt($createdAt);
+
+    /**
      * Gets the credit memo ID.
      *
-     * @return int Credit memo ID.
+     * @return int|null Credit memo ID.
      */
     public function getEntityId();
+
+    /**
+     * Sets entity ID.
+     *
+     * @param int $entityId
+     * @return $this
+     */
+    public function setEntityId($entityId);
 
     /**
      * Gets the is-customer-notified flag value for the credit memo.
@@ -84,4 +101,53 @@ interface CreditmemoCommentInterface extends \Magento\Framework\Api\ExtensibleDa
      * @return int Parent ID.
      */
     public function getParentId();
+
+    /**
+     * Sets the parent ID for the credit memo.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setParentId($id);
+
+    /**
+     * Sets the is-customer-notified flag value for the credit memo.
+     *
+     * @param int $isCustomerNotified
+     * @return $this
+     */
+    public function setIsCustomerNotified($isCustomerNotified);
+
+    /**
+     * Sets the is-visible-on-storefront flag value for the credit memo.
+     *
+     * @param int $isVisibleOnFront
+     * @return $this
+     */
+    public function setIsVisibleOnFront($isVisibleOnFront);
+
+    /**
+     * Sets the credit memo comment.
+     *
+     * @param string $comment
+     * @return $this
+     */
+    public function setComment($comment);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Sales\Api\Data\CreditmemoCommentExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Sales\Api\Data\CreditmemoCommentExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\CreditmemoCommentExtensionInterface $extensionAttributes
+    );
 }

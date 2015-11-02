@@ -9,6 +9,8 @@
  */
 namespace Magento\Theme\Model;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+
 class Config
 {
     /**
@@ -22,7 +24,7 @@ class Config
     protected $_configData;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -46,7 +48,7 @@ class Config
     /**
      * @param \Magento\Framework\App\Config\ValueInterface $configData
      * @param \Magento\Framework\App\Config\Storage\WriterInterface $configWriter
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
      * @param \Magento\Framework\Cache\FrontendInterface $configCache
      * @param \Magento\Framework\Cache\FrontendInterface $layoutCache
@@ -54,7 +56,7 @@ class Config
     public function __construct(
         \Magento\Framework\App\Config\ValueInterface $configData,
         \Magento\Framework\App\Config\Storage\WriterInterface $configWriter,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Magento\Framework\Cache\FrontendInterface $configCache,
         \Magento\Framework\Cache\FrontendInterface $layoutCache
@@ -78,7 +80,7 @@ class Config
     public function assignToStore(
         $theme,
         array $stores = [],
-        $scope = \Magento\Framework\Store\ScopeInterface::SCOPE_STORES
+        $scope = \Magento\Store\Model\ScopeInterface::SCOPE_STORES
     ) {
         $isReassigned = false;
 
@@ -108,7 +110,7 @@ class Config
      *
      * @param string $scope
      * @param string $configPath
-     * @return \Magento\Core\Model\Resource\Config\Data\Collection
+     * @return \Magento\Config\Model\Resource\Config\Data\Collection
      */
     protected function _getAssignedScopesCollection($scope, $configPath)
     {
@@ -173,7 +175,7 @@ class Config
     protected function _assignThemeToDefaultScope($themeId, &$isReassigned)
     {
         $configPath = \Magento\Framework\View\DesignInterface::XML_PATH_THEME_ID;
-        $this->_configWriter->save($configPath, $themeId, \Magento\Framework\App\ScopeInterface::SCOPE_DEFAULT);
+        $this->_configWriter->save($configPath, $themeId, ScopeConfigInterface::SCOPE_TYPE_DEFAULT);
         $isReassigned = true;
         return $this;
     }

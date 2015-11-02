@@ -13,11 +13,9 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertAttributeSearchableByLabel extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
+     * Assert that product attribute is searchable on Frontend.
+     *
      * @return void
      */
     public function processAssert()

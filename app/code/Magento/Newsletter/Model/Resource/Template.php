@@ -23,12 +23,16 @@ class Template extends \Magento\Framework\Model\Resource\Db\AbstractDb
     protected $_date;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
      * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
+     * @param string|null $resourcePrefix
      */
-    public function __construct(\Magento\Framework\App\Resource $resource, \Magento\Framework\Stdlib\DateTime\DateTime $date)
-    {
-        parent::__construct($resource);
+    public function __construct(
+        \Magento\Framework\Model\Resource\Db\Context $context,
+        \Magento\Framework\Stdlib\DateTime\DateTime $date,
+        $resourcePrefix = null
+    ) {
+        parent::__construct($context, $resourcePrefix);
         $this->_date = $date;
     }
 
@@ -40,36 +44,6 @@ class Template extends \Magento\Framework\Model\Resource\Db\AbstractDb
     protected function _construct()
     {
         $this->_init('newsletter_template', 'template_id');
-    }
-
-    /**
-     * Load an object by template code
-     *
-     * @param \Magento\Newsletter\Model\Template $object
-     * @param string $templateCode
-     * @return $this
-     */
-    public function loadByCode(\Magento\Newsletter\Model\Template $object, $templateCode)
-    {
-        $read = $this->_getReadAdapter();
-        if ($read && !is_null($templateCode)) {
-            $select = $this->_getLoadSelect(
-                'template_code',
-                $templateCode,
-                $object
-            )->where(
-                'template_actual = :template_actual'
-            );
-            $data = $read->fetchRow($select, ['template_actual' => 1]);
-
-            if ($data) {
-                $object->setData($data);
-            }
-        }
-
-        $this->_afterLoad($object);
-
-        return $this;
     }
 
     /**
@@ -136,12 +110,12 @@ class Template extends \Magento\Framework\Model\Resource\Db\AbstractDb
      *
      * @param \Magento\Framework\Model\AbstractModel $object
      * @return $this
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _beforeSave(\Magento\Framework\Model\AbstractModel $object)
     {
         if ($this->checkCodeUsage($object)) {
-            throw new \Magento\Framework\Model\Exception(__('Duplicate template code'));
+            throw new \Magento\Framework\Exception\LocalizedException(__('Duplicate template code'));
         }
 
         if (!$object->hasTemplateActual()) {

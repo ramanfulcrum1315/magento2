@@ -8,7 +8,7 @@ namespace Magento\Sales\Controller\Adminhtml\Order;
 /**
  * @magentoAppArea adminhtml
  */
-class CreditmemoTest extends \Magento\Backend\Utility\Controller
+class CreditmemoTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     /**
      * @magentoConfigFixture current_store cataloginventory/item_options/auto_return 1
@@ -32,7 +32,7 @@ class CreditmemoTest extends \Magento\Backend\Utility\Controller
         $creditmemo = array_shift($items);
         $comment = 'Test Comment 02';
         $this->getRequest()->setParam('creditmemo_id', $creditmemo->getId());
-        $this->getRequest()->setPost('comment', ['comment' => $comment]);
+        $this->getRequest()->setPostValue('comment', ['comment' => $comment]);
         $this->dispatch('backend/sales/order_creditmemo/addComment/id/' . $creditmemo->getId());
         $html = $this->getResponse()->getBody();
         $this->assertContains($comment, $html);

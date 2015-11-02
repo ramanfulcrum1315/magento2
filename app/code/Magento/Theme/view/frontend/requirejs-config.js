@@ -6,7 +6,6 @@
 var config = {
     map: {
         "*": {
-            "cookieBlock":            "Magento_Theme/js/notices",
             "rowBuilder":             "Magento_Theme/js/row-builder",
             "toggleAdvanced":         "mage/toggle",
             "translateInline":        "mage/translate-inline",
@@ -29,7 +28,8 @@ var config = {
             "loaderAjax":             "mage/loader",
             "menu":                   "mage/menu",
             "popupWindow":            "mage/popup-window",
-            "validation":             "mage/validation/validation"
+            "validation":             "mage/validation/validation",
+            "welcome":                "Magento_Theme/js/view/welcome"
         }
     },
     paths: {

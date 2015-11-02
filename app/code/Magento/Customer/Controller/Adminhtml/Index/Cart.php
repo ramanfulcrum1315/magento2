@@ -16,7 +16,7 @@ class Cart extends \Magento\Customer\Controller\Adminhtml\Index
      */
     public function execute()
     {
-        $this->_initCustomer();
+        $customerId = $this->initCurrentCustomer();
         $websiteId = $this->getRequest()->getParam('website_id');
 
         // delete an item from cart
@@ -26,14 +26,12 @@ class Cart extends \Magento\Customer\Controller\Adminhtml\Index
             $quoteRepository = $this->_objectManager->create('Magento\Quote\Model\QuoteRepository');
             /** @var \Magento\Quote\Model\Quote $quote */
             try {
-                $quote = $quoteRepository->getForCustomer(
-                    $this->_coreRegistry->registry(RegistryConstants::CURRENT_CUSTOMER_ID)
-                );
+                $quote = $quoteRepository->getForCustomer($customerId);
             } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
                 $quote = $quoteRepository->create();
             }
             $quote->setWebsite(
-                $this->_objectManager->get('Magento\Framework\Store\StoreManagerInterface')->getWebsite($websiteId)
+                $this->_objectManager->get('Magento\Store\Model\StoreManagerInterface')->getWebsite($websiteId)
             );
             $item = $quote->getItemById($deleteItemId);
             if ($item && $item->getId()) {

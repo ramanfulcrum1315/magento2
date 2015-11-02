@@ -7,10 +7,13 @@ namespace Magento\Quote\Model;
 
 use Magento\Framework\Exception\State\InvalidTransitionException;
 
+/**
+ * Class PaymentMethodManagement
+ */
 class PaymentMethodManagement implements \Magento\Quote\Api\PaymentMethodManagementInterface
 {
     /**
-     * @var \Magento\Quote\Model\QuoteRepository
+     * @var \Magento\Quote\Api\CartRepositoryInterface
      */
     protected $quoteRepository;
 
@@ -25,12 +28,14 @@ class PaymentMethodManagement implements \Magento\Quote\Api\PaymentMethodManagem
     protected $methodList;
 
     /**
-     * @param QuoteRepository $quoteRepository
+     * Constructor
+     *
+     * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
      * @param \Magento\Payment\Model\Checks\ZeroTotal $zeroTotalValidator
      * @param \Magento\Payment\Model\MethodList $methodList
      */
     public function __construct(
-        \Magento\Quote\Model\QuoteRepository $quoteRepository,
+        \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
         \Magento\Payment\Model\Checks\ZeroTotal $zeroTotalValidator,
         \Magento\Payment\Model\MethodList $methodList
     ) {
@@ -45,7 +50,7 @@ class PaymentMethodManagement implements \Magento\Quote\Api\PaymentMethodManagem
     public function set($cartId, \Magento\Quote\Api\Data\PaymentInterface $method)
     {
         /** @var \Magento\Quote\Model\Quote $quote */
-        $quote = $this->quoteRepository->getActive($cartId);
+        $quote = $this->quoteRepository->get($cartId);
 
         $method->setChecks([
             \Magento\Payment\Model\Method\AbstractMethod::CHECK_USE_CHECKOUT,
@@ -54,18 +59,20 @@ class PaymentMethodManagement implements \Magento\Quote\Api\PaymentMethodManagem
             \Magento\Payment\Model\Method\AbstractMethod::CHECK_ORDER_TOTAL_MIN_MAX,
         ]);
         $payment = $quote->getPayment();
-        $payment->importData($method->getData());
+
+        $data = $method->getData();
+        if (isset($data['additional_data'])) {
+            $data = array_merge($data, (array)$data['additional_data']);
+            unset($data['additional_data']);
+        }
+        $payment->importData($data);
 
         if ($quote->isVirtual()) {
-            // check if billing address is set
-            if (is_null($quote->getBillingAddress()->getCountryId())) {
-                throw new InvalidTransitionException('Billing address is not set');
-            }
             $quote->getBillingAddress()->setPaymentMethod($payment->getMethod());
         } else {
             // check if shipping address is set
-            if (is_null($quote->getShippingAddress()->getCountryId())) {
-                throw new InvalidTransitionException('Shipping address is not set');
+            if ($quote->getShippingAddress()->getCountryId() === null) {
+                throw new InvalidTransitionException(__('Shipping address is not set'));
             }
             $quote->getShippingAddress()->setPaymentMethod($payment->getMethod());
         }
@@ -74,7 +81,7 @@ class PaymentMethodManagement implements \Magento\Quote\Api\PaymentMethodManagem
         }
 
         if (!$this->zeroTotalValidator->isApplicable($payment->getMethodInstance(), $quote)) {
-            throw new InvalidTransitionException('The requested Payment Method is not available.');
+            throw new InvalidTransitionException(__('The requested Payment Method is not available.'));
         }
 
         $quote->setTotalsCollectedFlag(false)->collectTotals()->save();
@@ -87,7 +94,7 @@ class PaymentMethodManagement implements \Magento\Quote\Api\PaymentMethodManagem
     public function get($cartId)
     {
         /** @var \Magento\Quote\Model\Quote $quote */
-        $quote = $this->quoteRepository->getActive($cartId);
+        $quote = $this->quoteRepository->get($cartId);
         $payment = $quote->getPayment();
         if (!$payment->getId()) {
             return null;
@@ -101,7 +108,7 @@ class PaymentMethodManagement implements \Magento\Quote\Api\PaymentMethodManagem
     public function getList($cartId)
     {
         /** @var \Magento\Quote\Model\Quote $quote */
-        $quote = $this->quoteRepository->getActive($cartId);
+        $quote = $this->quoteRepository->get($cartId);
         return $this->methodList->getAvailableMethods($quote);
     }
 }

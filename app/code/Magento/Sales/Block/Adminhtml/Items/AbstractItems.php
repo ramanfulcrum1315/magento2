@@ -10,6 +10,7 @@ use Magento\Sales\Model\Order\Creditmemo\Item;
 
 /**
  * Abstract items renderer
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class AbstractItems extends \Magento\Backend\Block\Template
 {
@@ -178,7 +179,7 @@ class AbstractItems extends \Magento\Backend\Block\Template
 
         if ($block) {
             $block->setItem($item);
-            if (!is_null($field)) {
+            if ($field !== null) {
                 $block->setField($field);
             }
             return $block->toHtml();
@@ -203,7 +204,7 @@ class AbstractItems extends \Magento\Backend\Block\Template
     /**
      * Retrieve available order
      *
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return Order
      */
     public function getOrder()
@@ -227,7 +228,7 @@ class AbstractItems extends \Magento\Backend\Block\Template
             return $this->getItem()->getOrder();
         }
 
-        throw new \Magento\Framework\Model\Exception(__('We cannot get the order instance.'));
+        throw new \Magento\Framework\Exception\LocalizedException(__('We can\'t get the order instance right now.'));
     }
 
     /**
@@ -238,7 +239,7 @@ class AbstractItems extends \Magento\Backend\Block\Template
     public function getPriceDataObject()
     {
         $obj = $this->getData('price_data_object');
-        if (is_null($obj)) {
+        if ($obj === null) {
             return $this->getOrder();
         }
         return $obj;
@@ -392,7 +393,7 @@ class AbstractItems extends \Magento\Backend\Block\Template
         /**
          * If parent block has set
          */
-        if (!is_null($this->_canEditQty)) {
+        if ($this->_canEditQty !== null) {
             return $this->_canEditQty;
         }
 
@@ -494,7 +495,7 @@ class AbstractItems extends \Magento\Backend\Block\Template
      */
     public function canParentReturnToStock($item = null)
     {
-        if (!is_null($item)) {
+        if ($item !== null) {
             if ($item->getCreditmemo()->getOrder()->hasCanReturnToStock()) {
                 return $item->getCreditmemo()->getOrder()->getCanReturnToStock();
             }
@@ -512,11 +513,11 @@ class AbstractItems extends \Magento\Backend\Block\Template
      */
     public function canShipPartially($order = null)
     {
-        if (is_null($order) || !$order instanceof Order) {
+        if ($order === null || !$order instanceof Order) {
             $order = $this->_coreRegistry->registry('current_shipment')->getOrder();
         }
         $value = $order->getCanShipPartially();
-        if (!is_null($value) && !$value) {
+        if ($value !== null && !$value) {
             return false;
         }
         return true;
@@ -530,11 +531,11 @@ class AbstractItems extends \Magento\Backend\Block\Template
      */
     public function canShipPartiallyItem($order = null)
     {
-        if (is_null($order) || !$order instanceof Order) {
+        if ($order === null || !$order instanceof Order) {
             $order = $this->_coreRegistry->registry('current_shipment')->getOrder();
         }
         $value = $order->getCanShipPartiallyItem();
-        if (!is_null($value) && !$value) {
+        if ($value !== null && !$value) {
             return false;
         }
         return true;

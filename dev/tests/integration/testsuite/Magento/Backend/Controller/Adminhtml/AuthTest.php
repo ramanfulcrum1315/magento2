@@ -96,7 +96,7 @@ class AuthTest extends \Magento\TestFramework\TestCase\AbstractController
      */
     public function testNotLoggedLoginActionWithRedirect()
     {
-        $this->getRequest()->setPost(
+        $this->getRequest()->setPostValue(
             [
                 'login' => [
                     'username' => \Magento\TestFramework\Bootstrap::ADMIN_NAME,
@@ -184,9 +184,12 @@ class AuthTest extends \Magento\TestFramework\TestCase\AbstractController
      */
     public function testIncorrectLogin($params)
     {
-        $this->getRequest()->setPost($params);
+        $this->getRequest()->setPostValue($params);
         $this->dispatch('backend/admin/auth/login');
-        $this->assertContains('Please correct the user name or password.', $this->getResponse()->getBody());
+        $this->assertContains(
+            'You did not sign in correctly or your account is temporarily disabled.',
+            $this->getResponse()->getBody()
+        );
     }
 
     public function incorrectLoginDataProvider()

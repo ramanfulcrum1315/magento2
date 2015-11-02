@@ -7,6 +7,9 @@
 
 namespace Magento\Catalog\Api;
 
+/**
+ * @api
+ */
 interface CategoryManagementInterface
 {
     /**
@@ -26,7 +29,7 @@ interface CategoryManagementInterface
      * @param int $parentId
      * @param int $afterId
      * @return bool
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function move($categoryId, $parentId, $afterId = null);

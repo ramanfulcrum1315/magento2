@@ -16,10 +16,6 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertBestsellerReportResult extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Assert bestseller info in report: date, product name and qty.
      *
@@ -55,6 +51,6 @@ class AssertBestsellerReportResult extends AbstractConstraint
      */
     public function toString()
     {
-        return 'Bestseller total result is equals to data from dataSet.';
+        return 'Bestseller total result is equals to data from dataset.';
     }
 }

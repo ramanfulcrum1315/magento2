@@ -11,7 +11,7 @@ class Delete extends \Magento\Checkout\Controller\Cart
     /**
      * Delete shopping cart item action
      *
-     * @return void
+     * @return \Magento\Framework\Controller\Result\Redirect
      */
     public function execute()
     {
@@ -20,11 +20,11 @@ class Delete extends \Magento\Checkout\Controller\Cart
             try {
                 $this->cart->removeItem($id)->save();
             } catch (\Exception $e) {
-                $this->messageManager->addError(__('We cannot remove the item.'));
+                $this->messageManager->addError(__('We can\'t remove the item.'));
                 $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
             }
         }
         $defaultUrl = $this->_objectManager->create('Magento\Framework\UrlInterface')->getUrl('*/*');
-        $this->getResponse()->setRedirect($this->_redirect->getRedirectUrl($defaultUrl));
+        return $this->resultRedirectFactory->create()->setUrl($this->_redirect->getRedirectUrl($defaultUrl));
     }
 }

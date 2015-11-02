@@ -4,22 +4,13 @@
 //  */
 
 //
-//  Variables
+//  Default Grid
 //  _____________________________________________
-
-//
-//  Grid
-//  ---------------------------------------------
 
 //  Number of columns in the grid.
 
 @grid-columns: 12;
 @grid-gutter-width: 0;
-
-//
-//  Grid system
-//  _____________________________________________
-
 //
 //  Row
 //  ---------------------------------------------
@@ -42,18 +33,59 @@
 
 //  Small grid
 //  Columns, offsets, pushes, and pulls for the small device range, from phones to tablets.
-.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen-m) {
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
     .make-grid(m);
 }
 
 //  Medium grid
 //  Columns, offsets, pushes, and pulls for the desktop device range.
-.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen-l) {
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__l) {
     .make-grid(l);
 }
 
 //  Large grid
 //  Columns, offsets, pushes, and pulls for the large desktop device range.
-.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen-xl) {
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__xl) {
     .make-grid(xl);
+}
+
+//
+//  Gutter
+//  ---------------------------------------------
+
+.row-gutter {
+    margin-left: -(@content__indent / 2);
+    margin-right: -(@content__indent / 2);
+    > [class*='col-'] {
+        padding-left: @content__indent / 2;
+        padding-right: @content__indent / 2;
+    }
+}
+
+
+//
+//  Form Fields Grid Sketch
+//  _____________________________________________
+
+@temp_gutter: 30px;
+@temp_columns: 12;
+
+#mix-grid() {
+    .row() {
+        .clearer();
+        margin-left: ~'-@{temp_gutter}';
+    }
+    .return_length(@_columns-min, @_total: @temp_columns, @mathSymbol: '-') {
+        @_part: @_columns-min/@_total;
+        @_length: ~'calc( (100%) * @{_part} @{mathSymbol} @{temp_gutter} )';
+    }
+    .width(@_columns-min, @_total: @temp_columns) {
+        #mix-grid .return_length(@_columns-min, @_total);
+        width: @_length;
+    }
+    .column(@_columns-min, @_total: @temp_columns) {
+        #mix-grid .width(@_columns-min, @_total);
+        float: left;
+        margin-left: @temp_gutter;
+    }
 }

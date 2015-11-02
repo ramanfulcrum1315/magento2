@@ -15,10 +15,6 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertProductViewsReportTotalResult extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Assert product info in report: product name, price and views
      *
@@ -41,6 +37,6 @@ class AssertProductViewsReportTotalResult extends AbstractConstraint
      */
     public function toString()
     {
-        return 'Products view total result is equals to data from dataSet.';
+        return 'Products view total result is equals to data from dataset.';
     }
 }

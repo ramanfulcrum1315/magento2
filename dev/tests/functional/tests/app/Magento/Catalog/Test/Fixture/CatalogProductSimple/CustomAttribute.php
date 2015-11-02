@@ -6,35 +6,21 @@
 
 namespace Magento\Catalog\Test\Fixture\CatalogProductSimple;
 
-use Magento\Catalog\Test\Fixture\CatalogProductAttribute;
+use Magento\Mtf\Fixture\DataSource;
 use Magento\Mtf\Fixture\FixtureFactory;
-use Magento\Mtf\Fixture\FixtureInterface;
+use Magento\Catalog\Test\Fixture\CatalogProductAttribute;
 
 /**
  * Source for attribute field.
  */
-class CustomAttribute implements FixtureInterface
+class CustomAttribute extends DataSource
 {
-    /**
-     * Attribute name.
-     *
-     * @var string
-     */
-    protected $data;
-
     /**
      * Attribute fixture.
      *
      * @var CatalogProductAttribute
      */
     protected $attribute;
-
-    /**
-     * Data set configuration settings.
-     *
-     * @var array
-     */
-    protected $params;
 
     /**
      * @constructor
@@ -45,9 +31,9 @@ class CustomAttribute implements FixtureInterface
     public function __construct(FixtureFactory $fixtureFactory, array $params, $data)
     {
         $this->params = $params;
-        if (is_array($data) && isset($data['dataSet'])) {
+        if (is_array($data) && isset($data['dataset'])) {
             /** @var CatalogProductAttribute $data */
-            $data = $fixtureFactory->createByCode('catalogProductAttribute', ['dataSet' => $data['dataSet']]);
+            $data = $fixtureFactory->createByCode('catalogProductAttribute', ['dataset' => $data['dataset']]);
         }
         $this->data['value'] = $this->getDefaultAttributeValue($data);
         $this->data['code'] = $data->hasData('attribute_code') == false
@@ -58,6 +44,7 @@ class CustomAttribute implements FixtureInterface
 
     /**
      * Get default value of custom attribute considering to it's type.
+     * In case if default value isn't set for dropdown and multiselect return first option, for other types null.
      *
      * @param CatalogProductAttribute $attribute
      * @return string|null
@@ -65,39 +52,22 @@ class CustomAttribute implements FixtureInterface
     protected function getDefaultAttributeValue(CatalogProductAttribute $attribute)
     {
         $data = $attribute->getData();
+        $value = '';
         if (isset($data['options'])) {
             foreach ($data['options'] as $option) {
-                if ($option['is_default'] == 'Yes') {
-                    return $option['admin'];
+                if (isset($option['is_default']) && $option['is_default'] == 'Yes') {
+                    $value = $option['admin'];
                 }
+            }
+            if ($value == '') {
+                $value = $data['options'][0]['admin'];
             }
         } else {
             $defaultValue = preg_grep('/^default_value/', array_keys($data));
-            return !empty($defaultValue) ? $data[array_shift($defaultValue)] : null;
+            $value = !empty($defaultValue) ? $data[array_shift($defaultValue)] : null;
         }
-    }
 
-    /**
-     * Persist attribute options.
-     *
-     * @return void
-     */
-    public function persist()
-    {
-        //
-    }
-
-    /**
-     * Return prepared data set.
-     *
-     * @param string|null $key
-     * @return mixed
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function getData($key = null)
-    {
-        return $this->data;
+        return $value;
     }
 
     /**
@@ -108,16 +78,6 @@ class CustomAttribute implements FixtureInterface
     public function getAttribute()
     {
         return $this->attribute;
-    }
-
-    /**
-     * Return data set configuration settings.
-     *
-     * @return array
-     */
-    public function getDataConfig()
-    {
-        return $this->params;
     }
 
     /**

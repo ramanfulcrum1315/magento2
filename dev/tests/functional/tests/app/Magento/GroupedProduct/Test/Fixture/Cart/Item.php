@@ -6,12 +6,11 @@
 
 namespace Magento\GroupedProduct\Test\Fixture\Cart;
 
-use Magento\GroupedProduct\Test\Fixture\GroupedProductInjectable;
+use Magento\GroupedProduct\Test\Fixture\GroupedProduct;
 use Magento\Mtf\Fixture\FixtureInterface;
 
 /**
- * Class Item
- * Data for verify cart item block on checkout page
+ * Data for verify cart item block on checkout page.
  *
  * Data keys:
  *  - product (fixture data for verify)
@@ -24,7 +23,7 @@ class Item extends \Magento\Catalog\Test\Fixture\Cart\Item
      */
     public function __construct(FixtureInterface $product)
     {
-        /** @var GroupedProductInjectable $product */
+        /** @var GroupedProduct $product */
         $checkoutData = $product->getCheckoutData();
         $this->data = isset($checkoutData['cartItem']) ? $checkoutData['cartItem'] : [];
         $associatedProducts = [];
@@ -52,38 +51,5 @@ class Item extends \Magento\Catalog\Test\Fixture\Cart\Item
         }
 
         $this->data = $cartItem;
-    }
-
-    /**
-     * Persist fixture
-     *
-     * @return void
-     */
-    public function persist()
-    {
-        //
-    }
-
-    /**
-     * Return prepared data set
-     *
-     * @param string $key [optional]
-     * @return mixed
-     *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
-     */
-    public function getData($key = null)
-    {
-        return $this->data;
-    }
-
-    /**
-     * Return data set configuration settings
-     *
-     * @return string
-     */
-    public function getDataConfig()
-    {
-        //
     }
 }

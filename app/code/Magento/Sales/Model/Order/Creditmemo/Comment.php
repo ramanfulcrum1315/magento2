@@ -5,18 +5,13 @@
  */
 namespace Magento\Sales\Model\Order\Creditmemo;
 
-use Magento\Framework\Api\AttributeDataBuilder;
+use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Sales\Api\Data\CreditmemoCommentInterface;
 use Magento\Sales\Model\AbstractModel;
 
 /**
  * @method \Magento\Sales\Model\Resource\Order\Creditmemo\Comment _getResource()
  * @method \Magento\Sales\Model\Resource\Order\Creditmemo\Comment getResource()
- * @method \Magento\Sales\Model\Order\Creditmemo\Comment setParentId(int $value)
- * @method \Magento\Sales\Model\Order\Creditmemo\Comment setIsCustomerNotified(int $value)
- * @method \Magento\Sales\Model\Order\Creditmemo\Comment setIsVisibleOnFront(int $value)
- * @method \Magento\Sales\Model\Order\Creditmemo\Comment setComment(string $value)
- * @method \Magento\Sales\Model\Order\Creditmemo\Comment setCreatedAt(string $value)
  */
 class Comment extends AbstractModel implements CreditmemoCommentInterface
 {
@@ -28,42 +23,36 @@ class Comment extends AbstractModel implements CreditmemoCommentInterface
     protected $_creditmemo;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Api\MetadataServiceInterface $metadataService
-     * @param AttributeDataBuilder $customAttributeBuilder
-     * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
-     * @param \Magento\Framework\Stdlib\DateTime $dateTime
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
+     * @param AttributeValueFactory $customAttributeFactory
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\MetadataServiceInterface $metadataService,
-        AttributeDataBuilder $customAttributeBuilder,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
-        \Magento\Framework\Stdlib\DateTime $dateTime,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
+        AttributeValueFactory $customAttributeFactory,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
             $context,
             $registry,
-            $metadataService,
-            $customAttributeBuilder,
-            $localeDate,
-            $dateTime,
+            $extensionFactory,
+            $customAttributeFactory,
             $resource,
             $resourceCollection,
             $data
@@ -84,6 +73,8 @@ class Comment extends AbstractModel implements CreditmemoCommentInterface
     /**
      * Declare Creditmemo instance
      *
+     * @codeCoverageIgnore
+     *
      * @param \Magento\Sales\Model\Order\Creditmemo $creditmemo
      * @return $this
      */
@@ -95,6 +86,8 @@ class Comment extends AbstractModel implements CreditmemoCommentInterface
 
     /**
      * Retrieve Creditmemo instance
+     *
+     * @codeCoverageIgnore
      *
      * @return \Magento\Sales\Model\Order\Creditmemo
      */
@@ -116,6 +109,7 @@ class Comment extends AbstractModel implements CreditmemoCommentInterface
         return $this->_storeManager->getStore();
     }
 
+    //@codeCoverageIgnoreStart
     /**
      * Returns comment
      *
@@ -134,6 +128,14 @@ class Comment extends AbstractModel implements CreditmemoCommentInterface
     public function getCreatedAt()
     {
         return $this->getData(CreditmemoCommentInterface::CREATED_AT);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setCreatedAt($createdAt)
+    {
+        return $this->setData(CreditmemoCommentInterface::CREATED_AT, $createdAt);
     }
 
     /**
@@ -165,4 +167,59 @@ class Comment extends AbstractModel implements CreditmemoCommentInterface
     {
         return $this->getData(CreditmemoCommentInterface::PARENT_ID);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setParentId($id)
+    {
+        return $this->setData(CreditmemoCommentInterface::PARENT_ID, $id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsCustomerNotified($isCustomerNotified)
+    {
+        return $this->setData(CreditmemoCommentInterface::IS_CUSTOMER_NOTIFIED, $isCustomerNotified);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsVisibleOnFront($isVisibleOnFront)
+    {
+        return $this->setData(CreditmemoCommentInterface::IS_VISIBLE_ON_FRONT, $isVisibleOnFront);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setComment($comment)
+    {
+        return $this->setData(CreditmemoCommentInterface::COMMENT, $comment);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Magento\Sales\Api\Data\CreditmemoCommentExtensionInterface|null
+     */
+    public function getExtensionAttributes()
+    {
+        return $this->_getExtensionAttributes();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param \Magento\Sales\Api\Data\CreditmemoCommentExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\CreditmemoCommentExtensionInterface $extensionAttributes
+    ) {
+        return $this->_setExtensionAttributes($extensionAttributes);
+    }
+    //@codeCoverageIgnoreEnd
 }

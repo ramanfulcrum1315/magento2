@@ -6,6 +6,7 @@
 namespace Magento\CatalogSearch\Model\Resource\Fulltext;
 
 use Magento\Framework\DB\Select;
+use Magento\Framework\Exception\StateException;
 use Magento\Framework\Search\Response\Aggregation\Value;
 use Magento\Framework\Search\Response\QueryResponse;
 
@@ -58,7 +59,7 @@ class Collection extends \Magento\Catalog\Model\Resource\Product\Collection
      * @param \Magento\Eav\Model\EntityFactory $eavEntityFactory
      * @param \Magento\Catalog\Model\Resource\Helper $resourceHelper
      * @param \Magento\Framework\Validator\UniversalFactory $universalFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Module\Manager $moduleManager
      * @param \Magento\Catalog\Model\Indexer\Product\Flat\State $catalogProductFlatState
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
@@ -85,7 +86,7 @@ class Collection extends \Magento\Catalog\Model\Resource\Product\Collection
         \Magento\Eav\Model\EntityFactory $eavEntityFactory,
         \Magento\Catalog\Model\Resource\Helper $resourceHelper,
         \Magento\Framework\Validator\UniversalFactory $universalFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Module\Manager $moduleManager,
         \Magento\Catalog\Model\Indexer\Product\Flat\State $catalogProductFlatState,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -178,7 +179,7 @@ class Collection extends \Magento\Catalog\Model\Resource\Product\Collection
 
         $priceRangeCalculation = $this->_scopeConfig->getValue(
             \Magento\Catalog\Model\Layer\Filter\Dynamic\AlgorithmFactory::XML_PATH_RANGE_CALCULATION,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
         if ($priceRangeCalculation) {
             $this->requestBuilder->bind('price_dynamic_algorithm', $priceRangeCalculation);
@@ -253,12 +254,17 @@ class Collection extends \Magento\Catalog\Model\Resource\Product\Collection
     public function getFacetedData($field)
     {
         $this->_renderFilters();
-        $aggregations = $this->queryResponse->getAggregations();
-        $values = $aggregations->getBucket($field . '_bucket')->getValues();
         $result = [];
-        foreach ($values as $value) {
-            $metrics = $value->getMetrics();
-            $result[$metrics['value']] = $metrics;
+        $aggregations = $this->queryResponse->getAggregations();
+        $bucket = $aggregations->getBucket($field . '_bucket');
+        if ($bucket) {
+            $result = [];
+            foreach ($bucket->getValues() as $value) {
+                $metrics = $value->getMetrics();
+                $result[$metrics['value']] = $metrics;
+            }
+        } else {
+            throw new StateException('Bucket do not exists');
         }
         return $result;
     }

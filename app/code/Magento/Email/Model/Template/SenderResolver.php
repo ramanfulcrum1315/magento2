@@ -32,12 +32,12 @@ class SenderResolver implements \Magento\Framework\Mail\Template\SenderResolverI
         if (!is_array($sender)) {
             $result['name'] = $this->_scopeConfig->getValue(
                 'trans_email/ident_' . $sender . '/name',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $scopeId
             );
             $result['email'] = $this->_scopeConfig->getValue(
                 'trans_email/ident_' . $sender . '/email',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $scopeId
             );
         } else {
@@ -45,7 +45,7 @@ class SenderResolver implements \Magento\Framework\Mail\Template\SenderResolverI
         }
 
         if (!isset($result['name']) || !isset($result['email'])) {
-            throw new \Magento\Framework\Mail\Exception(__('Invalid sender data'));
+            throw new \Magento\Framework\Exception\MailException(__('Invalid sender data'));
         }
 
         return $result;

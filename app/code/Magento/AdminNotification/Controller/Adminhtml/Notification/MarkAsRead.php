@@ -22,7 +22,7 @@ class MarkAsRead extends \Magento\AdminNotification\Controller\Adminhtml\Notific
                     $notificationId
                 );
                 $this->messageManager->addSuccess(__('The message has been marked as Read.'));
-            } catch (\Magento\Framework\Model\Exception $e) {
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->messageManager->addError($e->getMessage());
             } catch (\Exception $e) {
                 $this->messageManager->addException(
@@ -35,5 +35,13 @@ class MarkAsRead extends \Magento\AdminNotification\Controller\Adminhtml\Notific
             return;
         }
         $this->_redirect('adminhtml/*/');
+    }
+
+    /**
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return $this->_authorization->isAllowed('Magento_AdminNotification::mark_as_read');
     }
 }

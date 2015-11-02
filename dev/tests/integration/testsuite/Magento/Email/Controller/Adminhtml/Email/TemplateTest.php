@@ -8,7 +8,7 @@ namespace Magento\Email\Controller\Adminhtml\Email;
 /**
  * @magentoAppArea adminhtml
  */
-class TemplateTest extends \Magento\Backend\Utility\Controller
+class TemplateTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     public function testDefaultTemplateAction()
     {
@@ -18,10 +18,10 @@ class TemplateTest extends \Magento\Backend\Utility\Controller
             'form_key' => $formKey->getFormKey(),
             'code' => 'customer_password_forgot_email_template',
         ];
-        $this->getRequest()->setPost($post);
+        $this->getRequest()->setPostValue($post);
         $this->dispatch('backend/admin/email_template/defaultTemplate/?isAjax=true');
         $this->assertContains(
-            '"template_type":2,"template_subject":"Password Reset Confirmation for {{var customer.name}}"',
+            '"template_type":2,"template_subject":"Reset your',
             $this->getResponse()->getBody()
         );
     }

@@ -71,7 +71,7 @@ class Review extends \Magento\Framework\Model\Resource\Db\AbstractDb
     /**
      * Core model store manager interface
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -90,25 +90,27 @@ class Review extends \Magento\Framework\Model\Resource\Db\AbstractDb
     protected $_ratingOptions;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
      * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Review\Model\RatingFactory $ratingFactory
      * @param \Magento\Review\Model\Resource\Rating\Option $ratingOptions
+     * @param string|null $resourcePrefix
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
+        \Magento\Framework\Model\Resource\Db\Context $context,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Review\Model\RatingFactory $ratingFactory,
-        Rating\Option $ratingOptions
+        Rating\Option $ratingOptions,
+        $resourcePrefix = null
     ) {
         $this->_date = $date;
         $this->_storeManager = $storeManager;
         $this->_ratingFactory = $ratingFactory;
         $this->_ratingOptions = $ratingOptions;
 
-        parent::__construct($resource);
+        parent::__construct($context, $resourcePrefix);
     }
 
     /**
@@ -320,8 +322,6 @@ class Review extends \Magento\Framework\Model\Resource\Db\AbstractDb
      */
     public function aggregate($object)
     {
-        $readAdapter = $this->_getReadAdapter();
-        $writeAdapter = $this->_getWriteAdapter();
         if (!$object->getEntityPkValue() && $object->getId()) {
             $object->load($object->getReviewId());
         }
@@ -330,48 +330,74 @@ class Review extends \Magento\Framework\Model\Resource\Db\AbstractDb
         $ratingSummaries = $ratingModel->getEntitySummary($object->getEntityPkValue(), false);
 
         foreach ($ratingSummaries as $ratingSummaryObject) {
-            if ($ratingSummaryObject->getCount()) {
-                $ratingSummary = round($ratingSummaryObject->getSum() / $ratingSummaryObject->getCount());
+            $this->aggregateReviewSummary($object, $ratingSummaryObject);
+        }
+    }
+
+    /**
+     * Aggregate review summary
+     *
+     * @param \Magento\Framework\Model\AbstractModel $object
+     * @param \Magento\Review\Model\Rating $ratingSummaryObject
+     * @return void
+     */
+    protected function aggregateReviewSummary($object, $ratingSummaryObject)
+    {
+        $readAdapter = $this->_getReadAdapter();
+
+        if ($ratingSummaryObject->getCount()) {
+            $ratingSummary = round($ratingSummaryObject->getSum() / $ratingSummaryObject->getCount());
+        } else {
+            $ratingSummary = $ratingSummaryObject->getSum();
+        }
+
+        $reviewsCount = $this->getTotalReviews(
+            $object->getEntityPkValue(),
+            true,
+            $ratingSummaryObject->getStoreId()
+        );
+        $select = $readAdapter->select()->from($this->_aggregateTable)
+            ->where('entity_pk_value = :pk_value')
+            ->where('entity_type = :entity_type')
+            ->where('store_id = :store_id');
+        $bind = [
+            ':pk_value' => $object->getEntityPkValue(),
+            ':entity_type' => $object->getEntityId(),
+            ':store_id' => $ratingSummaryObject->getStoreId(),
+        ];
+        $oldData = $readAdapter->fetchRow($select, $bind);
+        $data = new \Magento\Framework\Object();
+
+        $data->setReviewsCount($reviewsCount)
+            ->setEntityPkValue($object->getEntityPkValue())
+            ->setEntityType($object->getEntityId())
+            ->setRatingSummary($ratingSummary > 0 ? $ratingSummary : 0)
+            ->setStoreId($ratingSummaryObject->getStoreId());
+
+        $this->writeReviewSummary($oldData, $data);
+    }
+
+    /**
+     * Write rating summary
+     *
+     * @param array|bool $oldData
+     * @param \Magento\Framework\Object $data
+     * @return void
+     */
+    protected function writeReviewSummary($oldData, \Magento\Framework\Object $data)
+    {
+        $writeAdapter = $this->_getWriteAdapter();
+        $writeAdapter->beginTransaction();
+        try {
+            if (isset($oldData['primary_id']) && $oldData['primary_id'] > 0) {
+                $condition = ["{$this->_aggregateTable}.primary_id = ?" => $oldData['primary_id']];
+                $writeAdapter->update($this->_aggregateTable, $data->getData(), $condition);
             } else {
-                $ratingSummary = $ratingSummaryObject->getSum();
+                $writeAdapter->insert($this->_aggregateTable, $data->getData());
             }
-
-            $reviewsCount = $this->getTotalReviews(
-                $object->getEntityPkValue(),
-                true,
-                $ratingSummaryObject->getStoreId()
-            );
-            $select = $readAdapter->select()->from($this->_aggregateTable)
-                ->where('entity_pk_value = :pk_value')
-                ->where('entity_type = :entity_type')
-                ->where('store_id = :store_id');
-            $bind = [
-                ':pk_value' => $object->getEntityPkValue(),
-                ':entity_type' => $object->getEntityId(),
-                ':store_id' => $ratingSummaryObject->getStoreId(),
-            ];
-            $oldData = $readAdapter->fetchRow($select, $bind);
-
-            $data = new \Magento\Framework\Object();
-
-            $data->setReviewsCount($reviewsCount)
-                ->setEntityPkValue($object->getEntityPkValue())
-                ->setEntityType($object->getEntityId())
-                ->setRatingSummary($ratingSummary > 0 ? $ratingSummary : 0)
-                ->setStoreId($ratingSummaryObject->getStoreId());
-
-            $writeAdapter->beginTransaction();
-            try {
-                if ($oldData['primary_id'] > 0) {
-                    $condition = ["{$this->_aggregateTable}.primary_id = ?" => $oldData['primary_id']];
-                    $writeAdapter->update($this->_aggregateTable, $data->getData(), $condition);
-                } else {
-                    $writeAdapter->insert($this->_aggregateTable, $data->getData());
-                }
-                $writeAdapter->commit();
-            } catch (\Exception $e) {
-                $writeAdapter->rollBack();
-            }
+            $writeAdapter->commit();
+        } catch (\Exception $e) {
+            $writeAdapter->rollBack();
         }
     }
 

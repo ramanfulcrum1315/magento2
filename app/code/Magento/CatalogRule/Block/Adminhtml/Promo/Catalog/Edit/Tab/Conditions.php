@@ -45,7 +45,8 @@ class Conditions extends Generic implements TabInterface
     /**
      * Prepare content for tab
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
+     * @codeCoverageIgnore
      */
     public function getTabLabel()
     {
@@ -55,7 +56,8 @@ class Conditions extends Generic implements TabInterface
     /**
      * Prepare title for tab
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
+     * @codeCoverageIgnore
      */
     public function getTabTitle()
     {
@@ -66,6 +68,7 @@ class Conditions extends Generic implements TabInterface
      * Returns status flag about this tab can be showen or not
      *
      * @return bool
+     * @codeCoverageIgnore
      */
     public function canShowTab()
     {
@@ -76,6 +79,7 @@ class Conditions extends Generic implements TabInterface
      * Returns status flag about this tab hidden or not
      *
      * @return bool
+     * @codeCoverageIgnore
      */
     public function isHidden()
     {
@@ -101,7 +105,7 @@ class Conditions extends Generic implements TabInterface
 
         $fieldset = $form->addFieldset(
             'conditions_fieldset',
-            ['legend' => __('Conditions (leave blank for all products)')]
+            ['legend' => __('Conditions (don\'t add conditions if rule is applied to all products)')]
         )->setRenderer(
             $renderer
         );

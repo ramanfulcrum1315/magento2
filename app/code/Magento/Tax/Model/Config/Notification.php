@@ -5,13 +5,15 @@
  */
 namespace Magento\Tax\Model\Config;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
+
 /**
  * Tax Config Notification
  */
 class Notification extends \Magento\Framework\App\Config\Value
 {
     /**
-     * @var \Magento\Core\Model\Resource\Config
+     * @var \Magento\Config\Model\Resource\Config
      */
     protected $resourceConfig;
 
@@ -19,18 +21,18 @@ class Notification extends \Magento\Framework\App\Config\Value
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $config
-     * @param \Magento\Core\Model\Resource\Config $resourceConfig
+     * @param \Magento\Config\Model\Resource\Config $resourceConfig
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
-        \Magento\Core\Model\Resource\Config $resourceConfig,
+        \Magento\Config\Model\Resource\Config $resourceConfig,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         $this->resourceConfig = $resourceConfig;
@@ -59,7 +61,7 @@ class Notification extends \Magento\Framework\App\Config\Value
      */
     protected function _resetNotificationFlag($path)
     {
-        $this->resourceConfig->saveConfig($path, 0, \Magento\Framework\App\ScopeInterface::SCOPE_DEFAULT, 0);
+        $this->resourceConfig->saveConfig($path, 0, ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
         return $this;
     }
 }

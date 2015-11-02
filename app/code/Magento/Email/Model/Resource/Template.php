@@ -20,13 +20,17 @@ class Template extends \Magento\Framework\Model\Resource\Db\AbstractDb
     protected $dateTime;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
      * @param \Magento\Framework\Stdlib\DateTime $dateTime
+     * @param string|null $resourcePrefix
      */
-    public function __construct(\Magento\Framework\App\Resource $resource, \Magento\Framework\Stdlib\DateTime $dateTime)
-    {
+    public function __construct(
+        \Magento\Framework\Model\Resource\Db\Context $context,
+        \Magento\Framework\Stdlib\DateTime $dateTime,
+        $resourcePrefix = null
+    ) {
         $this->dateTime = $dateTime;
-        parent::__construct($resource);
+        parent::__construct($context, $resourcePrefix);
     }
 
     /**
@@ -40,27 +44,6 @@ class Template extends \Magento\Framework\Model\Resource\Db\AbstractDb
     }
 
     /**
-     * Load by template code from DB.
-     *
-     * @param string $templateCode
-     * @return array
-     */
-    public function loadByCode($templateCode)
-    {
-        $select = $this->_getReadAdapter()->select()->from(
-            $this->getMainTable()
-        )->where(
-            'template_code = :template_code'
-        );
-        $result = $this->_getReadAdapter()->fetchRow($select, ['template_code' => $templateCode]);
-
-        if (!$result) {
-            return [];
-        }
-        return $result;
-    }
-
-    /**
      * Check usage of template code in other templates
      *
      * @param \Magento\Email\Model\Template $template
@@ -68,7 +51,7 @@ class Template extends \Magento\Framework\Model\Resource\Db\AbstractDb
      */
     public function checkCodeUsage(\Magento\Email\Model\Template $template)
     {
-        if ($template->getTemplateActual() != 0 || is_null($template->getTemplateActual())) {
+        if ($template->getTemplateActual() != 0 || $template->getTemplateActual() === null) {
             $select = $this->_getReadAdapter()->select()->from(
                 $this->getMainTable(),
                 'COUNT(*)'

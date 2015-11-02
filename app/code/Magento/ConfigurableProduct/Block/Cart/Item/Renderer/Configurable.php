@@ -7,7 +7,7 @@ namespace Magento\ConfigurableProduct\Block\Cart\Item\Renderer;
 
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 use Magento\Checkout\Block\Cart\Item\Renderer;
-use Magento\Framework\View\Block\IdentityInterface;
+use Magento\Framework\Object\IdentityInterface;
 
 /**
  * Shopping cart item render block for configurable products.
@@ -63,7 +63,7 @@ class Configurable extends Renderer implements IdentityInterface
          */
         if ($this->_scopeConfig->getValue(
             self::CONFIG_THUMBNAIL_SOURCE,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         ) == ThumbnailSource::OPTION_USE_PARENT_IMAGE ||
             !($this->getChildProduct()->getThumbnail() && $this->getChildProduct()->getThumbnail() != 'no_selection')
         ) {

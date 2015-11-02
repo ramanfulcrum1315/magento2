@@ -34,7 +34,7 @@ abstract class AbstractEntity
     /**
      * Store manager
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -173,7 +173,7 @@ abstract class AbstractEntity
 
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\ImportExport\Model\Export\Factory $collectionFactory
      * @param \Magento\ImportExport\Model\Resource\CollectionByPagesIteratorFactory $resourceColFactory
      * @param array $data
@@ -181,7 +181,7 @@ abstract class AbstractEntity
      */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\ImportExport\Model\Export\Factory $collectionFactory,
         \Magento\ImportExport\Model\Resource\CollectionByPagesIteratorFactory $resourceColFactory,
         array $data = []
@@ -197,7 +197,7 @@ abstract class AbstractEntity
             $data['page_size']
         ) ? $data['page_size'] : (static::XML_PATH_PAGE_SIZE ? (int)$this->_scopeConfig->getValue(
             static::XML_PATH_PAGE_SIZE,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         ) : 0);
         $this->_byPagesIterator = isset(
             $data['collection_by_pages_iterator']
@@ -286,10 +286,10 @@ abstract class AbstractEntity
     /**
      * Iterate through given collection page by page and export items
      *
-     * @param \Magento\Framework\Data\Collection\Db $collection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $collection
      * @return void
      */
-    protected function _exportCollectionByPages(\Magento\Framework\Data\Collection\Db $collection)
+    protected function _exportCollectionByPages(\Magento\Framework\Data\Collection\AbstractDb $collection)
     {
         $this->_byPagesIterator->iterate($collection, $this->_pageSize, [[$this, 'exportItem']]);
     }
@@ -344,7 +344,7 @@ abstract class AbstractEntity
     /**
      * Get entity collection
      *
-     * @return \Magento\Framework\Data\Collection\Db
+     * @return \Magento\Framework\Data\Collection\AbstractDb
      */
     abstract protected function _getEntityCollection();
 
@@ -390,7 +390,7 @@ abstract class AbstractEntity
             ) ? __(
                 $this->_messageTemplates[$errorCode]
             ) : __(
-                "Please correct the value for '%1' column",
+                'Please correct the value for "%1" column.',
                 $errorCode
             );
             $message = (string)$message;
@@ -444,12 +444,12 @@ abstract class AbstractEntity
      * Inner writer object getter
      *
      * @return AbstractAdapter
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getWriter()
     {
         if (!$this->_writer) {
-            throw new \Magento\Framework\Model\Exception(__('Please specify writer.'));
+            throw new \Magento\Framework\Exception\LocalizedException(__('Please specify the writer.'));
         }
 
         return $this->_writer;

@@ -99,21 +99,7 @@ class Messages extends Template
         $this->messageFactory = $messageFactory;
         $this->collectionFactory = $collectionFactory;
         $this->messageManager = $messageManager;
-        $this->_isScopePrivate = true;
         parent::__construct($context, $data);
-    }
-
-    /**
-     * Preparing global layout
-     *
-     * @return $this
-     */
-    protected function _prepareLayout()
-    {
-        $this->addStorageType($this->messageManager->getDefaultGroup());
-        $this->addMessages($this->messageManager->getMessages(true));
-        parent::_prepareLayout();
-        return $this;
     }
 
     /**
@@ -281,7 +267,8 @@ class Messages extends Template
                 }
 
                 foreach ($messages as $message) {
-                    $html .= '<' . $this->secondLevelTagName . ' class="message ' . $type . '">';
+                    $html .= '<' . $this->secondLevelTagName . ' class="message ' . 'message-' . $type . ' ' . $type .
+                        '">';
                     $html .= '<' . $this->contentWrapTagName . $this->getUiId('message', $type) . '>';
                     $html .= $message->getText();
                     $html .= '</' . $this->contentWrapTagName . '>';

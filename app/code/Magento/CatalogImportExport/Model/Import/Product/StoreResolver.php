@@ -8,7 +8,9 @@ namespace Magento\CatalogImportExport\Model\Import\Product;
 class StoreResolver
 {
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * Store manager instance.
+     *
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
 
@@ -40,9 +42,9 @@ class StoreResolver
     protected $storeIdToWebsiteStoreIds = [];
 
     /**
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      */
-    public function __construct(\Magento\Framework\Store\StoreManagerInterface $storeManager)
+    public function __construct(\Magento\Store\Model\StoreManagerInterface $storeManager)
     {
         $this->storeManager = $storeManager;
     }

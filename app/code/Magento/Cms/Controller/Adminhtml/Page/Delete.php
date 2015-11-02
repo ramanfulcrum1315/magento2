@@ -19,12 +19,14 @@ class Delete extends \Magento\Backend\App\Action
     /**
      * Delete action
      *
-     * @return void
+     * @return \Magento\Backend\Model\View\Result\Redirect
      */
     public function execute()
     {
         // check if we know what should be deleted
         $id = $this->getRequest()->getParam('page_id');
+        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultRedirectFactory->create();
         if ($id) {
             $title = "";
             try {
@@ -40,8 +42,7 @@ class Delete extends \Magento\Backend\App\Action
                     'adminhtml_cmspage_on_delete',
                     ['title' => $title, 'status' => 'success']
                 );
-                $this->_redirect('*/*/');
-                return;
+                return $resultRedirect->setPath('*/*/');
             } catch (\Exception $e) {
                 $this->_eventManager->dispatch(
                     'adminhtml_cmspage_on_delete',
@@ -50,13 +51,12 @@ class Delete extends \Magento\Backend\App\Action
                 // display error message
                 $this->messageManager->addError($e->getMessage());
                 // go back to edit form
-                $this->_redirect('*/*/edit', ['page_id' => $id]);
-                return;
+                return $resultRedirect->setPath('*/*/edit', ['page_id' => $id]);
             }
         }
         // display error message
         $this->messageManager->addError(__('We can\'t find a page to delete.'));
         // go to grid
-        $this->_redirect('*/*/');
+        return $resultRedirect->setPath('*/*/');
     }
 }

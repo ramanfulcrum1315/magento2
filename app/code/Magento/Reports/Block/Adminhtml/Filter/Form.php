@@ -4,8 +4,6 @@
  * See COPYING.txt for license details.
  */
 
-// @codingStandardsIgnoreFile
-
 namespace Magento\Reports\Block\Adminhtml\Filter;
 
 /**
@@ -42,6 +40,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
      * @param string $fieldId
      * @param bool $visibility
      *
+     * @codeCoverageIgnore
      * @return void
      */
     public function setFieldVisibility($fieldId, $visibility)
@@ -95,6 +94,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
      * @param string $key
      * @param string $value
      * @return $this
+     * @codeCoverageIgnore
      */
     public function addReportTypeOption($key, $value)
     {
@@ -113,21 +113,31 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
 
         /** @var \Magento\Framework\Data\Form $form */
         $form = $this->_formFactory->create(
-            ['data' => ['id' => 'filter_form', 'action' => $actionUrl, 'method' => 'get']]
+            [
+                'data' => [
+                    'id' => 'filter_form',
+                    'action' => $actionUrl,
+                    'method' => 'get'
+                ]
+            ]
         );
 
         $htmlIdPrefix = 'sales_report_';
         $form->setHtmlIdPrefix($htmlIdPrefix);
         $fieldset = $form->addFieldset('base_fieldset', ['legend' => __('Filter')]);
 
-        $dateFormat = $this->_localeDate->getDateFormat(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_SHORT);
+        $dateFormat = $this->_localeDate->getDateFormat(\IntlDateFormatter::SHORT);
 
         $fieldset->addField('store_ids', 'hidden', ['name' => 'store_ids']);
 
         $fieldset->addField(
             'report_type',
             'select',
-            ['name' => 'report_type', 'options' => $this->_reportTypeOptions, 'label' => __('Match Period To')]
+            [
+                'name' => 'report_type',
+                'options' => $this->_reportTypeOptions,
+                'label' => __('Date Used')
+            ]
         );
 
         $fieldset->addField(
@@ -147,7 +157,6 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
             [
                 'name' => 'from',
                 'date_format' => $dateFormat,
-                'image' => $this->getViewFileUrl('images/grid-cal.png'),
                 'label' => __('From'),
                 'title' => __('From'),
                 'required' => true
@@ -160,7 +169,6 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
             [
                 'name' => 'to',
                 'date_format' => $dateFormat,
-                'image' => $this->getViewFileUrl('images/grid-cal.png'),
                 'label' => __('To'),
                 'title' => __('To'),
                 'required' => true

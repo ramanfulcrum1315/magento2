@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertProductTemplateSuccessSaveMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'high';
-    /* end tags */
-
     /**
      * Text value to be checked
      */
-    const SUCCESS_MESSAGE = 'You saved the attribute set.';
+    const SUCCESS_MESSAGE = 'You saved the product template.';
 
     /**
      * Assert that after save a product template "You saved the attribute set." successful message appears

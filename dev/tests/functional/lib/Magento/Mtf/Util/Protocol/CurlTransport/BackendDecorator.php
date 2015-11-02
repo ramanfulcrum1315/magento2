@@ -6,7 +6,7 @@
 
 namespace Magento\Mtf\Util\Protocol\CurlTransport;
 
-use Magento\Mtf\System\Config;
+use Magento\Mtf\Config\DataInterface;
 use Magento\Mtf\Util\Protocol\CurlInterface;
 use Magento\Mtf\Util\Protocol\CurlTransport;
 
@@ -40,7 +40,7 @@ class BackendDecorator implements CurlInterface
     /**
      * System config
      *
-     * @var Config
+     * @var DataInterface
      */
     protected $configuration;
 
@@ -48,9 +48,9 @@ class BackendDecorator implements CurlInterface
      * Constructor
      *
      * @param CurlTransport $transport
-     * @param Config $configuration
+     * @param DataInterface $configuration
      */
-    public function __construct(CurlTransport $transport, Config $configuration)
+    public function __construct(CurlTransport $transport, DataInterface $configuration)
     {
         $this->transport = $transport;
         $this->configuration = $configuration;
@@ -65,16 +65,17 @@ class BackendDecorator implements CurlInterface
      */
     protected function authorize()
     {
-        $credentials = $this->configuration->getConfigParam('application/backend_user_credentials');
-        $url = $_ENV['app_backend_url'] . $this->configuration->getConfigParam('application/backend_login_url');
+        $url = $_ENV['app_backend_url'] . $this->configuration->get('application/0/backendLoginUrl/0/value');
         $data = [
-            'login[username]' => $credentials['login'],
-            'login[password]' => $credentials['password'],
+            'login[username]' => $this->configuration->get('application/0/backendLogin/0/value'),
+            'login[password]' => $this->configuration->get('application/0/backendPassword/0/value'),
         ];
         $this->transport->write(CurlInterface::POST, $url, '1.0', [], $data);
         $response = $this->read();
         if (strpos($response, 'page-login')) {
-            throw new \Exception('Admin user cannot be logged in by curl handler!');
+            throw new \Exception(
+                'Admin user cannot be logged in by curl handler!'
+            );
         }
     }
 
@@ -107,7 +108,7 @@ class BackendDecorator implements CurlInterface
         if ($this->formKey) {
             $params['form_key'] = $this->formKey;
         } else {
-            throw new \Exception('Form key is absent! Response: ' . $this->response);
+            throw new \Exception(sprintf('Form key is absent! Url: "%s" Response: "%s"', $url, $this->response));
         }
         $this->transport->write($method, $url, $httpVer, $headers, http_build_query($params));
     }

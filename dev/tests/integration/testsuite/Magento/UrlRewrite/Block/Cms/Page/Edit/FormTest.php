@@ -70,7 +70,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
      * Test entity stores
      *
      * @magentoAppIsolation enabled
-     * @magentoDataFixture Magento/Core/_files/store.php
+     * @magentoDataFixture Magento/Store/_files/core_fixturestore.php
      */
     public function testGetEntityStores()
     {
@@ -91,7 +91,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
      * Check exception is thrown when product does not associated with stores
      *
      * @magentoAppIsolation enabled
-     * @magentoDataFixture Magento/Core/_files/store.php
+     * @magentoDataFixture Magento/Store/_files/core_fixturestore.php
      */
     public function testGetEntityStoresProductStoresException()
     {
@@ -99,7 +99,7 @@ class FormTest extends \PHPUnit_Framework_TestCase
         $form = $this->_getFormInstance($args);
         $this->assertEquals([], $form->getElement('store_id')->getValues());
         $this->assertEquals(
-            'Chosen cms page does not associated with any website.',
+            'Please assign a website to the selected CMS page.',
             $form->getElement('store_id')->getAfterElementHtml()
         );
     }

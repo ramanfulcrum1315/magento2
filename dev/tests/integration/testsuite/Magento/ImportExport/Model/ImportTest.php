@@ -104,7 +104,7 @@ class ImportTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Magento\Framework\Model\Exception
+     * @expectedException \Magento\Framework\Exception\LocalizedException
      * @expectedExceptionMessage Entity is unknown
      */
     public function testValidateSourceException()
@@ -126,7 +126,7 @@ class ImportTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \Magento\Framework\Model\Exception
+     * @expectedException \Magento\Framework\Exception\LocalizedException
      * @expectedExceptionMessage Entity is unknown
      */
     public function testGetEntityEntityIsNotSet()
@@ -154,8 +154,8 @@ class ImportTest extends \PHPUnit_Framework_TestCase
     /**
      * Test getEntityBehaviors with not existing behavior class
      *
-     * @expectedException \Magento\Framework\Model\Exception
-     * @expectedExceptionMessage Invalid behavior token for customer
+     * @expectedException \Magento\Framework\Exception\LocalizedException
+     * @expectedExceptionMessage The behavior token for customer is invalid.
      */
     public function testGetEntityBehaviorsWithUnknownBehavior()
     {

@@ -19,7 +19,7 @@ class State
      *
      * @var string
      */
-    private $_appMode;
+    protected $_appMode;
 
     /**
      * Is downloader flag
@@ -48,6 +48,13 @@ class State
      * @var string
      */
     protected $_areaCode;
+
+    /**
+     * Is area code being emulated
+     *
+     * @var bool
+     */
+    protected $_isAreaCodeEmulated = false;
 
     /**#@+
      * Application modes
@@ -129,12 +136,14 @@ class State
      *
      * @param string $code
      * @return void
-     * @throws \Magento\Framework\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function setAreaCode($code)
     {
         if (isset($this->_areaCode)) {
-            throw new \Magento\Framework\Exception('Area code is already set');
+            throw new \Magento\Framework\Exception\LocalizedException(
+                new \Magento\Framework\Phrase('Area code is already set')
+            );
         }
         $this->_configScope->setCurrentScope($code);
         $this->_areaCode = $code;
@@ -144,14 +153,26 @@ class State
      * Get area code
      *
      * @return string
-     * @throws \Magento\Framework\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getAreaCode()
     {
         if (!isset($this->_areaCode)) {
-            throw new \Magento\Framework\Exception('Area code is not set');
+            throw new \Magento\Framework\Exception\LocalizedException(
+                new \Magento\Framework\Phrase('Area code is not set')
+            );
         }
         return $this->_areaCode;
+    }
+
+    /**
+     * Checks whether area code is being emulated
+     *
+     * @return bool
+     */
+    public function isAreaCodeEmulated()
+    {
+        return $this->_isAreaCodeEmulated;
     }
 
     /**
@@ -167,13 +188,16 @@ class State
     {
         $currentArea = $this->_areaCode;
         $this->_areaCode = $areaCode;
+        $this->_isAreaCodeEmulated = true;
         try {
             $result = call_user_func_array($callback, $params);
         } catch (\Exception $e) {
             $this->_areaCode = $currentArea;
+            $this->_isAreaCodeEmulated = false;
             throw $e;
         }
         $this->_areaCode = $currentArea;
+        $this->_isAreaCodeEmulated = false;
         return $result;
     }
 }

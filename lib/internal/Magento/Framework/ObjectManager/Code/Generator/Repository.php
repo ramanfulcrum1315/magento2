@@ -64,11 +64,24 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                 'visibility' => 'protected',
                 'defaultValue' => [],
                 'docblock' => [
-                    'shortDescription' => $this->_getSourceClassName() . '[]',
+                    'shortDescription' => $this->getSourceClassName() . '[]',
                     'tags' => [
                         [
                             'name' => 'var',
                             'description' => 'array',
+                        ],
+                    ],
+                ]
+            ],
+            [
+                'name' => 'extensionAttributesJoinProcessor',
+                'visibility' => 'protected',
+                'docblock' => [
+                    'shortDescription' => 'Extension attributes join processor.',
+                    'tags' => [
+                        [
+                            'name' => 'var',
+                            'description' => '\Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface',
                         ],
                     ],
                 ]
@@ -84,8 +97,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
      */
     protected function _getSourcePersistorPropertyName()
     {
-        $parts = explode('\\', $this->_getSourceClassName());
-        return lcfirst(end($parts)) . 'Persistor';
+        return lcfirst($this->getSourceClassNameWithoutNamespace()) . 'Persistor';
     }
 
     /**
@@ -94,8 +106,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
      */
     protected function _getSourceCollectionFactoryPropertyName()
     {
-        $parts = explode('\\', $this->_getSourceClassName());
-        return lcfirst(end($parts)) . 'SearchResultFactory';
+        return lcfirst($this->getSourceClassNameWithoutNamespace()) . 'SearchResultFactory';
     }
 
     /**
@@ -106,8 +117,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
     protected function _getCollectionFactoryClassName()
     {
         return
-            str_replace('Interface', '', $this->_getFullyQualifiedClassName($this->_getSourceClassName()))
-            . 'SearchResultInterfaceFactory';
+            str_replace('Interface', '', $this->getSourceClassName()) . 'SearchResultInterfaceFactory';
     }
     /**
      * Returns source persistor class name
@@ -116,7 +126,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
      */
     protected function _getPersistorClassName()
     {
-        $target = $this->_getFullyQualifiedClassName($this->_getSourceClassName());
+        $target = $this->getSourceClassName();
 //        if (substr($target, -9) == 'Interface') {
 //            $target = substr($target, 1, strlen($target) -9);
 //        }
@@ -141,26 +151,35 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                     'name' => $this->_getSourceCollectionFactoryPropertyName(),
                     'type' => $this->_getCollectionFactoryClassName(),
                 ],
+                [
+                    'name' => 'extensionAttributesJoinProcessor',
+                    'type' => '\Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface',
+                ],
             ],
             'body' => "\$this->"
                 . $this->_getSourcePersistorPropertyName()
                 . " = \$" . $this->_getSourcePersistorPropertyName() . ";\n"
                 . "\$this->"
                 . $this->_getSourceCollectionFactoryPropertyName()
-                . " = \$" . $this->_getSourceCollectionFactoryPropertyName() . ";"
+                . " = \$" . $this->_getSourceCollectionFactoryPropertyName() . ";\n"
+                . "\$this->extensionAttributesJoinProcessor = \$extensionAttributesJoinProcessor;"
             ,
             'docblock' => [
                 'shortDescription' => ucfirst(static::ENTITY_TYPE) . ' constructor',
                 'tags' => [
                     [
                         'name' => 'param',
-                        'description' => '\\' . $this->_getSourceClassName()
-                            . " \$" . $this->_getSourcePersistorPropertyName(),
+                        'description' => $this->getSourceClassName() . " \$" . $this->_getSourcePersistorPropertyName(),
                     ],
                     [
                         'name' => 'param',
                         'description' => $this->_getCollectionFactoryClassName()
                             . " \$" . $this->_getSourceCollectionFactoryPropertyName()
+                    ],
+                    [
+                        'name' => 'param',
+                        'description' => '\Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface'
+                            . " \$extensionAttributesJoinProcessor"
                     ],
                 ],
             ]
@@ -204,7 +223,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                     ],
                     [
                         'name' => 'return',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()),
+                        'description' => $this->getSourceClassName(),
                     ],
                     [
                         'name' => 'throws',
@@ -245,7 +264,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                     ],
                     [
                         'name' => 'return',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getResultClassName()),
+                        'description' => $this->_getResultClassName(),
                     ],
                 ],
             ]
@@ -265,7 +284,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
             'parameters' => [
                 [
                     'name' => 'entity',
-                    'type' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()),
+                    'type' => $this->getSourceClassName(),
                 ],
             ],
             'body' => $body,
@@ -278,7 +297,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                     ],
                     [
                         'name' => 'return',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()),
+                        'description' => $this->getSourceClassName(),
                     ],
                 ],
             ]
@@ -321,7 +340,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
             'parameters' => [
                 [
                     'name' => 'entity',
-                    'type' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()),
+                    'type' => $this->getSourceClassName(),
                 ],
             ],
             'body' => $body,
@@ -330,11 +349,11 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                 'tags' => [
                     [
                         'name' => 'param',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()) . " \$entity",
+                        'description' => $this->getSourceClassName() . " \$entity",
                     ],
                     [
                         'name' => 'return',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()),
+                        'description' => $this->getSourceClassName(),
                     ],
                 ],
             ]
@@ -355,7 +374,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
             'parameters' => [
                 [
                     'name' => 'entity',
-                    'type' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()),
+                    'type' => $this->getSourceClassName(),
                 ],
             ],
             'body' => $body,
@@ -364,7 +383,11 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                 'tags' => [
                     [
                         'name' => 'param',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()) . ' $entity',
+                        'description' => $this->getSourceClassName() . ' $entity',
+                    ],
+                    [
+                        'name' => 'return',
+                        'description' => 'bool',
                     ],
                 ],
             ]
@@ -397,6 +420,10 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                         'name' => 'param',
                         'description' => 'int $id',
                     ],
+                    [
+                        'name' => 'return',
+                        'description' => 'bool',
+                    ],
                 ],
             ]
         ];
@@ -415,7 +442,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
             'parameters' => [
                 [
                     'name' => 'entity',
-                    'type' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()),
+                    'type' => $this->getSourceClassName(),
                 ],
             ],
             'body' => $body,
@@ -424,7 +451,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                 'tags' => [
                     [
                         'name' => 'param',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()) . ' $entity',
+                        'description' => $this->getSourceClassName() . ' $entity',
                     ],
                 ],
             ]
@@ -432,14 +459,15 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
     }
 
     /**
-     * Returns find() method
+     * Returns getList() method
      *
      * @return string
      */
     protected function _getGetListMethod()
     {
         $body = "\$collection = \$this->" . $this->_getSourceCollectionFactoryPropertyName() . "->create();\n"
-        . "foreach(\$criteria->getFilterGroups() as \$filterGroup) {\n"
+        . "\$this->extensionAttributesJoinProcessor->process(\$collection);\n"
+        . "foreach (\$criteria->getFilterGroups() as \$filterGroup) {\n"
         . "    foreach (\$filterGroup->getFilters() as \$filter) {\n"
         . "        \$condition = \$filter->getConditionType() ? \$filter->getConditionType() : 'eq';\n"
         . "        \$collection->addFieldToFilter(\$filter->getField(), [\$condition => \$filter->getValue()]);\n"
@@ -466,7 +494,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
                     ],
                     [
                         'name' => 'return',
-                        'description' => $this->_getFullyQualifiedClassName($this->_getSourceClassName()) . '[]',
+                        'description' => $this->getSourceClassName() . '[]',
                     ],
                 ],
             ]
@@ -502,7 +530,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
         $result = parent::_validateData();
 
         if ($result) {
-            $sourceClassName = $this->_getSourceClassName();
+            $sourceClassName = $this->getSourceClassName();
             $resultClassName = $this->_getResultClassName();
 
             if ($resultClassName !== str_replace('Interface', '', $sourceClassName) . '\\Repository') {
@@ -522,7 +550,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
      */
     protected function _generateCode()
     {
-        $className = str_replace('Interface', '', str_replace('Data\\', '', $this->_getSourceClassName()));
+        $className = str_replace('Interface', '', str_replace('Data\\', '', $this->getSourceClassName()));
         $this->_classGenerator->setName(
             $this->_getResultClassName()
         )->addProperties(
@@ -533,7 +561,7 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
             $this->_getClassDocBlock()
         )->setImplementedInterfaces(
             [
-                '\\' . $className . 'RepositoryInterface',
+                $className . 'RepositoryInterface',
             ]
         );
         return $this->_getGeneratedCode();
@@ -544,8 +572,8 @@ class Repository extends \Magento\Framework\Code\Generator\EntityAbstract
      *
      * @return string
      */
-    protected function _getSourceClassName()
+    public function getSourceClassName()
     {
-        return parent::_getSourceClassName() . 'Interface';
+        return parent::getSourceClassName() . 'Interface';
     }
 }

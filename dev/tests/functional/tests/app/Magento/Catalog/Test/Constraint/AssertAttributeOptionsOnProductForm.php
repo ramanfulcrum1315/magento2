@@ -13,11 +13,9 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertAttributeOptionsOnProductForm extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
+     * Assert all product attribute options on product creation form.
+     *
      * @return void
      */
     public function processAssert()

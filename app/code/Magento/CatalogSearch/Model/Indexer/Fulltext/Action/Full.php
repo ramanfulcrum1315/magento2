@@ -5,7 +5,7 @@
  */
 namespace Magento\CatalogSearch\Model\Indexer\Fulltext\Action;
 
-use Magento\Framework\Pricing\PriceCurrencyInterface;
+use Magento\CatalogSearch\Model\Indexer\Fulltext;
 
 /**
  * @SuppressWarnings(PHPMD.TooManyFields)
@@ -13,6 +13,11 @@ use Magento\Framework\Pricing\PriceCurrencyInterface;
  */
 class Full
 {
+    /**
+     * Scope identifier
+     */
+    const SCOPE_FIELD_NAME = 'scope';
+
     /**
      * Searchable attributes cache
      *
@@ -28,9 +33,9 @@ class Full
     protected $separator = ' | ';
 
     /**
-     * Array of \Magento\Framework\Stdlib\DateTime\DateInterface objects per store
+     * Array of \DateTime objects per store
      *
-     * @var array
+     * @var \DateTime[]
      */
     protected $dates = [];
 
@@ -75,13 +80,6 @@ class Full
     protected $catalogProductType;
 
     /**
-     * Catalog search data
-     *
-     * @var \Magento\CatalogSearch\Helper\Data
-     */
-    protected $catalogSearchData;
-
-    /**
      * Core event manager proxy
      *
      * @var \Magento\Framework\Event\ManagerInterface
@@ -98,14 +96,19 @@ class Full
     /**
      * Store manager
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
 
     /**
-     * @var \Magento\CatalogSearch\Model\Resource\EngineProvider
+     * @var \Magento\CatalogSearch\Model\Resource\Engine
      */
-    protected $engineProvider;
+    protected $engine;
+
+    /**
+     * @var \Magento\Framework\IndexerInterface
+     */
+    protected $indexHandler;
 
     /**
      * @var \Magento\Framework\Stdlib\DateTime
@@ -133,14 +136,14 @@ class Full
     protected $fulltextResource;
 
     /**
-     * @var PriceCurrencyInterface
-     */
-    protected $priceCurrency;
-
-    /**
      * @var \Magento\Framework\Search\Request\Config
      */
-    private $searchRequestConfig;
+    protected $searchRequestConfig;
+
+    /**
+     * @var \Magento\Framework\Search\Request\DimensionFactory
+     */
+    private $dimensionFactory;
 
     /**
      * @param \Magento\Framework\App\Resource $resource
@@ -150,15 +153,16 @@ class Full
      * @param \Magento\Catalog\Model\Product\Attribute\Source\Status $catalogProductStatus
      * @param \Magento\Catalog\Model\Resource\Product\Attribute\CollectionFactory $productAttributeCollectionFactory
      * @param \Magento\CatalogSearch\Model\Resource\EngineProvider $engineProvider
+     * @param \Magento\CatalogSearch\Model\Indexer\IndexerHandlerFactory $indexHandlerFactory
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
-     * @param \Magento\CatalogSearch\Helper\Data $catalogSearchData
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Stdlib\DateTime $dateTime
      * @param \Magento\Framework\Locale\ResolverInterface $localeResolver
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\CatalogSearch\Model\Resource\Fulltext $fulltextResource
-     * @param PriceCurrencyInterface $priceCurrency
+     * @param \Magento\Framework\Search\Request\DimensionFactory $dimensionFactory
+     * @param \Magento\Indexer\Model\ConfigInterface $indexerConfig
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -169,15 +173,16 @@ class Full
         \Magento\Catalog\Model\Product\Attribute\Source\Status $catalogProductStatus,
         \Magento\Catalog\Model\Resource\Product\Attribute\CollectionFactory $productAttributeCollectionFactory,
         \Magento\CatalogSearch\Model\Resource\EngineProvider $engineProvider,
+        \Magento\CatalogSearch\Model\Indexer\IndexerHandlerFactory $indexHandlerFactory,
         \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Magento\CatalogSearch\Helper\Data $catalogSearchData,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Stdlib\DateTime $dateTime,
         \Magento\Framework\Locale\ResolverInterface $localeResolver,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\CatalogSearch\Model\Resource\Fulltext $fulltextResource,
-        PriceCurrencyInterface $priceCurrency
+        \Magento\Framework\Search\Request\DimensionFactory $dimensionFactory,
+        \Magento\Indexer\Model\ConfigInterface $indexerConfig
     ) {
         $this->resource = $resource;
         $this->catalogProductType = $catalogProductType;
@@ -186,25 +191,31 @@ class Full
         $this->catalogProductStatus = $catalogProductStatus;
         $this->productAttributeCollectionFactory = $productAttributeCollectionFactory;
         $this->eventManager = $eventManager;
-        $this->catalogSearchData = $catalogSearchData;
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
-        $this->engineProvider = $engineProvider;
+        $this->engine = $engineProvider->get();
+        $configData = $indexerConfig->getIndexer(Fulltext::INDEXER_ID);
+        $this->indexHandler = $indexHandlerFactory->create(['data' => $configData]);
         $this->dateTime = $dateTime;
         $this->localeResolver = $localeResolver;
         $this->localeDate = $localeDate;
         $this->fulltextResource = $fulltextResource;
-        $this->priceCurrency = $priceCurrency;
+        $this->dimensionFactory = $dimensionFactory;
     }
 
     /**
-     * Rebuild whole fulltext index
+     * Rebuild whole fulltext index for all stores
      *
      * @return void
      */
     public function reindexAll()
     {
-        $this->rebuildIndex();
+        $storeIds = array_keys($this->storeManager->getStores());
+        foreach ($storeIds as $storeId) {
+            $this->cleanIndex($storeId);
+            $this->rebuildStoreIndex($storeId);
+        }
+        $this->searchRequestConfig->reset();
     }
 
     /**
@@ -225,11 +236,6 @@ class Full
      */
     protected function getReadAdapter()
     {
-        $writeAdapter = $this->getWriteAdapter();
-        if ($writeAdapter && $writeAdapter->getTransactionLevel() > 0) {
-            // if transaction is started we should use write connection for reading
-            return $writeAdapter;
-        }
         return $this->resource->getConnection('read');
     }
 
@@ -244,7 +250,7 @@ class Full
     }
 
     /**
-     * Regenerate search index for store(s)
+     * Regenerate search index for all stores
      *
      * @param int|array|null $productIds
      * @return void
@@ -253,9 +259,33 @@ class Full
     {
         $storeIds = array_keys($this->storeManager->getStores());
         foreach ($storeIds as $storeId) {
-            $this->rebuildStoreIndex($storeId, $productIds);
+            $dimension = $this->dimensionFactory->create(['name' => self::SCOPE_FIELD_NAME, 'value' => $storeId]);
+            $this->indexHandler->deleteIndex([$dimension], $this->getIterator($productIds));
+            $this->indexHandler->saveIndex(
+                [$dimension],
+                $this->rebuildStoreIndex($storeId, $productIds)
+            );
         }
+        $this->fulltextResource->resetSearchResults();
         $this->searchRequestConfig->reset();
+    }
+
+    /**
+     * Get parents IDs of product IDs to be re-indexed
+     *
+     * @param int[] $entityIds
+     * @return int[]
+     */
+    protected function getProductIdsFromParents(array $entityIds)
+    {
+        return $this->getWriteAdapter()
+            ->select()
+            ->from($this->getTable('catalog_product_relation'), 'parent_id')
+            ->distinct(true)
+            ->where('child_id IN (?)', $entityIds)
+            ->where('parent_id NOT IN (?)', $entityIds)
+            ->query()
+            ->fetchAll(\Zend_Db::FETCH_COLUMN);
     }
 
     /**
@@ -263,14 +293,16 @@ class Full
      *
      * @param int $storeId Store View Id
      * @param int|array $productIds Product Entity Id
-     * @return void
+     * @return \Generator
+     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
-    protected function rebuildStoreIndex($storeId, $productIds = null)
+    public function rebuildStoreIndex($storeId, $productIds = null)
     {
-        $this->cleanIndex($storeId, $productIds);
-
+        if ($productIds !== null) {
+            $productIds = array_unique(array_merge($productIds, $this->getProductIdsFromParents($productIds)));
+        }
         // prepare searchable attributes
         $staticFields = [];
         foreach ($this->getSearchableAttributes('static') as $attribute) {
@@ -288,7 +320,7 @@ class Full
         $visibility = $this->getSearchableAttribute('visibility');
         $status = $this->getSearchableAttribute('status');
         $statusIds = $this->catalogProductStatus->getVisibleStatusIds();
-        $allowedVisibility = $this->engineProvider->get()->getAllowedVisibility();
+        $allowedVisibility = $this->engine->getAllowedVisibility();
 
         $lastProductId = 0;
         while (true) {
@@ -311,7 +343,6 @@ class Full
                 }
             }
 
-            $productIndexes = [];
             $productAttributes = $this->getProductAttributes($storeId, $productAttributes, $dynamicFields);
             foreach ($products as $productData) {
                 if (!isset($productAttributes[$productData['entity_id']])) {
@@ -349,19 +380,15 @@ class Full
                         }
                     }
                 }
-                if (!is_null($productChildren) && !$hasChildren) {
+                if ($productChildren !== null && !$hasChildren) {
                     continue;
                 }
 
                 $index = $this->prepareProductIndex($productIndex, $productData, $storeId);
 
-                $productIndexes[$productData['entity_id']] = $index;
+                yield $productData['entity_id'] => $index;
             }
-
-            $this->saveProductIndexes($storeId, $productIndexes);
         }
-
-        $this->fulltextResource->resetSearchResults();
     }
 
     /**
@@ -396,7 +423,7 @@ class Full
                 []
             );
 
-        if (!is_null($productIds)) {
+        if ($productIds !== null) {
             $select->where('e.entity_id IN (?)', $productIds);
         }
 
@@ -408,17 +435,28 @@ class Full
     }
 
     /**
+     * Clean search index data for store
+     *
+     * @param int $storeId
+     * @return void
+     */
+    protected function cleanIndex($storeId)
+    {
+        $dimension = $this->dimensionFactory->create(['name' => self::SCOPE_FIELD_NAME, 'value' => $storeId]);
+        $this->indexHandler->cleanIndex([$dimension]);
+    }
+
+    /**
      * Delete search index data for store
      *
      * @param int $storeId Store View Id
-     * @param int $productId Product Entity Id
+     * @param array $productIds Product Entity Id
      * @return void
      */
-    protected function cleanIndex($storeId = null, $productId = null)
+    protected function deleteIndex($storeId = null, $productIds = null)
     {
-        if ($this->engineProvider->get()) {
-            $this->engineProvider->get()->cleanIndex($storeId, $productId);
-        }
+        $dimension = $this->dimensionFactory->create(['name' => self::SCOPE_FIELD_NAME, 'value' => $storeId]);
+        $this->indexHandler->deleteIndex([$dimension], $this->getIterator($productIds));
     }
 
     /**
@@ -443,18 +481,14 @@ class Full
             $this->searchableAttributes = [];
 
             $productAttributes = $this->productAttributeCollectionFactory->create();
+            $productAttributes->addToIndexFilter(true);
 
-            if ($this->engineProvider->get() && $this->engineProvider->get()->allowAdvancedIndex()) {
-                $productAttributes->addToIndexFilter(true);
-            } else {
-                $productAttributes->addSearchableAttributeFilter();
-            }
             /** @var \Magento\Eav\Model\Entity\Attribute[] $attributes */
             $attributes = $productAttributes->getItems();
 
             $this->eventManager->dispatch(
                 'catelogsearch_searchable_attributes_load_after',
-                ['engine' => $this->engineProvider->get(), 'attributes' => $attributes]
+                ['engine' => $this->engine, 'attributes' => $attributes]
             );
 
             $entity = $this->getEavConfig()->getEntityType(\Magento\Catalog\Model\Product::ENTITY)->getEntity();
@@ -466,7 +500,7 @@ class Full
             $this->searchableAttributes = $attributes;
         }
 
-        if (!is_null($backendType)) {
+        if ($backendType !== null) {
             $attributes = [];
             foreach ($this->searchableAttributes as $attributeId => $attribute) {
                 if ($attribute->getBackendType() == $backendType) {
@@ -612,7 +646,7 @@ class Full
                 $relation->getParentFieldName() . ' = ?',
                 $productId
             );
-            if (!is_null($relation->getWhere())) {
+            if ($relation->getWhere() !== null) {
                 $select->where($relation->getWhere());
             }
             return $this->getReadAdapter()->fetchCol($select);
@@ -631,7 +665,7 @@ class Full
     {
         if (!isset($this->productEmulators[$typeId])) {
             $productEmulator = new \Magento\Framework\Object();
-            $productEmulator->setIdFieldName('entity_id')->setTypeId($typeId);
+            $productEmulator->setTypeId($typeId);
             $this->productEmulators[$typeId] = $productEmulator;
         }
         return $this->productEmulators[$typeId];
@@ -655,15 +689,20 @@ class Full
             $attributeCode = $attribute->getAttributeCode();
 
             if (isset($productData[$attributeCode])) {
+
+                if ('store_id' === $attributeCode) {
+                    continue;
+                }
+
                 $value = $this->getAttributeValue($attribute->getId(), $productData[$attributeCode], $storeId);
                 if ($value) {
-                    if (isset($index[$attributeCode])) {
-                        if (!is_array($index[$attributeCode])) {
-                            $index[$attributeCode] = [$index[$attributeCode]];
+                    if (isset($index[$attribute->getId()])) {
+                        if (!is_array($index[$attribute->getId()])) {
+                            $index[$attribute->getId()] = [$index[$attribute->getId()]];
                         }
-                        $index[$attributeCode][] = $value;
+                        $index[$attribute->getId()][] = $value;
                     } else {
-                        $index[$attributeCode] = $value;
+                        $index[$attribute->getId()] = $value;
                     }
                 }
             }
@@ -672,38 +711,30 @@ class Full
         foreach ($indexData as $entityId => $attributeData) {
             foreach ($attributeData as $attributeId => $attributeValue) {
                 $value = $this->getAttributeValue($attributeId, $attributeValue, $storeId);
-                if (!is_null($value) && $value !== false) {
-                    $attributeCode = $this->getSearchableAttribute($attributeId)->getAttributeCode();
-
-                    if (isset($index[$attributeCode])) {
-                        $index[$attributeCode][$entityId] = $value;
+                if (!empty($value)) {
+                    if (isset($index[$attributeId])) {
+                        $index[$attributeId][$entityId] = $value;
                     } else {
-                        $index[$attributeCode] = [$entityId => $value];
+                        $index[$attributeId] = [$entityId => $value];
                     }
                 }
             }
         }
 
-        if ($this->engineProvider->get()->allowAdvancedIndex()) {
-            $product = $this->getProductEmulator(
-                $productData['type_id']
-            )->setId(
-                $productData['entity_id']
-            )->setStoreId(
-                $storeId
-            );
-            $typeInstance = $this->getProductTypeInstance($productData['type_id']);
-            $data = $typeInstance->getSearchableData($product);
-            if ($data) {
-                $index['options'] = $data;
-            }
+        $product = $this->getProductEmulator(
+            $productData['type_id']
+        )->setId(
+            $productData['entity_id']
+        )->setStoreId(
+            $storeId
+        );
+        $typeInstance = $this->getProductTypeInstance($productData['type_id']);
+        $data = $typeInstance->getSearchableData($product);
+        if ($data) {
+            $index['options'] = $data;
         }
 
-        if ($this->engineProvider->get()) {
-            return $this->engineProvider->get()->prepareEntityIndex($index, $this->separator);
-        }
-
-        return $this->catalogSearchData->prepareIndexdata($index, $this->separator);
+        return $this->engine->prepareEntityIndex($index, $this->separator);
     }
 
     /**
@@ -717,10 +748,11 @@ class Full
     protected function getAttributeValue($attributeId, $valueId, $storeId)
     {
         $attribute = $this->getSearchableAttribute($attributeId);
-        $value = $this->engineProvider->get()->processAttributeValue($attribute, $valueId);
+        $value = $this->engine->processAttributeValue($attribute, $valueId);
 
         if ($attribute->getIsSearchable()
             && $attribute->usesSource()
+            && $this->engine->allowAdvancedIndex()
         ) {
             $attribute->setStoreId($storeId);
             $valueText = $attribute->getSource()->getIndexOptionText($valueId);
@@ -738,22 +770,6 @@ class Full
     }
 
     /**
-     * Save Multiply Product indexes
-     *
-     * @param int $storeId
-     * @param array $productIndexes
-     * @return $this
-     */
-    protected function saveProductIndexes($storeId, $productIndexes)
-    {
-        if ($this->engineProvider->get()) {
-            $this->engineProvider->get()->saveEntityIndexes($storeId, $productIndexes);
-        }
-
-        return $this;
-    }
-
-    /**
      * Retrieve Date value for store
      *
      * @param int $storeId
@@ -765,28 +781,38 @@ class Full
         if (!isset($this->dates[$storeId])) {
             $timezone = $this->scopeConfig->getValue(
                 $this->localeDate->getDefaultTimezonePath(),
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $storeId
             );
-            $locale = $this->scopeConfig->getValue(
-                $this->localeResolver->getDefaultLocalePath(),
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
-                $storeId
-            );
-            $locale = new \Zend_Locale($locale);
+            
+            $this->localeResolver->emulate($storeId);
 
-            $dateObj = new \Magento\Framework\Stdlib\DateTime\Date(null, null, $locale);
-            $dateObj->setTimezone($timezone);
-            $this->dates[$storeId] = [$dateObj, $locale->getTranslation(null, 'date', $locale)];
+            $dateObj = new \DateTime();
+            $dateObj->setTimezone(new \DateTimeZone($timezone));
+            $this->dates[$storeId] = $dateObj;
+
+            $this->localeResolver->revert();
         }
 
         if (!$this->dateTime->isEmptyDate($date)) {
-            list($dateObj, $format) = $this->dates[$storeId];
-            $dateObj->setDate($date, \Magento\Framework\Stdlib\DateTime::DATETIME_INTERNAL_FORMAT);
-
-            return $dateObj->toString($format);
+            /** @var \DateTime $dateObj */
+            $dateObj = $this->dates[$storeId];
+            return $this->localeDate->formatDateTime($dateObj, \IntlDateFormatter::MEDIUM, \IntlDateFormatter::NONE);
         }
 
         return null;
+    }
+
+    /**
+     * Get iterator
+     *
+     * @param array $data
+     * @return \Generator
+     */
+    protected function getIterator(array $data)
+    {
+        foreach ($data as $key => $value) {
+            yield $key => $value;
+        }
     }
 }

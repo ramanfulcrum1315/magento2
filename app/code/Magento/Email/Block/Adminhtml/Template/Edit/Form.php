@@ -17,7 +17,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
     protected $_variables;
 
     /**
-     * @var \Magento\Core\Model\VariableFactory
+     * @var \Magento\Variable\Model\VariableFactory
      */
     protected $_variableFactory;
 
@@ -25,7 +25,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
      * @param \Magento\Backend\Block\Template\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\Data\FormFactory $formFactory
-     * @param \Magento\Core\Model\VariableFactory $variableFactory
+     * @param \Magento\Variable\Model\VariableFactory $variableFactory
      * @param \Magento\Email\Model\Source\Variables $variables
      * @param array $data
      */
@@ -33,7 +33,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
         \Magento\Backend\Block\Template\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Framework\Data\FormFactory $formFactory,
-        \Magento\Core\Model\VariableFactory $variableFactory,
+        \Magento\Variable\Model\VariableFactory $variableFactory,
         \Magento\Email\Model\Source\Variables $variables,
         array $data = []
     ) {
@@ -50,9 +50,7 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
      */
     protected function _prepareLayout()
     {
-        $this->pageConfig->addPageAsset('prototype/window.js');
         $this->pageConfig->addPageAsset('prototype/windows/themes/default.css');
-        $this->pageConfig->addPageAsset('Magento_Core::prototype/magento.css');
         return parent::_prepareLayout();
     }
 
@@ -74,37 +72,19 @@ class Form extends \Magento\Backend\Block\Widget\Form\Generic
         );
 
         $templateId = $this->getEmailTemplate()->getId();
-        if ($templateId) {
-            $fieldset->addField(
-                'used_currently_for',
-                'label',
-                [
-                    'label' => __('Used Currently For'),
-                    'container_id' => 'used_currently_for',
-                    'after_element_html' => '<script>' .
-                    (!$this->getEmailTemplate()->getSystemConfigPathsWhereUsedCurrently() ? '$(\'' .
-                    'used_currently_for' .
-                    '\').hide(); ' : '') .
-                    '</script>'
-                ]
-            );
-        }
-
-        if (!$templateId) {
-            $fieldset->addField(
-                'used_default_for',
-                'label',
-                [
-                    'label' => __('Used as Default For'),
-                    'container_id' => 'used_default_for',
-                    'after_element_html' => '<script>' .
-                    (!(bool)$this->getEmailTemplate()->getOrigTemplateCode() ? '$(\'' .
-                    'used_default_for' .
-                    '\').hide(); ' : '') .
-                    '</script>'
-                ]
-            );
-        }
+        $fieldset->addField(
+            'currently_used_for',
+            'label',
+            [
+                'label' => __('Currently Used For'),
+                'container_id' => 'currently_used_for',
+                'after_element_html' => '<script>require(["prototype"], function () {' .
+                (!$this->getEmailTemplate()->getSystemConfigPathsWhereCurrentlyUsed() ? '$(\'' .
+                'currently_used_for' .
+                '\').hide(); ' : '') .
+                '});</script>'
+            ]
+        );
 
         $fieldset->addField(
             'template_code',

@@ -5,7 +5,7 @@
  */
 namespace Magento\Customer\Controller\Adminhtml\Index;
 
-use Magento\Customer\Controller\RegistryConstants;
+use Magento\Framework\Controller\ResultFactory;
 
 class Delete extends \Magento\Customer\Controller\Adminhtml\Index
 {
@@ -16,8 +16,7 @@ class Delete extends \Magento\Customer\Controller\Adminhtml\Index
      */
     public function execute()
     {
-        $this->_initCustomer();
-        $customerId = $this->_coreRegistry->registry(RegistryConstants::CURRENT_CUSTOMER_ID);
+        $customerId = $this->initCurrentCustomer();
         if (!empty($customerId)) {
             try {
                 $this->_customerRepository->deleteById($customerId);
@@ -26,8 +25,9 @@ class Delete extends \Magento\Customer\Controller\Adminhtml\Index
                 $this->messageManager->addError($exception->getMessage());
             }
         }
-        $resultRedirect = $this->resultRedirectFactory->create();
-        $resultRedirect->setPath('customer/index');
-        return $resultRedirect;
+
+        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+        return $resultRedirect->setPath('customer/index');
     }
 }

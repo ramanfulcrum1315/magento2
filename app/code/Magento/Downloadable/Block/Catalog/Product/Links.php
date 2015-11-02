@@ -16,9 +16,9 @@ use Magento\Framework\Json\EncoderInterface;
 class Links extends \Magento\Catalog\Block\Product\AbstractProduct
 {
     /**
-     * @var \Magento\Core\Helper\Data
+     * @var \Magento\Framework\Pricing\Helper\Data
      */
-    protected $coreData;
+    protected $pricingHelper;
 
     /**
      * @var EncoderInterface
@@ -27,17 +27,17 @@ class Links extends \Magento\Catalog\Block\Product\AbstractProduct
 
     /**
      * @param \Magento\Catalog\Block\Product\Context $context
-     * @param \Magento\Core\Helper\Data $coreData
+     * @param \Magento\Framework\Pricing\Helper\Data $pricingHelper
      * @param EncoderInterface $encoder
      * @param array $data
      */
     public function __construct(
         \Magento\Catalog\Block\Product\Context $context,
-        \Magento\Core\Helper\Data $coreData,
+        \Magento\Framework\Pricing\Helper\Data $pricingHelper,
         EncoderInterface $encoder,
         array $data = []
     ) {
-        $this->coreData = $coreData;
+        $this->pricingHelper = $pricingHelper;
         $this->encoder = $encoder;
         parent::__construct($context, $data);
     }
@@ -87,7 +87,7 @@ class Links extends \Magento\Catalog\Block\Product\AbstractProduct
     public function getCurrencyPrice($price)
     {
         $store = $this->getProduct()->getStore();
-        return $this->coreData->currencyByStore($price, $store, false);
+        return $this->pricingHelper->currencyByStore($price, $store, false);
     }
 
     /**
@@ -103,6 +103,7 @@ class Links extends \Magento\Catalog\Block\Product\AbstractProduct
             $amount = $finalPrice->getCustomAmount($link->getPrice());
             $linksConfig[$link->getId()] = [
                 'finalPrice' => $amount->getValue(),
+                'basePrice' => $amount->getBaseAmount()
             ];
         }
 
@@ -131,7 +132,7 @@ class Links extends \Magento\Catalog\Block\Product\AbstractProduct
         }
         return $this->_scopeConfig->getValue(
             \Magento\Downloadable\Model\Link::XML_PATH_LINKS_TITLE,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }
 
@@ -145,7 +146,7 @@ class Links extends \Magento\Catalog\Block\Product\AbstractProduct
     {
         return $this->_scopeConfig->isSetFlag(
             \Magento\Downloadable\Model\Link::XML_PATH_TARGET_NEW_WINDOW,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }
 

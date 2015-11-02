@@ -1,17 +1,17 @@
 <?php
 /**
- *
  * Copyright © 2015 Magento. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Wishlist\Controller\Index;
 
-use Magento\Core\App\Action\FormKeyValidator;
+use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\App\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Wishlist\Controller\IndexInterface;
 use Magento\Wishlist\Controller\WishlistProviderInterface;
 use Magento\Wishlist\Model\ItemCarrier;
+use Magento\Framework\Controller\ResultFactory;
 
 class Allcart extends Action\Action implements IndexInterface
 {
@@ -26,20 +26,20 @@ class Allcart extends Action\Action implements IndexInterface
     protected $itemCarrier;
 
     /**
-     * @var \Magento\Core\App\Action\FormKeyValidator
+     * @var \Magento\Framework\Data\Form\FormKey\Validator
      */
     protected $formKeyValidator;
 
     /**
      * @param Context $context
      * @param WishlistProviderInterface $wishlistProvider
-     * @param FormKeyValidator $formKeyValidator
+     * @param Validator $formKeyValidator
      * @param ItemCarrier $itemCarrier
      */
     public function __construct(
         Context $context,
         WishlistProviderInterface $wishlistProvider,
-        FormKeyValidator $formKeyValidator,
+        Validator $formKeyValidator,
         ItemCarrier $itemCarrier
     ) {
         $this->wishlistProvider = $wishlistProvider;
@@ -51,21 +51,26 @@ class Allcart extends Action\Action implements IndexInterface
     /**
      * Add all items from wishlist to shopping cart
      *
-     * @return void
+     * @return \Magento\Framework\Controller\ResultInterface
      */
     public function execute()
     {
+        /** @var \Magento\Framework\Controller\Result\Forward $resultForward */
+        $resultForward = $this->resultFactory->create(ResultFactory::TYPE_FORWARD);
         if (!$this->formKeyValidator->validate($this->getRequest())) {
-            $this->_forward('noroute');
-            return;
+            $resultForward->forward('noroute');
+            return $resultForward;
         }
 
         $wishlist = $this->wishlistProvider->getWishlist();
         if (!$wishlist) {
-            $this->_forward('noroute');
-            return;
+            $resultForward->forward('noroute');
+            return $resultForward;
         }
+        /** @var \Magento\Framework\Controller\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         $redirectUrl = $this->itemCarrier->moveAllToCart($wishlist, $this->getRequest()->getParam('qty'));
-        $this->getResponse()->setRedirect($redirectUrl);
+        $resultRedirect->setUrl($redirectUrl);
+        return $resultRedirect;
     }
 }

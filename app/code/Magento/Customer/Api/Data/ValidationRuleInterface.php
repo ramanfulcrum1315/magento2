@@ -22,14 +22,34 @@ interface ValidationRuleInterface
     /**
      * Get validation rule name
      *
+     * @api
      * @return string
      */
     public function getName();
 
     /**
+     * Set validation rule name
+     *
+     * @api
+     * @param string $name
+     * @return $this
+     */
+    public function setName($name);
+
+    /**
      * Get validation rule value
      *
+     * @api
      * @return string
      */
     public function getValue();
+
+    /**
+     * Set validation rule value
+     *
+     * @api
+     * @param string $value
+     * @return $this
+     */
+    public function setValue($value);
 }

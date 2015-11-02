@@ -6,7 +6,7 @@
  */
 namespace Magento\DesignEditor\Controller\Adminhtml\System\Design\Editor\Tools;
 
-use Magento\Framework\Model\Exception as CoreException;
+use Magento\Framework\Exception\LocalizedException as CoreException;
 
 class UploadQuickStyleImage extends \Magento\DesignEditor\Controller\Adminhtml\System\Design\Editor\Tools
 {
@@ -43,14 +43,14 @@ class UploadQuickStyleImage extends \Magento\DesignEditor\Controller\Adminhtml\S
             $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
         } catch (\Exception $e) {
             $errorMessage = __(
-                'Something went wrong uploading the image.' .
+                'Something went wrong while uploading the image.' .
                 ' Please check the file format and try again (JPEG, GIF, or PNG).'
             );
             $response = ['error' => true, 'message' => $errorMessage];
             $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
         }
         $this->getResponse()->representJson(
-            $this->_objectManager->get('Magento\Core\Helper\Data')->jsonEncode($response)
+            $this->_objectManager->get('Magento\Framework\Json\Helper\Data')->jsonEncode($response)
         );
     }
 }

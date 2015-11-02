@@ -13,12 +13,12 @@ use Magento\Catalog\Test\Block\Adminhtml\Product\Attribute\CustomAttribute;
 use Magento\Catalog\Test\Fixture\CatalogProductAttribute;
 use Magento\Mtf\Client\Element\SimpleElement;
 use Magento\Catalog\Test\Block\Adminhtml\Product\Edit\ProductTab;
-use Magento\Catalog\Test\Fixture\Product;
 use Magento\Mtf\Client\Element;
 use Magento\Mtf\Client\Locator;
-use Magento\Mtf\Fixture\DataFixture;
 use Magento\Mtf\Fixture\FixtureInterface;
 use Magento\Mtf\Fixture\InjectableFixture;
+use Magento\Catalog\Test\Fixture\Category;
+use Magento\Catalog\Test\Block\Adminhtml\Product\Edit\Tab\Attributes\Search;
 
 /**
  * Product form on backend product page.
@@ -61,41 +61,6 @@ class ProductForm extends FormTabs
     protected $customTab = './/*/a[contains(@id,"product_info_tabs_%s")]';
 
     /**
-     * Button "New Category".
-     *
-     * @var string
-     */
-    protected $buttonNewCategory = '#add_category_button';
-
-    /**
-     * Dialog box "Create Category".
-     *
-     * @var string
-     */
-    protected $createCategoryDialog = './/ancestor::body//*[contains(@class,"mage-new-category-dialog")]';
-
-    /**
-     * "Parent Category" block on dialog box.
-     *
-     * @var string
-     */
-    protected $parentCategoryBlock = '//*[contains(@class,"field-new_category_parent")]';
-
-    /**
-     * Field "Category Name" on dialog box.
-     *
-     * @var string
-     */
-    protected $fieldNewCategoryName = '//input[@id="new_category_name"]';
-
-    /**
-     * Button "Create Category" on dialog box.
-     *
-     * @var string
-     */
-    protected $createCategoryButton = '//button[contains(@class,"action-create")]';
-
-    /**
      * Tabs title css selector.
      *
      * @var string
@@ -135,6 +100,7 @@ class ProductForm extends FormTabs
      */
     public function fill(FixtureInterface $product, SimpleElement $element = null, FixtureInterface $category = null)
     {
+        $this->waitPageToLoad();
         $dataConfig = $product->getDataConfig();
         $typeId = isset($dataConfig['type_id']) ? $dataConfig['type_id'] : null;
 
@@ -148,18 +114,12 @@ class ProductForm extends FormTabs
         } else {
             $tabs = $this->getFieldsByTabs($product);
 
-            if (null === $category && $product instanceof DataFixture) {
-                $categories = $product->getCategories();
-                $category = reset($categories);
-            }
             if ($category) {
                 $tabs['product-details']['category_ids']['value'] = $category->getName();
             }
-
-            $this->showAdvancedSettings();
             $this->fillTabs($tabs, $element);
 
-            if ($product instanceof InjectableFixture && $product->hasData('custom_attribute')) {
+            if ($product->hasData('custom_attribute')) {
                 $this->createCustomAttribute($product);
             }
         }
@@ -182,7 +142,7 @@ class ProductForm extends FormTabs
             /** @var \Magento\Catalog\Test\Block\Adminhtml\Product\Edit\Tab\ProductDetails $tab */
             $tab = $this->openTab($tabName);
             $tab->addNewAttribute($tabName);
-            $this->fillAttributeForm($attribute);
+            $this->getAttributeForm()->fill($attribute);
         }
     }
 
@@ -201,6 +161,20 @@ class ProductForm extends FormTabs
     }
 
     /**
+     * Open tab.
+     *
+     * @param string $tabName
+     * @return Tab
+     */
+    public function openTab($tabName)
+    {
+        if (!$this->isTabVisible($tabName)) {
+            $this->showAdvancedSettings();
+        }
+        return parent::openTab($tabName);
+    }
+
+    /**
      * Show Advanced Setting.
      *
      * @return void
@@ -215,52 +189,27 @@ class ProductForm extends FormTabs
     }
 
     /**
-     * Open tab.
-     *
-     * @param string $tabName
-     * @return Tab
-     */
-    public function openTab($tabName)
-    {
-        $this->showAdvancedSettings();
-        return parent::openTab($tabName);
-    }
-
-    /**
-     * Save new category.
-     *
-     * @param Product $fixture
-     * @return void
-     */
-    public function addNewCategory(Product $fixture)
-    {
-        $this->openTab('product-details');
-        $this->openNewCategoryDialog();
-        $this->_rootElement->find(
-            $this->createCategoryDialog . $this->fieldNewCategoryName,
-            Locator::SELECTOR_XPATH
-        )->setValue($fixture->getNewCategoryName());
-
-        $this->clearCategorySelect();
-        $this->selectParentCategory();
-
-        $buttonCreateCategory = $this->createCategoryDialog . $this->createCategoryButton;
-        $this->_rootElement->find($buttonCreateCategory, Locator::SELECTOR_XPATH)->click();
-        $this->waitForElementNotVisible($buttonCreateCategory, Locator::SELECTOR_XPATH);
-    }
-
-    /**
-     * Select parent category for new one.
+     * Wait page to load.
      *
      * @return void
      */
-    protected function selectParentCategory()
+    protected function waitPageToLoad()
     {
-        $this->_rootElement->find(
-            $this->createCategoryDialog . $this->parentCategoryBlock,
-            Locator::SELECTOR_XPATH,
-            '\Magento\Catalog\Test\Block\Adminhtml\Product\Edit\Tab\ProductDetails\ParentCategoryIds'
-        )->setValue('Default Category');
+        $browser = $this->browser;
+        $element = $this->advancedSettingContent;
+        $advancedSettingTrigger = $this->advancedSettingTrigger;
+
+        $this->_rootElement->waitUntil(
+            function () use ($browser, $advancedSettingTrigger) {
+                return $browser->find($advancedSettingTrigger)->isVisible() == true ? true : null;
+            }
+        );
+
+        $this->_rootElement->waitUntil(
+            function () use ($browser, $element) {
+                return $browser->find($element)->isVisible() == false ? true : null;
+            }
+        );
     }
 
     /**
@@ -274,17 +223,6 @@ class ProductForm extends FormTabs
         if ($this->_rootElement->find($selectedCategory)->isVisible()) {
             $this->_rootElement->find($selectedCategory)->click();
         }
-    }
-
-    /**
-     * Open new category dialog.
-     *
-     * @return void
-     */
-    protected function openNewCategoryDialog()
-    {
-        $this->_rootElement->find($this->buttonNewCategory)->click();
-        $this->waitForElementVisible($this->createCategoryDialog, Locator::SELECTOR_XPATH);
     }
 
     /**
@@ -311,20 +249,31 @@ class ProductForm extends FormTabs
      */
     public function checkAttributeInSearchAttributeForm(CatalogProductAttribute $productAttribute)
     {
+        $this->waitPageToLoad();
+        return $this->getAttributesSearchForm()->isExistAttributeInSearchResult($productAttribute);
+    }
+
+    /**
+     * Get attributes search form.
+     *
+     * @return Search
+     */
+    protected function getAttributesSearchForm()
+    {
         return $this->_rootElement->find(
             $this->attributeSearch,
             Locator::SELECTOR_CSS,
             'Magento\Catalog\Test\Block\Adminhtml\Product\Edit\Tab\Attributes\Search'
-        )->isExistAttributeInSearchResult($productAttribute);
+        );
     }
 
     /**
-     * Check tab visibility on Product form.
+     * Check custom tab visibility on Product form.
      *
      * @param string $tabName
      * @return bool
      */
-    public function isTabVisible($tabName)
+    public function isCustomTabVisible($tabName)
     {
         $tabName = strtolower($tabName);
         $selector = sprintf($this->customTab, $tabName);
@@ -358,7 +307,7 @@ class ProductForm extends FormTabs
         $data = [];
         $tabs = $this->getFieldsByTabs($product);
         foreach ($tabs as $tabName => $fields) {
-            $tab = $this->getTabElement($tabName);
+            $tab = $this->getTab($tabName);
             $this->openTab($tabName);
             $errors = $tab->getJsErrors();
             if (!empty($errors)) {
@@ -367,18 +316,6 @@ class ProductForm extends FormTabs
         }
 
         return $data;
-    }
-
-    /**
-     * Fill product attribute form.
-     *
-     * @param CatalogProductAttribute $productAttribute
-     * @return void
-     */
-    public function fillAttributeForm(CatalogProductAttribute $productAttribute)
-    {
-        $attributeForm = $this->getAttributeForm();
-        $attributeForm->fill($productAttribute);
     }
 
     /**
@@ -413,7 +350,6 @@ class ProductForm extends FormTabs
      */
     public function getAttributeForm()
     {
-        /** @var AttributeForm $attributeForm */
         return $this->blockFactory->create(
             'Magento\Catalog\Test\Block\Adminhtml\Product\Attribute\AttributeForm',
             ['element' => $this->browser->find('body')]
@@ -443,7 +379,7 @@ class ProductForm extends FormTabs
      */
     public function addNewAttribute($tabName = 'product-details')
     {
-        $tab = $this->getTabElement($tabName);
+        $tab = $this->getTab($tabName);
         if ($tab instanceof ProductTab) {
             $this->openTab($tabName);
             $tab->addNewAttribute($tabName);

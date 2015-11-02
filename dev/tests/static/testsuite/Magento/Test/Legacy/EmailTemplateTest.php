@@ -13,7 +13,7 @@ class EmailTemplateTest extends \PHPUnit_Framework_TestCase
 {
     public function testObsoleteDirectives()
     {
-        $invoker = new \Magento\Framework\Test\Utility\AggregateInvoker($this);
+        $invoker = new \Magento\Framework\App\Utility\AggregateInvoker($this);
         $invoker(
             /**
              * @param string $file
@@ -22,10 +22,16 @@ class EmailTemplateTest extends \PHPUnit_Framework_TestCase
                 $this->assertNotRegExp(
                     '/\{\{htmlescape.*?\}\}/i',
                     file_get_contents($file),
-                    'Directive {{htmlescape}} is obsolete. Use {{escapehtml}} instead.'
+                    'Directive {{htmlescape}} is obsolete. Use {{var}} instead.'
+                );
+
+                $this->assertNotRegExp(
+                    '/\{\{escapehtml.*?\}\}/i',
+                    file_get_contents($file),
+                    'Directive {{escapehtml}} is obsolete. Use {{var}} instead.'
                 );
             },
-            \Magento\Framework\Test\Utility\Files::init()->getEmailTemplates()
+            \Magento\Framework\App\Utility\Files::init()->getEmailTemplates()
         );
     }
 }

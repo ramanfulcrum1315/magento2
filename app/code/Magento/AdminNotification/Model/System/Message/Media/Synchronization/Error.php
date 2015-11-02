@@ -4,8 +4,6 @@
  * See COPYING.txt for license details.
  */
 
-// @codingStandardsIgnoreFile
-
 namespace Magento\AdminNotification\Model\System\Message\Media\Synchronization;
 
 class Error extends \Magento\AdminNotification\Model\System\Message\Media\AbstractSynchronization
@@ -31,12 +29,12 @@ class Error extends \Magento\AdminNotification\Model\System\Message\Media\Abstra
     /**
      * Retrieve message text
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getText()
     {
         return __(
-            'One or more media files failed to be synchronized during the media storages synchronization process. Refer to the log file for details.'
+            'We were unable to synchronize one or more media files. Please refer to the log file for details.'
         );
     }
 }

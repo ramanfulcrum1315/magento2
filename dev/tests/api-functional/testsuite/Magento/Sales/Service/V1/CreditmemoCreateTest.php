@@ -9,7 +9,6 @@
 namespace Magento\Sales\Service\V1;
 
 use Magento\TestFramework\TestCase\WebapiAbstract;
-use Magento\Webapi\Model\Rest\Config;
 
 /**
  * Class CreditmemoCreateTest
@@ -45,12 +44,12 @@ class CreditmemoCreateTest extends WebapiAbstract
         /** @var \Magento\Sales\Model\Order\Item $orderItem */
         $orderItem = current($order->getAllItems());
         $items = [
-            $orderItem->getId() => ['qty' => $orderItem->getQtyInvoiced(), 'order_item_id' => $orderItem->getId()],
+            $orderItem->getId() => ['order_item_id' => $orderItem->getId(), 'qty' => $orderItem->getQtyInvoiced()],
         ];
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH,
-                'httpMethod' => Config::HTTP_METHOD_POST,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_POST,
             ],
             'soap' => [
                 'service' => self::SERVICE_READ_NAME,
@@ -68,9 +67,9 @@ class CreditmemoCreateTest extends WebapiAbstract
             'base_currency_code' => null,
             'base_discount_amount' => null,
             'base_grand_total' => null,
-            'base_hidden_tax_amount' => null,
+            'base_discount_tax_compensation_amount' => null,
             'base_shipping_amount' => null,
-            'base_shipping_hidden_tax_amnt' => null,
+            'base_shipping_discount_tax_compensation_amnt' => null,
             'base_shipping_incl_tax' => null,
             'base_shipping_tax_amount' => null,
             'base_subtotal' => null,
@@ -87,14 +86,14 @@ class CreditmemoCreateTest extends WebapiAbstract
             'entity_id' => null,
             'global_currency_code' => null,
             'grand_total' => null,
-            'hidden_tax_amount' => null,
+            'discount_tax_compensation_amount' => null,
             'increment_id' => null,
             'invoice_id' => null,
             'order_currency_code' => null,
             'order_id' => $order->getId(),
             'shipping_address_id' => null,
             'shipping_amount' => null,
-            'shipping_hidden_tax_amount' => null,
+            'shipping_discount_tax_compensation_amount' => null,
             'shipping_incl_tax' => null,
             'shipping_tax_amount' => null,
             'state' => null,

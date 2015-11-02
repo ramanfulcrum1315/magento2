@@ -6,14 +6,15 @@
 namespace Magento\Backend\Helper\Dashboard;
 
 use Magento\Framework\App\DeploymentConfig;
+use Magento\Framework\Config\ConfigOptionsListConstants;
 
 /**
  * Data helper for dashboard
  */
-class Data extends \Magento\Core\Helper\Data
+class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**
-     * @var \Magento\Framework\Data\Collection\Db
+     * @var \Magento\Framework\Data\Collection\AbstractDb
      */
     protected $_stores;
 
@@ -23,43 +24,31 @@ class Data extends \Magento\Core\Helper\Data
     protected $_installDate;
 
     /**
-     * Configuration key to installation date
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
-    const INSTALL_DATE = 'install/date';
+    private $_storeManager;
 
     /**
      * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\App\State $appState
-     * @param \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrency
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param DeploymentConfig $deploymentConfig
-     * @param bool $dbCompatibleMode
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
-        \Magento\Framework\App\State $appState,
-        \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrency,
-        DeploymentConfig $deploymentConfig,
-        $dbCompatibleMode = true
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        DeploymentConfig $deploymentConfig
     ) {
         parent::__construct(
-            $context,
-            $scopeConfig,
-            $storeManager,
-            $appState,
-            $priceCurrency,
-            $dbCompatibleMode
+            $context
         );
-        $this->_installDate = $deploymentConfig->get(self::INSTALL_DATE);
+        $this->_installDate = $deploymentConfig->get(ConfigOptionsListConstants::CONFIG_PATH_INSTALL_DATE);
+        $this->_storeManager = $storeManager;
     }
 
     /**
      * Retrieve stores configured in system.
      *
-     * @return \Magento\Framework\Data\Collection\Db
+     * @return \Magento\Framework\Data\Collection\AbstractDb
      */
     public function getStores()
     {

@@ -11,15 +11,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
 use Magento\Mtf\Fixture\FixtureInterface;
 
 /**
- * Class AssertProductInGrid
  * Assert that product is present in products grid.
  */
 class AssertProductInGrid extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'high';
-    /* end tags */
-
     /**
      * Product fixture
      *
@@ -67,7 +62,7 @@ class AssertProductInGrid extends AbstractConstraint
     }
 
     /**
-     * Get product type
+     * Get product type.
      *
      * @return string
      */

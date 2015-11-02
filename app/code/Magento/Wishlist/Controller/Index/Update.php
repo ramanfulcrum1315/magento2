@@ -1,15 +1,14 @@
 <?php
 /**
- *
  * Copyright © 2015 Magento. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Wishlist\Controller\Index;
 
 use Magento\Framework\App\Action;
-use Magento\Framework\App\Action\NotFoundException;
-use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Exception\NotFoundException;
 use Magento\Wishlist\Controller\IndexInterface;
+use Magento\Framework\Controller\ResultFactory;
 
 class Update extends Action\Action implements IndexInterface
 {
@@ -19,7 +18,7 @@ class Update extends Action\Action implements IndexInterface
     protected $wishlistProvider;
 
     /**
-     * @var \Magento\Core\App\Action\FormKeyValidator
+     * @var \Magento\Framework\Data\Form\FormKey\Validator
      */
     protected $_formKeyValidator;
 
@@ -30,13 +29,13 @@ class Update extends Action\Action implements IndexInterface
 
     /**
      * @param Action\Context $context
-     * @param \Magento\Core\App\Action\FormKeyValidator $formKeyValidator
+     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator
      * @param \Magento\Wishlist\Controller\WishlistProviderInterface $wishlistProvider
      * @param \Magento\Wishlist\Model\LocaleQuantityProcessor $quantityProcessor
      */
     public function __construct(
         Action\Context $context,
-        \Magento\Core\App\Action\FormKeyValidator $formKeyValidator,
+        \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator,
         \Magento\Wishlist\Controller\WishlistProviderInterface $wishlistProvider,
         \Magento\Wishlist\Model\LocaleQuantityProcessor $quantityProcessor
     ) {
@@ -49,22 +48,25 @@ class Update extends Action\Action implements IndexInterface
     /**
      * Update wishlist item comments
      *
-     * @return ResponseInterface|void
+     * @return \Magento\Framework\Controller\Result\Redirect
      * @throws NotFoundException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function execute()
     {
+        /** @var \Magento\Framework\Controller\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
         if (!$this->_formKeyValidator->validate($this->getRequest())) {
-            return $this->_redirect('*/*/');
+            $resultRedirect->setPath('*/*/');
+            return $resultRedirect;
         }
         $wishlist = $this->wishlistProvider->getWishlist();
         if (!$wishlist) {
-            throw new NotFoundException();
+            throw new NotFoundException(__('Page not found.'));
         }
 
-        $post = $this->getRequest()->getPost();
+        $post = $this->getRequest()->getPostValue();
         if ($post && isset($post['description']) && is_array($post['description'])) {
             $updatedItems = 0;
 
@@ -88,7 +90,7 @@ class Update extends Action\Action implements IndexInterface
                 if (isset($post['qty'][$itemId])) {
                     $qty = $this->quantityProcessor->process($post['qty'][$itemId]);
                 }
-                if (is_null($qty)) {
+                if ($qty === null) {
                     $qty = $item->getQty();
                     if (!$qty) {
                         $qty = 1;
@@ -98,7 +100,7 @@ class Update extends Action\Action implements IndexInterface
                         $item->delete();
                     } catch (\Exception $e) {
                         $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
-                        $this->messageManager->addError(__('Can\'t delete item from wishlist'));
+                        $this->messageManager->addError(__('We can\'t delete item from Wish List right now.'));
                     }
                 }
 
@@ -130,10 +132,11 @@ class Update extends Action\Action implements IndexInterface
             }
 
             if (isset($post['save_and_share'])) {
-                $this->_redirect('*/*/share', ['wishlist_id' => $wishlist->getId()]);
-                return;
+                $resultRedirect->setPath('*/*/share', ['wishlist_id' => $wishlist->getId()]);
+                return $resultRedirect;
             }
         }
-        $this->_redirect('*', ['wishlist_id' => $wishlist->getId()]);
+        $resultRedirect->setPath('*', ['wishlist_id' => $wishlist->getId()]);
+        return $resultRedirect;
     }
 }

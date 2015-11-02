@@ -11,7 +11,7 @@ namespace Magento\Dhl\Block\Adminhtml;
 /**
  * Frontend model for DHL shipping methods for documentation
  */
-class Unitofmeasure extends \Magento\Backend\Block\System\Config\Form\Field
+class Unitofmeasure extends \Magento\Config\Block\System\Config\Form\Field
 {
     /**
      * Carrier helper
@@ -65,7 +65,7 @@ class Unitofmeasure extends \Magento\Backend\Block\System\Config\Form\Field
         $this->setDivideOrderWeightNoteKg(
             $this->escapeJsQuote(
                 __(
-                    'This allows breaking total order weight into smaller pieces if it exceeds %1 %2 to ensure accurate calculation of shipping charges.',
+                    'Select this to allow DHL to optimize shipping charges by splitting the order if it exceeds %1 %2.',
                     $kgWeight,
                     'kg'
                 )
@@ -84,7 +84,7 @@ class Unitofmeasure extends \Magento\Backend\Block\System\Config\Form\Field
         $this->setDivideOrderWeightNoteLbp(
             $this->escapeJsQuote(
                 __(
-                    'This allows breaking total order weight into smaller pieces if it exceeds %1 %2 to ensure accurate calculation of shipping charges.',
+                    'Select this to allow DHL to optimize shipping charges by splitting the order if it exceeds %1 %2.',
                     $weight,
                     'pounds'
                 )

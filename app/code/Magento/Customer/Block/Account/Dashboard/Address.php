@@ -54,7 +54,6 @@ class Address extends \Magento\Framework\View\Element\Template
         $this->currentCustomerAddress = $currentCustomerAddress;
         $this->_addressConfig = $addressConfig;
         parent::__construct($context, $data);
-        $this->_isScopePrivate = true;
         $this->addressMapper = $addressMapper;
     }
 
@@ -75,7 +74,7 @@ class Address extends \Magento\Framework\View\Element\Template
     /**
      * HTML for Shipping Address
      *
-     * @return string
+     * @return \Magento\Framework\Phrase|string
      */
     public function getPrimaryShippingAddressHtml()
     {
@@ -95,7 +94,7 @@ class Address extends \Magento\Framework\View\Element\Template
     /**
      * HTML for Billing Address
      *
-     * @return string
+     * @return \Magento\Framework\Phrase|string
      */
     public function getPrimaryBillingAddressHtml()
     {

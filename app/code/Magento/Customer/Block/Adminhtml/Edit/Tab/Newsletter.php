@@ -62,7 +62,7 @@ class Newsletter extends \Magento\Backend\Block\Widget\Form\Generic implements T
     /**
      * Return Tab label
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getTabLabel()
     {
@@ -72,7 +72,7 @@ class Newsletter extends \Magento\Backend\Block\Widget\Form\Generic implements T
     /**
      * Return Tab title
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getTabTitle()
     {
@@ -154,15 +154,17 @@ class Newsletter extends \Magento\Backend\Block\Widget\Form\Generic implements T
             [
                 'label' => __('Subscribed to Newsletter'),
                 'name' => 'subscription',
-                'data-form-part' => $this->getData('target_form')
+                'data-form-part' => $this->getData('target_form'),
+                'onchange' => 'this.value = this.checked;'
             ]
         );
 
         if ($this->customerAccountManagement->isReadOnly($customerId)) {
             $form->getElement('subscription')->setReadonly(true, true);
         }
-
-        $form->getElement('subscription')->setIsChecked($subscriber->isSubscribed());
+        $isSubscribed = $subscriber->isSubscribed();
+        $form->setValues(['subscription' => $isSubscribed ? 'true' : 'false']);
+        $form->getElement('subscription')->setIsChecked($isSubscribed);
 
         $changedDate = $this->getStatusChangedDate();
         if ($changedDate) {
@@ -170,7 +172,7 @@ class Newsletter extends \Magento\Backend\Block\Widget\Form\Generic implements T
                 'change_status_date',
                 'label',
                 [
-                    'label' => $subscriber->isSubscribed() ? __('Last Date Subscribed') : __('Last Date Unsubscribed'),
+                    'label' => $isSubscribed ? __('Last Date Subscribed') : __('Last Date Unsubscribed'),
                     'value' => $changedDate,
                     'bold' => true
                 ]
@@ -192,7 +194,7 @@ class Newsletter extends \Magento\Backend\Block\Widget\Form\Generic implements T
         if ($subscriber->getChangeStatusAt()) {
             return $this->formatDate(
                 $subscriber->getChangeStatusAt(),
-                \Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_MEDIUM,
+                \IntlDateFormatter::MEDIUM,
                 true
             );
         }

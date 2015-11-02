@@ -54,7 +54,7 @@ class Tax extends \Magento\Framework\Model\AbstractModel
     protected $_attributeFactory;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -89,7 +89,7 @@ class Tax extends \Magento\Framework\Model\AbstractModel
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Eav\Model\Entity\AttributeFactory $attributeFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Tax\Model\CalculationFactory $calculationFactory
      * @param \Magento\Customer\Model\Session $customerSession
      * @param AccountManagementInterface $accountManagement
@@ -97,7 +97,7 @@ class Tax extends \Magento\Framework\Model\AbstractModel
      * @param Resource\Tax $resource
      * @param Config $weeeConfig
      * @param PriceCurrencyInterface $priceCurrency
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -105,7 +105,7 @@ class Tax extends \Magento\Framework\Model\AbstractModel
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Eav\Model\Entity\AttributeFactory $attributeFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Tax\Model\CalculationFactory $calculationFactory,
         \Magento\Customer\Model\Session $customerSession,
         AccountManagementInterface $accountManagement,
@@ -113,7 +113,7 @@ class Tax extends \Magento\Framework\Model\AbstractModel
         \Magento\Weee\Model\Resource\Tax $resource,
         \Magento\Weee\Model\Config $weeeConfig,
         PriceCurrencyInterface $priceCurrency,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         $this->_attributeFactory = $attributeFactory;
@@ -188,7 +188,7 @@ class Tax extends \Magento\Framework\Model\AbstractModel
             return [];
         }
 
-        if (is_null($this->_allAttributes)) {
+        if ($this->_allAttributes === null) {
             $this->_allAttributes = $this->_attributeFactory->create()->getAttributeCodesByFrontendType('weee');
         }
         return $this->_allAttributes;
@@ -232,8 +232,18 @@ class Tax extends \Magento\Framework\Model\AbstractModel
             if ($customerId = $this->_customerSession->getCustomerId()) {
                 $shipping = $this->accountManagement->getDefaultShippingAddress($customerId);
                 $billing = $this->accountManagement->getDefaultBillingAddress($customerId);
+                $customerTaxClass = null;
+            } else {
+                $shippingAddressArray = $this->_customerSession->getDefaultTaxShippingAddress();
+                $billingAddressArray = $this->_customerSession->getDefaultTaxBillingAddress();
+                if (!empty($billingAddressArray)) {
+                    $billing = new \Magento\Framework\Object($billingAddressArray);
+                }
+                if (!empty($shippingAddressArray)) {
+                    $shipping = new \Magento\Framework\Object($shippingAddressArray);
+                }
+                $customerTaxClass = $this->_customerSession->getCustomerTaxClassId();
             }
-            $customerTaxClass = null;
         }
 
         $rateRequest = $calculator->getRateRequest(
@@ -263,7 +273,7 @@ class Tax extends \Magento\Framework\Model\AbstractModel
                     $rateRequest->getCountryId()
                 )->where(
                     'state IN(?)',
-                    [$rateRequest->getRegionId(), '*']
+                    [$rateRequest->getRegionId(), 0]
                 )->where(
                     'entity_id = ?',
                     (int)$product->getId()
@@ -321,5 +331,16 @@ class Tax extends \Magento\Framework\Model\AbstractModel
             }
         }
         return $result;
+    }
+
+    /**
+     * @param int $countryId
+     * @param int $regionId
+     * @param int $websiteId
+     * @return boolean
+     */
+    public function isWeeeInLocation($countryId, $regionId, $websiteId)
+    {
+        return $this->getResource()->isWeeeInLocation($countryId, $regionId, $websiteId);
     }
 }

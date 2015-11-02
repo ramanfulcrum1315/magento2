@@ -6,12 +6,12 @@
 
 namespace Magento\Customer\Test\TestCase;
 
+use Magento\Mtf\TestCase\Injectable;
 use Magento\Cms\Test\Page\CmsIndex;
-use Magento\Customer\Test\Fixture\CustomerInjectable;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Customer\Test\Page\CustomerAccountEdit;
 use Magento\Customer\Test\Page\CustomerAccountIndex;
 use Magento\Customer\Test\Page\CustomerAccountLogin;
-use Magento\Mtf\TestCase\Injectable;
 
 /**
  * Test Flow:
@@ -34,6 +34,7 @@ class ChangeCustomerPasswordTest extends Injectable
     /* tags */
     const MVP = 'yes';
     const DOMAIN = 'CS';
+    const STABLE = 'no';
     /* end tags */
 
     /**
@@ -88,11 +89,11 @@ class ChangeCustomerPasswordTest extends Injectable
     /**
      * Run Change customer password test.
      *
-     * @param CustomerInjectable $initialCustomer
-     * @param CustomerInjectable $customer
+     * @param Customer $initialCustomer
+     * @param Customer $customer
      * @return void
      */
-    public function test(CustomerInjectable $initialCustomer, CustomerInjectable $customer)
+    public function test(Customer $initialCustomer, Customer $customer)
     {
         // Preconditions
         $initialCustomer->persist();

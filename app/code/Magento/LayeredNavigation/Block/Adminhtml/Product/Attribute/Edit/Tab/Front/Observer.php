@@ -7,13 +7,13 @@
  */
 namespace Magento\LayeredNavigation\Block\Adminhtml\Product\Attribute\Edit\Tab\Front;
 
-use Magento\Backend\Model\Config\Source;
+use Magento\Config\Model\Config\Source;
 use Magento\Framework\Module\Manager;
 
 class Observer
 {
     /**
-     * @var \Magento\Backend\Model\Config\Source\Yesno
+     * @var \Magento\Config\Model\Config\Source\Yesno
      */
     protected $optionList;
 
@@ -52,7 +52,7 @@ class Observer
             'select',
             [
                 'name' => 'is_filterable',
-                'label' => __("Use In Layered Navigation"),
+                'label' => __("Use in Layered Navigation"),
                 'title' => __('Can be used only with catalog input type Dropdown, Multiple Select and Price'),
                 'note' => __('Can be used only with catalog input type Dropdown, Multiple Select and Price'),
                 'values' => [
@@ -68,7 +68,7 @@ class Observer
             'select',
             [
                 'name' => 'is_filterable_in_search',
-                'label' => __("Use In Search Results Layered Navigation"),
+                'label' => __("Use in Search Results Layered Navigation"),
                 'title' => __('Can be used only with catalog input type Dropdown, Multiple Select and Price'),
                 'note' => __('Can be used only with catalog input type Dropdown, Multiple Select and Price'),
                 'values' => $this->optionList->toOptionArray(),

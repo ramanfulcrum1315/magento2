@@ -10,7 +10,7 @@ use Magento\Customer\Model\Context;
 /**
  * Html page footer block
  */
-class Footer extends \Magento\Framework\View\Element\Template implements \Magento\Framework\View\Block\IdentityInterface
+class Footer extends \Magento\Framework\View\Element\Template implements \Magento\Framework\Object\IdentityInterface
 {
     /**
      * Copyright information
@@ -79,7 +79,7 @@ class Footer extends \Magento\Framework\View\Element\Template implements \Magent
         if (!$this->_copyright) {
             $this->_copyright = $this->_scopeConfig->getValue(
                 'design/footer/copyright',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
         }
         return $this->_copyright;

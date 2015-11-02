@@ -18,10 +18,6 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertProductTemplateForm extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'high';
-    /* end tags */
-
     /**
      * Assert that after save a product template on edit product set page displays:
      * 1. Correct product template name in Attribute set name field passed from fixture
@@ -47,7 +43,7 @@ class AssertProductTemplateForm extends AbstractConstraint
         \PHPUnit_Framework_Assert::assertEquals(
             $filterAttribute['set_name'],
             $productSetEdit->getAttributeSetEditBlock()->getAttributeSetName(),
-            'Attribute Set not found'
+            'Product Template not found'
             . "\nExpected: " . $filterAttribute['set_name']
             . "\nActual: " . $productSetEdit->getAttributeSetEditBlock()->getAttributeSetName()
         );

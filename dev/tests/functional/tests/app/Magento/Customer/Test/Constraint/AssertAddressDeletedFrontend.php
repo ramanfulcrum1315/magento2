@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertAddressDeletedFrontend extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Expected message
      */
-    const EXPECTED_MESSAGE = 'You have no additional address entries in your address book.';
+    const EXPECTED_MESSAGE = 'You have no other address entries in your address book.';
 
     /**
      * Asserts that Asserts that 'Additional Address Entries' contains expected message

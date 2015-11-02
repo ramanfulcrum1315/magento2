@@ -7,7 +7,6 @@
 namespace Magento\CatalogRule\Model\Indexer;
 
 use Magento\Catalog\Model\Product;
-use Magento\CatalogRule\CatalogRuleException;
 use Magento\CatalogRule\Model\Resource\Rule\CollectionFactory as RuleCollectionFactory;
 use Magento\CatalogRule\Model\Rule;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
@@ -20,12 +19,21 @@ class IndexBuilder
     const SECONDS_IN_DAY = 86400;
 
     /**
+     * CatalogRuleGroupWebsite columns list
+     *
+     * This array contain list of CatalogRuleGroupWebsite table columns
+     *
+     * @var array
+     */
+    protected $_catalogRuleGroupWebsiteColumnsList = ['rule_id', 'customer_group_id', 'website_id'];
+
+    /**
      * @var \Magento\Framework\App\Resource
      */
     protected $resource;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
 
@@ -78,7 +86,7 @@ class IndexBuilder
      * @param RuleCollectionFactory $ruleCollectionFactory
      * @param PriceCurrencyInterface $priceCurrency
      * @param \Magento\Framework\App\Resource $resource
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Eav\Model\Config $eavConfig
      * @param \Magento\Framework\Stdlib\DateTime $dateFormat
@@ -91,7 +99,7 @@ class IndexBuilder
         RuleCollectionFactory $ruleCollectionFactory,
         PriceCurrencyInterface $priceCurrency,
         \Magento\Framework\App\Resource $resource,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Eav\Model\Config $eavConfig,
         \Magento\Framework\Stdlib\DateTime $dateFormat,
@@ -116,6 +124,7 @@ class IndexBuilder
      *
      * @param int $id
      * @return void
+     * @api
      */
     public function reindexById($id)
     {
@@ -126,8 +135,9 @@ class IndexBuilder
      * Reindex by ids
      *
      * @param array $ids
-     * @throws \Magento\CatalogRule\CatalogRuleException
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return void
+     * @api
      */
     public function reindexByIds(array $ids)
     {
@@ -135,7 +145,7 @@ class IndexBuilder
             $this->doReindexByIds($ids);
         } catch (\Exception $e) {
             $this->critical($e);
-            throw new CatalogRuleException($e->getMessage(), $e->getCode(), $e);
+            throw new \Magento\Framework\Exception\LocalizedException(__($e->getMessage()), $e);
         }
     }
 
@@ -159,8 +169,9 @@ class IndexBuilder
     /**
      * Full reindex
      *
-     * @throws CatalogRuleException
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return void
+     * @api
      */
     public function reindexFull()
     {
@@ -168,7 +179,7 @@ class IndexBuilder
             $this->doReindexFull();
         } catch (\Exception $e) {
             $this->critical($e);
-            throw new CatalogRuleException($e->getMessage(), $e->getCode(), $e);
+            throw new \Magento\Framework\Exception\LocalizedException(__($e->getMessage()), $e);
         }
     }
 
@@ -413,8 +424,6 @@ class IndexBuilder
      */
     protected function applyAllRules(Product $product = null)
     {
-        $write = $this->getWriteAdapter();
-
         $fromDate = mktime(0, 0, 0, date('m'), date('d') - 1);
         $toDate = mktime(0, 0, 0, date('m'), date('d') + 1);
 
@@ -497,6 +506,17 @@ class IndexBuilder
             $this->saveRuleProductPrices($dayPrices);
         }
 
+        return $this->updateCatalogRuleGroupWebsiteData();
+    }
+
+    /**
+     * Update CatalogRuleGroupWebsite data
+     *
+     * @return $this
+     */
+    protected function updateCatalogRuleGroupWebsiteData()
+    {
+        $write = $this->getWriteAdapter();
         $write->delete($this->getTable('catalogrule_group_website'), []);
 
         $timestamp = $this->dateTime->gmtTimestamp();
@@ -505,11 +525,15 @@ class IndexBuilder
             true
         )->from(
             $this->getTable('catalogrule_product'),
-            ['rule_id', 'customer_group_id', 'website_id']
+            $this->_catalogRuleGroupWebsiteColumnsList
         )->where(
             "{$timestamp} >= from_time AND (({$timestamp} <= to_time AND to_time > 0) OR to_time = 0)"
         );
-        $query = $select->insertFromSelect($this->getTable('catalogrule_group_website'));
+        $query = $select->insertFromSelect(
+            $this->getTable('catalogrule_group_website'),
+            $this->_catalogRuleGroupWebsiteColumnsList
+        );
+
         $write->query($query);
 
         return $this;
@@ -563,7 +587,7 @@ class IndexBuilder
      * @param int $websiteId
      * @param int|null $productId
      * @return \Zend_Db_Statement_Interface
-     * @throws \Magento\Eav\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function getRuleProductsStmt($websiteId, $productId = null)
     {
@@ -584,9 +608,20 @@ class IndexBuilder
             ['rp.website_id', 'rp.customer_group_id', 'rp.product_id', 'rp.sort_order', 'rp.rule_id']
         );
 
-        if (!is_null($productId)) {
+        if ($productId !== null) {
             $select->where('rp.product_id=?', $productId);
         }
+
+        /**
+         * Join group price to result
+         */
+        $groupPriceAttr = $this->eavConfig->getAttribute(Product::ENTITY, 'group_price');
+        $select->joinLeft(
+            ['gp' => $groupPriceAttr->getBackend()->getResource()->getMainTable()],
+            'gp.entity_id=rp.product_id AND gp.customer_group_id=rp.customer_group_id AND '
+            . $this->getReadAdapter()->getCheckSql('gp.website_id=0', 'TRUE', 'gp.website_id=rp.website_id'),
+            'value'
+        );
 
         /**
          * Join default price and websites prices to result
@@ -629,7 +664,10 @@ class IndexBuilder
             []
         );
         $select->columns([
-            'default_price' => $this->getReadAdapter()->getIfNullSql($tableAlias . '.value', 'pp_default.value'),
+            'default_price' => $this->getReadAdapter()->getIfNullSql(
+                'gp.value',
+                $this->getReadAdapter()->getIfNullSql($tableAlias . '.value', 'pp_default.value')
+            ),
         ]);
 
         return $read->query($select);
@@ -656,7 +694,6 @@ class IndexBuilder
                 $arrData[$key]['latest_start_date'] = $this->dateFormat->formatDate($data['latest_start_date'], false);
                 $arrData[$key]['earliest_end_date'] = $this->dateFormat->formatDate($data['earliest_end_date'], false);
             }
-            $adapter->insertOnDuplicate($this->getTable('catalogrule_affected_product'), array_unique($productIds));
             $adapter->insertOnDuplicate($this->getTable('catalogrule_product_price'), $arrData);
         } catch (\Exception $e) {
             throw $e;

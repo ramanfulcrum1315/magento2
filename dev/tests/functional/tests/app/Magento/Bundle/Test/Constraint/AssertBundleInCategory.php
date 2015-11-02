@@ -6,63 +6,37 @@
 
 namespace Magento\Bundle\Test\Constraint;
 
-use Magento\Bundle\Test\Fixture\BundleProduct;
 use Magento\Catalog\Test\Fixture\Category;
+use Magento\Bundle\Test\Fixture\BundleProduct;
 use Magento\Catalog\Test\Page\Category\CatalogCategoryView;
-use Magento\Cms\Test\Page\CmsIndex;
-use Magento\Mtf\Constraint\AbstractConstraint;
+use Magento\Catalog\Test\Constraint\AssertProductInCategory;
+use Magento\Mtf\Fixture\FixtureInterface;
 
 /**
  * Check bundle product on the category page.
  */
-class AssertBundleInCategory extends AbstractConstraint
+class AssertBundleInCategory extends AssertProductInCategory
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
-    /**
-     * Check bundle product on the category page.
-     *
-     * @param CatalogCategoryView $catalogCategoryView
-     * @param CmsIndex $cmsIndex
-     * @param BundleProduct $product
-     * @param Category $category
-     * @return void
-     */
-    public function processAssert(
-        CatalogCategoryView $catalogCategoryView,
-        CmsIndex $cmsIndex,
-        BundleProduct $product,
-        Category $category
-    ) {
-        //Open category view page
-        $cmsIndex->open();
-        $cmsIndex->getTopmenu()->selectCategoryByName($category->getName());
-
-        //Process asserts
-        $this->assertPrice($product, $catalogCategoryView);
-    }
-
     /**
      * Verify product price on category view page.
      *
-     * @param BundleProduct $bundle
+     * @param FixtureInterface $bundle
      * @param CatalogCategoryView $catalogCategoryView
      * @return void
      */
-    protected function assertPrice(BundleProduct $bundle, CatalogCategoryView $catalogCategoryView)
+    protected function assertPrice(FixtureInterface $bundle, CatalogCategoryView $catalogCategoryView)
     {
-        $priceData = $bundle->getDataFieldConfig('price')['source']->getPreset();
+        /** @var BundleProduct $bundle */
+        $priceData = $bundle->getDataFieldConfig('price')['source']->getPriceData();
         //Price from/to verification
-        $priceBlock = $catalogCategoryView->getListProductBlock()->getProductPriceBlock($bundle->getName());
+        $priceBlock = $catalogCategoryView->getListProductBlock()->getProductItem($bundle)->getPriceBlock();
 
         if ($bundle->hasData('special_price') || $bundle->hasData('group_price')) {
-            $priceLow = $priceBlock->getFinalPrice();
+            $priceLow = $priceBlock->getPrice();
         } else {
             $priceLow = ($bundle->getPriceView() == 'Price Range')
                 ? $priceBlock->getPriceFrom()
-                : $priceBlock->getRegularPrice();
+                : $priceBlock->getPrice();
         }
 
         \PHPUnit_Framework_Assert::assertEquals(

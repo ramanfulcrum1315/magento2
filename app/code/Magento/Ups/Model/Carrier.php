@@ -184,10 +184,10 @@ class Carrier extends AbstractCarrierOnline implements CarrierInterface
     /**
      * Collect and get rates
      *
-     * @param RateRequest $request
+     * @param \Magento\Framework\Object $request
      * @return Result|bool|null
      */
-    public function collectRates(RateRequest $request)
+    public function collectRates(\Magento\Framework\Object $request)
     {
         if (!$this->getConfigFlag($this->_activeFlag)) {
             return false;
@@ -250,7 +250,7 @@ class Carrier extends AbstractCarrierOnline implements CarrierInterface
         } else {
             $origCountry = $this->_scopeConfig->getValue(
                 \Magento\Sales\Model\Order\Shipment::XML_PATH_STORE_COUNTRY_ID,
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $request->getStoreId()
             );
         }
@@ -262,7 +262,7 @@ class Carrier extends AbstractCarrierOnline implements CarrierInterface
         } else {
             $origRegionCode = $this->_scopeConfig->getValue(
                 \Magento\Sales\Model\Order\Shipment::XML_PATH_STORE_REGION_ID,
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $request->getStoreId()
             );
         }
@@ -277,7 +277,7 @@ class Carrier extends AbstractCarrierOnline implements CarrierInterface
             $rowRequest->setOrigPostal(
                 $this->_scopeConfig->getValue(
                     \Magento\Sales\Model\Order\Shipment::XML_PATH_STORE_ZIP,
-                    \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                    \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                     $request->getStoreId()
                 )
             );
@@ -289,7 +289,7 @@ class Carrier extends AbstractCarrierOnline implements CarrierInterface
             $rowRequest->setOrigCity(
                 $this->_scopeConfig->getValue(
                     \Magento\Sales\Model\Order\Shipment::XML_PATH_STORE_CITY,
-                    \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                    \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                     $request->getStoreId()
                 )
             );
@@ -991,7 +991,7 @@ XMLAuth;
      */
     protected function _parseXmlTrackingResponse($trackingValue, $xmlResponse)
     {
-        $errorTitle = 'Unable to retrieve tracking';
+        $errorTitle = 'For some reason we can\'t retrieve tracking info right now.';
         $resultArr = [];
         $packageProgress = [];
 

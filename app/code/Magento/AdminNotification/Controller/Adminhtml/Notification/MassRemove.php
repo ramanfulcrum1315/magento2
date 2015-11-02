@@ -25,12 +25,20 @@ class MassRemove extends \Magento\AdminNotification\Controller\Adminhtml\Notific
                     }
                 }
                 $this->messageManager->addSuccess(__('Total of %1 record(s) have been removed.', count($ids)));
-            } catch (\Magento\Framework\Model\Exception $e) {
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->messageManager->addError($e->getMessage());
             } catch (\Exception $e) {
                 $this->messageManager->addException($e, __("We couldn't remove the messages because of an error."));
             }
         }
         $this->getResponse()->setRedirect($this->_redirect->getRedirectUrl($this->getUrl('*')));
+    }
+
+    /**
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return $this->_authorization->isAllowed('Magento_AdminNotification::adminnotification_remove');
     }
 }

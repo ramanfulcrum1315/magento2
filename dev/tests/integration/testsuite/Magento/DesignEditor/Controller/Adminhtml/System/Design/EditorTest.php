@@ -8,19 +8,8 @@ namespace Magento\DesignEditor\Controller\Adminhtml\System\Design;
 /**
  * @magentoAppArea adminhtml
  */
-class EditorTest extends \Magento\Backend\Utility\Controller
+class EditorTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
-    /**
-     * @var \Magento\Core\Helper\Data
-     */
-    protected $_dataHelper;
-
-    protected function setUp()
-    {
-        parent::setUp();
-        $this->_dataHelper = $this->_objectManager->get('Magento\Core\Helper\Data');
-    }
-
     public function testIndexAction()
     {
         $this->dispatch('backend/admin/system_design_editor/index');

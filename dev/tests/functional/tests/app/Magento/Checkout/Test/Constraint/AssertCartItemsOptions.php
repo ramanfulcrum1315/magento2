@@ -21,10 +21,6 @@ use Magento\Mtf\Fixture\FixtureInterface;
  */
 class AssertCartItemsOptions extends AbstractAssertForm
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Error message for verify options
      *
@@ -34,7 +30,7 @@ class AssertCartItemsOptions extends AbstractAssertForm
 
     /**
      * Assert that cart item options for product(s) display with correct information block
-     * (custom options, variations, links, samples, bundle items etc) according to passed from dataSet.
+     * (custom options, variations, links, samples, bundle items etc) according to passed from dataset.
      *
      * @param CheckoutCart $checkoutCart
      * @param Cart $cart

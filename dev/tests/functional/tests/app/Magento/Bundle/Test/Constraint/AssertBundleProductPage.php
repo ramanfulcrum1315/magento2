@@ -22,14 +22,14 @@ class AssertBundleProductPage extends AssertProductPage
      */
     protected function verifyPrice()
     {
-        $priceData = $this->product->getDataFieldConfig('price')['source']->getPreset();
+        $priceData = $this->product->getDataFieldConfig('price')['source']->getPriceData();
         $priceView = $this->product->getPriceView();
         $priceBlock = $this->productView->getPriceBlock();
 
         if ($this->product->hasData('special_price') || $this->product->hasData('group_price')) {
-            $priceLow = $priceBlock->getFinalPrice();
+            $priceLow = $priceBlock->getPrice();
         } else {
-            $priceLow = ($priceView == 'Price Range') ? $priceBlock->getPriceFrom() : $priceBlock->getRegularPrice();
+            $priceLow = ($priceView == 'Price Range') ? $priceBlock->getPriceFrom() : $priceBlock->getPrice();
         }
 
         $errors = [];

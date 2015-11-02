@@ -5,14 +5,17 @@
 
 var config = {
     "waitSeconds": 0,
+    "map": {
+        "*": {
+            "mageUtils": "mage/utils/main"
+        }
+    },
     "shim": {
         "jquery/jquery-migrate": ["jquery"],
-        "jquery/jquery.hashchange": ["jquery"],
+        "jquery/jquery.hashchange": ["jquery", "jquery/jquery-migrate"],
         "jquery/jstree/jquery.hotkeys": ["jquery"],
         "jquery/hover-intent": ["jquery"],
         "mage/adminhtml/backup": ["prototype"],
-        "mage/adminhtml/tools": ["prototype"],
-        "mage/adminhtml/varienLoader": ["prototype"],
         "mage/captcha": ["prototype"],
         "mage/common": ["jquery"],
         "mage/requirejs/plugin/id-normalizer": ["jquery"],
@@ -34,17 +37,20 @@ var config = {
     "paths": {
         "jquery/validate": "jquery/jquery.validate",
         "jquery/hover-intent": "jquery/jquery.hoverIntent",
-        "jquery/template": "jquery/jquery.tmpl.min",
         "jquery/file-uploader": "jquery/fileUploader/jquery.fileupload-fp",
-        "handlebars": "jquery/handlebars/handlebars-v1.3.0",
         "jquery/jquery.hashchange": "jquery/jquery.ba-hashchange.min",
-        "prototype": "prototype/prototype-amd",
+        "prototype": "legacy-build.min",
+        "jquery/jquery-storageapi": "jquery/jquery.storageapi.min",
         "text": "requirejs/text",
         "domReady": "requirejs/domReady",
         "ko": "ko/ko",
-        "tinymce": "tiny_mce/tiny_mce"
+        "tinymce": "tiny_mce/tiny_mce_src"
     },
     "deps": [
         "jquery/jquery-migrate"
     ]
 };
+
+require(['jquery'], function ($) {
+    $.noConflict();
+});

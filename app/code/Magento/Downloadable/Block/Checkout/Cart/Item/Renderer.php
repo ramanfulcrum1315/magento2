@@ -27,11 +27,11 @@ class Renderer extends \Magento\Checkout\Block\Cart\Item\Renderer
      * @param \Magento\Catalog\Helper\Product\Configuration $productConfig
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Magento\Catalog\Helper\Image $imageHelper
-     * @param \Magento\Core\Helper\Url $urlHelper
+     * @param \Magento\Framework\Url\Helper\Data $urlHelper
      * @param \Magento\Framework\Message\ManagerInterface $messageManager
      * @param PriceCurrencyInterface $priceCurrency
-     * @param \Magento\Downloadable\Helper\Catalog\Product\Configuration $downloadableProductConfiguration
      * @param \Magento\Framework\Module\Manager $moduleManager
+     * @param \Magento\Downloadable\Helper\Catalog\Product\Configuration $downloadableProductConfiguration
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -40,7 +40,7 @@ class Renderer extends \Magento\Checkout\Block\Cart\Item\Renderer
         \Magento\Catalog\Helper\Product\Configuration $productConfig,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Catalog\Helper\Image $imageHelper,
-        \Magento\Core\Helper\Url $urlHelper,
+        \Magento\Framework\Url\Helper\Data $urlHelper,
         \Magento\Framework\Message\ManagerInterface $messageManager,
         PriceCurrencyInterface $priceCurrency,
         \Magento\Framework\Module\Manager $moduleManager,
@@ -68,7 +68,10 @@ class Renderer extends \Magento\Checkout\Block\Cart\Item\Renderer
      */
     public function getLinks()
     {
-        return $this->_downloadProdConfig->getLinks($this->getItem());
+        if (!$this->getItem()) {
+            return [];
+        }
+        return $this->_downloadableProductConfiguration->getLinks($this->getItem());
     }
 
     /**
@@ -78,6 +81,26 @@ class Renderer extends \Magento\Checkout\Block\Cart\Item\Renderer
      */
     public function getLinksTitle()
     {
-        return $this->_downloadProdConfig->getLinksTitle($this->getProduct());
+        return $this->_downloadableProductConfiguration->getLinksTitle($this->getProduct());
+    }
+
+    /**
+     * Get list of all options for product
+     *
+     * @return array
+     */
+    public function getOptionList()
+    {
+        return $this->_downloadableProductConfiguration->getOptions($this->getItem());
+    }
+
+    /**
+     * Get list of all options for product
+     * @param \Magento\Catalog\Model\Product\Configuration\Item\ItemInterface $item
+     * @return array
+     */
+    public function getOption($item)
+    {
+        return $this->_downloadableProductConfiguration->getOptions($item);
     }
 }

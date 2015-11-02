@@ -5,8 +5,8 @@
  */
 namespace Magento\Tax\Model;
 
-use Magento\Framework\Model\AbstractExtensibleModel;
 use Magento\Tax\Api\Data\TaxClassKeyInterface;
+use Magento\Tax\Model\TaxClass\Key;
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
@@ -29,18 +29,11 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
     private $taxCalculationService;
 
     /**
-     * Tax Details Builder
+     * Tax Details Factory
      *
-     * @var \Magento\Tax\Api\Data\QuoteDetailsDataBuilder
+     * @var \Magento\Tax\Api\Data\QuoteDetailsInterfaceFactory
      */
-    private $quoteDetailsBuilder;
-
-    /**
-     * Tax Details Item Builder
-     *
-     * @var \Magento\Tax\Api\Data\QuoteDetailsItemDataBuilder
-     */
-    private $quoteDetailsItemBuilder;
+    private $quoteDetailsFactory;
 
     /**
      * Array of default tax classes ids
@@ -76,13 +69,16 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
      */
     private $taxRuleFixtureFactory;
 
+    /**
+     * @var \Magento\Framework\Api\DataObjectHelper
+     */
+    private $dataObjectHelper;
+
     protected function setUp()
     {
         $this->objectManager = Bootstrap::getObjectManager();
-        $this->quoteDetailsBuilder = $this->objectManager
-            ->create('Magento\Tax\Api\Data\QuoteDetailsDataBuilder');
-        $this->quoteDetailsItemBuilder = $this->objectManager
-            ->create('Magento\Tax\Api\Data\QuoteDetailsItemDataBuilder');
+        $this->quoteDetailsFactory = $this->objectManager->create('Magento\Tax\Api\Data\QuoteDetailsInterfaceFactory');
+        $this->dataObjectHelper = $this->objectManager->create('Magento\Framework\Api\DataObjectHelper');
         $this->taxCalculationService = $this->objectManager->get('Magento\Tax\Api\TaxCalculationInterface');
         $this->taxRuleFixtureFactory = new TaxRuleFixtureFactory();
 
@@ -101,7 +97,12 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
     public function testCalculateTaxUnitBased($quoteDetailsData, $expected)
     {
         $quoteDetailsData = $this->performTaxClassSubstitution($quoteDetailsData);
-        $quoteDetails = $this->quoteDetailsBuilder->populateWithArray($quoteDetailsData)->create();
+        $quoteDetails = $this->quoteDetailsFactory->create();
+        $this->dataObjectHelper->populateWithArray(
+            $quoteDetails,
+            $quoteDetailsData,
+            '\Magento\Tax\Api\Data\QuoteDetailsInterface'
+        );
 
         $taxDetails = $this->taxCalculationService->calculateTax($quoteDetails, 1);
         $this->assertEquals($expected, $this->convertObjectToArray($taxDetails));
@@ -120,8 +121,8 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 2,
             'unit_price' => 10,
             'tax_class_key' => [
-                TaxClassKeyInterface::KEY_TYPE => TaxClassKeyInterface::TYPE_NAME,
-                TaxClassKeyInterface::KEY_VALUE => 'DefaultProductClass',
+                Key::KEY_TYPE => TaxClassKeyInterface::TYPE_NAME,
+                Key::KEY_VALUE => 'DefaultProductClass',
             ],
         ];
         $oneProductResults = [
@@ -179,7 +180,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 2,
             'unit_price' => 10.75,
             'tax_class_key' => 'DefaultProductClass',
-            'tax_included' => true,
+            'is_tax_included' => true,
         ];
         $oneProductInclTaxResults = $oneProductResults;
 
@@ -190,7 +191,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 2,
             'unit_price' => 11,
             'tax_class_key' => 'HigherProductClass',
-            'tax_included' => true,
+            'is_tax_included' => true,
         ];
         $oneProductInclTaxDiffRateResults = [
             'subtotal' => 20,
@@ -340,7 +341,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                 'unit_price' => 10.75,
                 'row_total' => 21.5,
                 'tax_class_key' => 'DefaultProductClass',
-                'tax_included' => true,
+                'is_tax_included' => true,
             ],
             [
                 'code' => 'sku_2',
@@ -349,7 +350,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                 'unit_price' => 11.83,
                 'row_total' => 236.6,
                 'tax_class_key' => 'DefaultProductClass',
-                'tax_included' => true,
+                'is_tax_included' => true,
             ],
         ];
         $twoProductInclTaxResults = $twoProductsResults;
@@ -462,8 +463,12 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
     public function testCalculateTaxTotalBased($quoteDetailsData, $expectedTaxDetails, $storeId = null)
     {
         $quoteDetailsData = $this->performTaxClassSubstitution($quoteDetailsData);
-
-        $quoteDetails = $this->quoteDetailsBuilder->populateWithArray($quoteDetailsData)->create();
+        $quoteDetails = $this->quoteDetailsFactory->create();
+        $this->dataObjectHelper->populateWithArray(
+            $quoteDetails,
+            $quoteDetailsData,
+            '\Magento\Tax\Api\Data\QuoteDetailsInterface'
+        );
 
         $taxDetails = $this->taxCalculationService->calculateTax($quoteDetails, $storeId);
 
@@ -497,7 +502,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                         'type' => 'type',
                         'quantity' => 1,
                         'unit_price' => 10.0,
-                        'tax_included' => false,
+                        'is_tax_included' => false,
                     ],
                 ],
                 'customer_tax_class_key' => 'DefaultCustomerClass',
@@ -517,7 +522,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'type' => 'type',
             'quantity' => 1,
             'unit_price' => 10.0,
-            'tax_included' => false,
+            'is_tax_included' => false,
         ];
 
         $quoteDetailAppliedTaxesBase = [
@@ -640,12 +645,12 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                         'type' => 'type',
                         'quantity' => 1,
                         'unit_price' => 10.0,
-                        'tax_included' => true,
+                        'is_tax_included' => true,
                     ],
                 ],
                 'customer_tax_class_key' => [
-                    TaxClassKeyInterface::KEY_TYPE => TaxClassKeyInterface::TYPE_NAME,
-                    TaxClassKeyInterface::KEY_VALUE => 'DefaultCustomerClass',
+                    Key::KEY_TYPE => TaxClassKeyInterface::TYPE_NAME,
+                    Key::KEY_VALUE => 'DefaultCustomerClass',
                 ],
             ],
             'expected_tax_details' => [
@@ -663,7 +668,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'type' => 'type',
             'quantity' => 1,
             'unit_price' => 10.0,
-            'tax_included' => true,
+            'is_tax_included' => true,
         ];
 
         $quoteDetailTaxInclItemWithDefaultProductTaxClass = $productTaxInclQuoteDetailItemBase;
@@ -789,7 +794,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                         'type' => 'type',
                         'quantity' => 2,
                         'unit_price' => 7.97,
-                        'tax_included' => false,
+                        'is_tax_included' => false,
                     ],
                 ],
                 'customer_tax_class_key' => 'DefaultCustomerClass',
@@ -809,7 +814,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'type' => 'type',
             'quantity' => 2,
             'unit_price' => 7.97,
-            'tax_included' => false,
+            'is_tax_included' => false,
         ];
 
         $quoteDetailItemWithDefaultProductTaxClass = $prodQuoteDetailItemBase;
@@ -920,8 +925,12 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
     public function testCalculateTaxRowBased($quoteDetailsData, $expectedTaxDetails)
     {
         $quoteDetailsData = $this->performTaxClassSubstitution($quoteDetailsData);
-
-        $quoteDetails = $this->quoteDetailsBuilder->populateWithArray($quoteDetailsData)->create();
+        $quoteDetails = $this->quoteDetailsFactory->create();
+        $this->dataObjectHelper->populateWithArray(
+            $quoteDetails,
+            $quoteDetailsData,
+            '\Magento\Tax\Api\Data\QuoteDetailsInterface'
+        );
 
         $taxDetails = $this->taxCalculationService->calculateTax($quoteDetails);
 
@@ -998,7 +1007,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 10,
             'unit_price' => 1.0,
             'tax_class_key' => 'DefaultProductClass',
-            'tax_included' => true,
+            'is_tax_included' => true,
         ];
         $oneProductInclTaxResults = [
             'subtotal' => 9.3,
@@ -1055,10 +1064,10 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 9,
             'unit_price' => 0.33, // this is including the store tax of 10%. Pre tax is 0.3
             'tax_class_key' => [
-                TaxClassKeyInterface::KEY_TYPE => TaxClassKeyInterface::TYPE_NAME,
-                TaxClassKeyInterface::KEY_VALUE => 'HigherProductClass',
+                Key::KEY_TYPE => TaxClassKeyInterface::TYPE_NAME,
+                Key::KEY_VALUE => 'HigherProductClass',
             ],
-            'tax_included' => true,
+            'is_tax_included' => true,
         ];
         $oneProductInclTaxDiffRateResults = [
             'subtotal' => 2.73,
@@ -1207,7 +1216,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                 'quantity' => 10,
                 'unit_price' => 0.98,
                 'tax_class_key' => 'DefaultProductClass',
-                'tax_included' => true,
+                'is_tax_included' => true,
             ],
             [
                 'code' => 'sku_2',
@@ -1215,7 +1224,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                 'quantity' => 20,
                 'unit_price' => 11.99,
                 'tax_class_key' => 'DefaultProductClass',
-                'tax_included' => true,
+                'is_tax_included' => true,
             ],
         ];
         $twoProductInclTaxResults = [
@@ -1456,7 +1465,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 10,
             'unit_price' => 1.89,
             'tax_class_key' => 'MultipleRulesProductClass',
-            'tax_included' => true,
+            'is_tax_included' => true,
             'discount_amount' => 5,
         ];
         $baseQuote['items'][] = [
@@ -1465,7 +1474,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 5,
             'unit_price' => 14.99,
             'tax_class_key' => 'MultipleRulesProductClass',
-            'tax_included' => true,
+            'is_tax_included' => true,
             'discount_amount' => 10,
         ];
         $baseQuote['items'][] = [
@@ -1474,7 +1483,7 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
             'quantity' => 1,
             'unit_price' => 99.99,
             'tax_class_key' => 'MultipleRulesProductClass',
-            'tax_included' => false,
+            'is_tax_included' => false,
             'discount_amount' => 5,
         ];
 
@@ -1668,8 +1677,12 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
     public function testMultiRulesRowBased($quoteDetailsData, $expectedTaxDetails)
     {
         $quoteDetailsData = $this->performTaxClassSubstitution($quoteDetailsData);
-
-        $quoteDetails = $this->quoteDetailsBuilder->populateWithArray($quoteDetailsData)->create();
+        $quoteDetails = $this->quoteDetailsFactory->create();
+        $this->dataObjectHelper->populateWithArray(
+            $quoteDetails,
+            $quoteDetailsData,
+            '\Magento\Tax\Api\Data\QuoteDetailsInterface'
+        );
 
         $taxDetails = $this->taxCalculationService->calculateTax($quoteDetails);
 
@@ -1701,8 +1714,12 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
     public function testMultiRulesTotalBased($quoteDetailsData, $expectedTaxDetails)
     {
         $quoteDetailsData = $this->performTaxClassSubstitution($quoteDetailsData);
-
-        $quoteDetails = $this->quoteDetailsBuilder->populateWithArray($quoteDetailsData)->create();
+        $quoteDetails = $this->quoteDetailsFactory->create();
+        $this->dataObjectHelper->populateWithArray(
+            $quoteDetails,
+            $quoteDetailsData,
+            '\Magento\Tax\Api\Data\QuoteDetailsInterface'
+        );
 
         $taxDetails = $this->taxCalculationService->calculateTax($quoteDetails);
 
@@ -1744,8 +1761,12 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
     public function testMultiRulesUnitBased($quoteDetailsData, $expectedTaxDetails)
     {
         $quoteDetailsData = $this->performTaxClassSubstitution($quoteDetailsData);
-
-        $quoteDetails = $this->quoteDetailsBuilder->populateWithArray($quoteDetailsData)->create();
+        $quoteDetails = $this->quoteDetailsFactory->create();
+        $this->dataObjectHelper->populateWithArray(
+            $quoteDetails,
+            $quoteDetailsData,
+            '\Magento\Tax\Api\Data\QuoteDetailsInterface'
+        );
 
         $taxDetails = $this->taxCalculationService->calculateTax($quoteDetails);
 
@@ -1796,8 +1817,8 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
                     && is_string($value)
                 ) {
                     $value = [
-                        TaxClassKeyInterface::KEY_TYPE => TaxClassKeyInterface::TYPE_ID,
-                        TaxClassKeyInterface::KEY_VALUE => $this->taxClassIds[$value],
+                        Key::KEY_TYPE => TaxClassKeyInterface::TYPE_ID,
+                        Key::KEY_VALUE => $this->taxClassIds[$value],
                     ];
                 }
             }
@@ -1930,12 +1951,18 @@ class TaxCalculationTest extends \PHPUnit_Framework_TestCase
      *
      * This utility function is used to simplify expected result verification.
      *
-     * @param AbstractExtensibleModel $object
+     * @param \Magento\Framework\Object $object
      * @return array
      */
-    private function convertObjectToArray(AbstractExtensibleModel $object)
+    private function convertObjectToArray($object)
     {
-        $data = $object->getData();
+        if ($object instanceof \Magento\Framework\Object) {
+            $data = $object->getData();
+        } else if (is_object($object)) {
+            $data = (array)$object;
+        } else {
+            throw new \InvalidArgumentException("Provided argument is not an object.");
+        }
         foreach ($data as $key => $value) {
             if (is_object($value)) {
                 $data[$key] = $this->convertObjectToArray($value);

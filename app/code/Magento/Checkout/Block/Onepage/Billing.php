@@ -11,11 +11,13 @@ use Magento\Customer\Model\Address\Config as AddressConfig;
 /**
  * One page checkout status
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @deprecated
+ * @removeCandidate
  */
 class Billing extends \Magento\Checkout\Block\Onepage\AbstractOnepage
 {
     /**
-     * Sales Qoute Billing Address instance
+     * Sales Quote Billing Address instance
      *
      * @var \Magento\Quote\Model\Quote\Address
      */
@@ -35,7 +37,7 @@ class Billing extends \Magento\Checkout\Block\Onepage\AbstractOnepage
 
     /**
      * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Magento\Core\Helper\Data $coreData
+     * @param \Magento\Directory\Helper\Data $directoryHelper
      * @param \Magento\Framework\App\Cache\Type\Config $configCacheType
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Checkout\Model\Session $resourceSession
@@ -51,7 +53,7 @@ class Billing extends \Magento\Checkout\Block\Onepage\AbstractOnepage
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Core\Helper\Data $coreData,
+        \Magento\Directory\Helper\Data $directoryHelper,
         \Magento\Framework\App\Cache\Type\Config $configCacheType,
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Checkout\Model\Session $resourceSession,
@@ -67,7 +69,7 @@ class Billing extends \Magento\Checkout\Block\Onepage\AbstractOnepage
         $this->_addressFactory = $addressFactory;
         parent::__construct(
             $context,
-            $coreData,
+            $directoryHelper,
             $configCacheType,
             $customerSession,
             $resourceSession,
@@ -138,7 +140,7 @@ class Billing extends \Magento\Checkout\Block\Onepage\AbstractOnepage
      */
     public function getAddress()
     {
-        if (is_null($this->_address)) {
+        if ($this->_address === null) {
             if ($this->isCustomerLoggedIn()) {
                 $this->_address = $this->getQuote()->getBillingAddress();
                 if (!$this->_address->getFirstname()) {

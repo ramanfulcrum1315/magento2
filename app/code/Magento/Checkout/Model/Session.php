@@ -7,6 +7,7 @@ namespace Magento\Checkout\Model;
 
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\QuoteIdMaskFactory;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -72,7 +73,7 @@ class Session extends \Magento\Framework\Session\SessionManager
     protected $_eventManager;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -80,6 +81,16 @@ class Session extends \Magento\Framework\Session\SessionManager
      * @var \Magento\Customer\Api\CustomerRepositoryInterface
      */
     protected $customerRepository;
+
+    /**
+     * @param QuoteIdMaskFactory
+     */
+    protected $quoteIdMaskFactory;
+
+    /**
+     * @param bool
+     */
+    protected $isQuoteMasked;
 
     /**
      * @param \Magento\Framework\App\Request\Http $request
@@ -90,13 +101,16 @@ class Session extends \Magento\Framework\Session\SessionManager
      * @param \Magento\Framework\Session\StorageInterface $storage
      * @param \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager
      * @param \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMetadataFactory
+     * @param \Magento\Framework\App\State $appState
      * @param \Magento\Sales\Model\OrderFactory $orderFactory
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Quote\Model\QuoteRepository $quoteRepository
      * @param \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+     * @param QuoteIdMaskFactory $quoteIdMaskFactory
+     * @throws \Magento\Framework\Exception\SessionException
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -108,13 +122,15 @@ class Session extends \Magento\Framework\Session\SessionManager
         \Magento\Framework\Session\StorageInterface $storage,
         \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager,
         \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMetadataFactory,
+        \Magento\Framework\App\State $appState,
         \Magento\Sales\Model\OrderFactory $orderFactory,
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Quote\Model\QuoteRepository $quoteRepository,
         \Magento\Framework\HTTP\PhpEnvironment\RemoteAddress $remoteAddress,
         \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
+        QuoteIdMaskFactory $quoteIdMaskFactory
     ) {
         $this->_orderFactory = $orderFactory;
         $this->_customerSession = $customerSession;
@@ -123,6 +139,7 @@ class Session extends \Magento\Framework\Session\SessionManager
         $this->_eventManager = $eventManager;
         $this->_storeManager = $storeManager;
         $this->customerRepository = $customerRepository;
+        $this->quoteIdMaskFactory = $quoteIdMaskFactory;
         parent::__construct(
             $request,
             $sidResolver,
@@ -131,9 +148,9 @@ class Session extends \Magento\Framework\Session\SessionManager
             $validator,
             $storage,
             $cookieManager,
-            $cookieMetadataFactory
+            $cookieMetadataFactory,
+            $appState
         );
-        $this->start();
     }
 
     /**
@@ -226,16 +243,24 @@ class Session extends \Magento\Framework\Session\SessionManager
                 }
             }
 
-            if ($this->getQuoteId()) {
-                if ($this->_customer) {
-                    $quote->setCustomer($this->_customer);
-                } elseif ($this->_customerSession->isLoggedIn()) {
-                    $quote->setCustomer($this->customerRepository->getById($this->_customerSession->getCustomerId()));
-                }
+            if ($this->_customer) {
+                $quote->setCustomer($this->_customer);
+            } elseif ($this->_customerSession->isLoggedIn()) {
+                $quote->setCustomer($this->customerRepository->getById($this->_customerSession->getCustomerId()));
             }
 
             $quote->setStore($this->_storeManager->getStore());
             $this->_quote = $quote;
+        }
+
+        if (!$this->isQuoteMasked() && !$this->_customerSession->isLoggedIn() && $this->getQuoteId()) {
+            $quoteId = $this->getQuoteId();
+            /** @var $quoteIdMask \Magento\Quote\Model\QuoteIdMask */
+            $quoteIdMask = $this->quoteIdMaskFactory->create()->load($quoteId, 'quote_id');
+            if ($quoteIdMask->getMaskedId() === null) {
+                $quoteIdMask->setQuoteId($quoteId)->save();
+            }
+            $this->setIsQuoteMasked(true);
         }
 
         $remoteAddress = $this->_remoteAddress->getRemoteAddress();
@@ -326,7 +351,7 @@ class Session extends \Magento\Framework\Session\SessionManager
     public function setStepData($step, $data, $value = null)
     {
         $steps = $this->getSteps();
-        if (is_null($value)) {
+        if ($value === null) {
             if (is_array($data)) {
                 $steps[$step] = $data;
             }
@@ -351,13 +376,13 @@ class Session extends \Magento\Framework\Session\SessionManager
     public function getStepData($step = null, $data = null)
     {
         $steps = $this->getSteps();
-        if (is_null($step)) {
+        if ($step === null) {
             return $steps;
         }
         if (!isset($steps[$step])) {
             return false;
         }
-        if (is_null($data)) {
+        if ($data === null) {
             return $steps[$step];
         }
         if (!is_string($data) || !isset($steps[$step][$data])) {
@@ -462,5 +487,22 @@ class Session extends \Magento\Framework\Session\SessionManager
             }
         }
         return false;
+    }
+
+    /**
+     * @param $isQuoteMasked bool
+     * @return void
+     */
+    protected function setIsQuoteMasked($isQuoteMasked)
+    {
+        $this->isQuoteMasked = $isQuoteMasked;
+    }
+
+    /**
+     * @return bool|null
+     */
+    protected function isQuoteMasked()
+    {
+        return $this->isQuoteMasked;
     }
 }

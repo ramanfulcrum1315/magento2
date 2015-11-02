@@ -13,7 +13,7 @@
             <argument name="defaultReader" xsi:type="object">Magento\Store\Model\Config\Reader\DefaultReader</argument>
         </arguments>
     </type>
-    <type name="Magento\Backend\Model\Config\Structure\Converter">
+    <type name="Magento\Config\Model\Config\Structure\Converter">
         <plugin name="cron_backend_config_structure_converter_plugin" type="Magento\Cron\Model\Backend\Config\Structure\Converter" />
     </type>
     <type name="Magento\Framework\App\Config\Initial\Converter">
@@ -27,6 +27,13 @@
     <type name="Magento\Cron\Model\Observer">
         <arguments>
             <argument name="shell" xsi:type="object">shellBackground</argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="cronCommand" xsi:type="object">Magento\Cron\Console\Command\CronCommand</item>
+            </argument>
         </arguments>
     </type>
 </config>

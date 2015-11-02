@@ -39,7 +39,7 @@ class Compared extends \Magento\Reports\Model\Product\Index\AbstractIndex
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Customer\Model\Visitor $customerVisitor
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Framework\Session\Generic $reportSession
@@ -47,14 +47,14 @@ class Compared extends \Magento\Reports\Model\Product\Index\AbstractIndex
      * @param \Magento\Framework\Stdlib\DateTime $dateTime
      * @param \Magento\Catalog\Helper\Product\Compare $productCompare
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Customer\Model\Visitor $customerVisitor,
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Framework\Session\Generic $reportSession,
@@ -62,7 +62,7 @@ class Compared extends \Magento\Reports\Model\Product\Index\AbstractIndex
         \Magento\Framework\Stdlib\DateTime $dateTime,
         \Magento\Catalog\Helper\Product\Compare $productCompare,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(

@@ -5,6 +5,7 @@
  */
 namespace Magento\Store\Model\Config\Reader;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 
 class Store implements \Magento\Framework\App\Config\Scope\ReaderInterface
@@ -35,7 +36,7 @@ class Store implements \Magento\Framework\App\Config\Scope\ReaderInterface
     protected $_storeFactory;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -45,7 +46,7 @@ class Store implements \Magento\Framework\App\Config\Scope\ReaderInterface
      * @param \Magento\Store\Model\Config\Converter $converter
      * @param \Magento\Store\Model\Resource\Config\Collection\ScopedFactory $collectionFactory
      * @param \Magento\Store\Model\StoreFactory $storeFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      */
     public function __construct(
         \Magento\Framework\App\Config\Initial $initialConfig,
@@ -53,7 +54,7 @@ class Store implements \Magento\Framework\App\Config\Scope\ReaderInterface
         \Magento\Store\Model\Config\Converter $converter,
         \Magento\Store\Model\Resource\Config\Collection\ScopedFactory $collectionFactory,
         \Magento\Store\Model\StoreFactory $storeFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
         $this->_initialConfig = $initialConfig;
         $this->_scopePool = $scopePool;
@@ -66,7 +67,7 @@ class Store implements \Magento\Framework\App\Config\Scope\ReaderInterface
     /**
      * Read configuration by code
      *
-     * @param string $code
+     * @param null|string $code
      * @return array
      * @throws NoSuchEntityException
      */
@@ -74,7 +75,7 @@ class Store implements \Magento\Framework\App\Config\Scope\ReaderInterface
     {
         if (empty($code)) {
             $store = $this->_storeManager->getStore();
-        } elseif (($code == \Magento\Framework\App\ScopeInterface::SCOPE_DEFAULT)) {
+        } elseif (($code == ScopeConfigInterface::SCOPE_TYPE_DEFAULT)) {
             $store = $this->_storeManager->getDefaultStoreView();
         } else {
             $store = $this->_storeFactory->create();
@@ -85,13 +86,13 @@ class Store implements \Magento\Framework\App\Config\Scope\ReaderInterface
             throw NoSuchEntityException::singleField('storeCode', $code);
         }
         $websiteConfig = $this->_scopePool->getScope(
-            \Magento\Framework\Store\ScopeInterface::SCOPE_WEBSITE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE,
             $store->getWebsite()->getCode()
         )->getSource();
         $config = array_replace_recursive($websiteConfig, $this->_initialConfig->getData("stores|{$code}"));
 
         $collection = $this->_collectionFactory->create(
-            ['scope' => \Magento\Framework\Store\ScopeInterface::SCOPE_STORES, 'scopeId' => $store->getId()]
+            ['scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORES, 'scopeId' => $store->getId()]
         );
         $dbStoreConfig = [];
         foreach ($collection as $item) {

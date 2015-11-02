@@ -8,16 +8,12 @@ namespace Magento\Weee\Test\TestCase;
 
 use Magento\Catalog\Test\Fixture\CatalogAttributeSet;
 use Magento\Catalog\Test\Fixture\CatalogProductSimple;
-use Magento\Customer\Test\Fixture\CustomerInjectable;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Mtf\Fixture\FixtureFactory;
 use Magento\Mtf\ObjectManager;
 use Magento\Mtf\TestCase\Injectable;
 
 /**
- * Test CreateTaxWithFptTest.
- *
- * Test Flow:
- *
  * Preconditions:
  * 1. Create customer
  * 2. Log in as default admin user.
@@ -68,16 +64,13 @@ class CreateTaxWithFptTest extends Injectable
      * @param FixtureFactory $fixtureFactory
      * @return array
      */
-    public function __prepare(
-        FixtureFactory $fixtureFactory
-    ) {
+    public function __prepare(FixtureFactory $fixtureFactory)
+    {
         $this->fixtureFactory = $fixtureFactory;
-        $customer = $fixtureFactory->createByCode('customerInjectable', ['dataSet' => 'johndoe_with_addresses']);
+        $customer = $fixtureFactory->createByCode('customer', ['dataset' => 'johndoe_with_addresses']);
         $customer->persist();
-        $taxRule = $fixtureFactory->createByCode('taxRule', ['dataSet' => 'tax_rule_default']);
-        $taxRule->persist();
         $productTemplate = $this->fixtureFactory
-            ->createByCode('catalogAttributeSet', ['dataSet' => 'custom_attribute_set_with_fpt']);
+            ->createByCode('catalogAttributeSet', ['dataset' => 'custom_attribute_set_with_fpt']);
         $productTemplate->persist();
         return [
             'customer' => $customer,
@@ -88,10 +81,10 @@ class CreateTaxWithFptTest extends Injectable
     /**
      * Login customer.
      *
-     * @param CustomerInjectable $customer
+     * @param Customer $customer
      * @return void
      */
-    protected function loginCustomer(CustomerInjectable $customer)
+    protected function loginCustomer(Customer $customer)
     {
         $this->objectManager->create(
             'Magento\Customer\Test\TestStep\LoginCustomerOnFrontendStep',
@@ -103,7 +96,7 @@ class CreateTaxWithFptTest extends Injectable
      * Test product prices with tax.
      *
      * @param string $configData
-     * @param CustomerInjectable $customer
+     * @param Customer $customer
      * @param CatalogAttributeSet $productTemplate
      * @param array $productData
      * @return array
@@ -111,19 +104,21 @@ class CreateTaxWithFptTest extends Injectable
     public function test(
         $productData,
         $configData,
-        CustomerInjectable $customer,
+        Customer $customer,
         CatalogAttributeSet $productTemplate
     ) {
+        $this->fixtureFactory->createByCode('taxRule', ['dataset' => 'tax_rule_default'])->persist();
         $product = $this->fixtureFactory->createByCode(
             'catalogProductSimple',
-            ['dataSet' => $productData, 'data' => ['attribute_set_id' => ['attribute_set' => $productTemplate]]]
+            ['dataset' => $productData, 'data' => ['attribute_set_id' => ['attribute_set' => $productTemplate]]]
         );
         $product->persist();
         $this->objectManager->create(
-            'Magento\Core\Test\TestStep\SetupConfigurationStep',
+            'Magento\Config\Test\TestStep\SetupConfigurationStep',
             ['configData' => $configData]
         )->run();
         $this->loginCustomer($customer);
+
         return ['product' => $product];
     }
 
@@ -136,7 +131,7 @@ class CreateTaxWithFptTest extends Injectable
     {
         $this->objectManager->create('\Magento\Tax\Test\TestStep\DeleteAllTaxRulesStep')->run();
         $this->objectManager->create(
-            'Magento\Core\Test\TestStep\SetupConfigurationStep',
+            'Magento\Config\Test\TestStep\SetupConfigurationStep',
             ['configData' => 'default_tax_configuration,shipping_tax_class_taxable_goods_rollback']
         )->run();
     }

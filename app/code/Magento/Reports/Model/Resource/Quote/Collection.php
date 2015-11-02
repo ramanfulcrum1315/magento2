@@ -3,84 +3,45 @@
  * Copyright © 2015 Magento. All rights reserved.
  * See COPYING.txt for license details.
  */
-
-// @codingStandardsIgnoreFile
-
-/**
- * Reports quote collection
- *
- * @author      Magento Core Team <core@magentocommerce.com>
- */
 namespace Magento\Reports\Model\Resource\Quote;
 
 class Collection extends \Magento\Quote\Model\Resource\Quote\Collection
 {
-    const SELECT_COUNT_SQL_TYPE_CART = 1;
-
-    /**
-     * @var int
-     */
-    protected $_selectCountSqlType = 0;
-
-    /**
-     * Join fields
-     *
-     * @var array
-     */
-    protected $_joinedFields = [];
-
-    /**
-     * Map
-     *
-     * @var array
-     */
-    protected $_map = ['fields' => ['store_id' => 'main_table.store_id']];
-
-    /**
-     * @var \Magento\Catalog\Model\Resource\Product\Collection
-     */
-    protected $_productResource;
-
     /**
      * @var \Magento\Customer\Model\Resource\Customer
      */
-    protected $_customerResource;
+    protected $customerResource;
 
     /**
-     * @param \Magento\Framework\Data\Collection\EntityFactory $entityFactory
+     * @param \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
-     * @param \Magento\Catalog\Model\Resource\Product\Collection $productResource
+     * @param \Magento\Framework\Model\Resource\Db\VersionControl\Snapshot $entitySnapshot
      * @param \Magento\Customer\Model\Resource\Customer $customerResource
-     * @param null $connection
+     * @param \Zend_Db_Adapter_Abstract $connection
      * @param \Magento\Framework\Model\Resource\Db\AbstractDb $resource
      */
     public function __construct(
-        \Magento\Framework\Data\Collection\EntityFactory $entityFactory,
+        \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy,
         \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Magento\Catalog\Model\Resource\Product\Collection $productResource,
+        \Magento\Framework\Model\Resource\Db\VersionControl\Snapshot $entitySnapshot,
         \Magento\Customer\Model\Resource\Customer $customerResource,
         $connection = null,
         \Magento\Framework\Model\Resource\Db\AbstractDb $resource = null
     ) {
-        parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
-        $this->_productResource = $productResource;
-        $this->_customerResource = $customerResource;
-    }
-
-    /**
-     * Set type for COUNT SQL select
-     *
-     * @param int $type
-     * @return $this
-     */
-    public function setSelectCountSqlType($type)
-    {
-        $this->_selectCountSqlType = $type;
-        return $this;
+        parent::__construct(
+            $entityFactory,
+            $logger,
+            $fetchStrategy,
+            $eventManager,
+            $entitySnapshot,
+            $connection,
+            $resource
+        );
+        $this->customerResource = $customerResource;
     }
 
     /**
@@ -98,14 +59,18 @@ class Collection extends \Magento\Quote\Model\Resource\Quote\Collection
         )->addFieldToFilter(
             'main_table.is_active',
             '1'
+        )->addFieldToFilter(
+            'main_table.customer_id',
+            ['neq' => null]
         )->addSubtotal(
             $storeIds,
-            $filter
-        )->addCustomerData(
             $filter
         )->setOrder(
             'updated_at'
         );
+        if (isset($filter['email']) || isset($filter['customer_name'])) {
+            $this->addCustomerData($filter);
+        }
         if (is_array($storeIds) && !empty($storeIds)) {
             $this->addFieldToFilter('store_id', ['in' => $storeIds]);
         }
@@ -114,141 +79,28 @@ class Collection extends \Magento\Quote\Model\Resource\Quote\Collection
     }
 
     /**
-     * Prepare select query for products in carts report
-     *
-     * @return $this
-     */
-    public function prepareForProductsInCarts()
-    {
-        $productAttrName = $this->_productResource->getAttribute('name');
-        $productAttrNameId = (int)$productAttrName->getAttributeId();
-        $productAttrNameTable = $productAttrName->getBackend()->getTable();
-        $productAttrPrice = $this->_productResource->getAttribute('price');
-        $productAttrPriceId = (int)$productAttrPrice->getAttributeId();
-        $productAttrPriceTable = $productAttrPrice->getBackend()->getTable();
-
-        $ordersSubSelect = clone $this->getSelect();
-        $ordersSubSelect->reset()->from(
-            ['oi' => $this->getTable('sales_order_item')],
-            ['orders' => new \Zend_Db_Expr('COUNT(1)'), 'product_id']
-        )->group(
-            'oi.product_id'
-        );
-
-        $this->getSelect()->useStraightJoin(
-            true
-        )->reset(
-            \Zend_Db_Select::COLUMNS
-        )->joinInner(
-            ['quote_items' => $this->getTable('quote_item')],
-            'quote_items.quote_id = main_table.entity_id',
-            null
-        )->joinInner(
-            ['e' => $this->getTable('catalog_product_entity')],
-            'e.entity_id = quote_items.product_id',
-            null
-        )->joinInner(
-            ['product_name' => $productAttrNameTable],
-            "product_name.entity_id = e.entity_id\n                AND product_name.attribute_id = {$productAttrNameId}\n                AND product_name.store_id = " .
-            \Magento\Store\Model\Store::DEFAULT_STORE_ID,
-            ['name' => 'product_name.value']
-        )->joinInner(
-            ['product_price' => $productAttrPriceTable],
-            "product_price.entity_id = e.entity_id AND product_price.attribute_id = {$productAttrPriceId}",
-            ['price' => new \Zend_Db_Expr('product_price.value * main_table.base_to_global_rate')]
-        )->joinLeft(
-            ['order_items' => new \Zend_Db_Expr(sprintf('(%s)', $ordersSubSelect))],
-            'order_items.product_id = e.entity_id',
-            []
-        )->columns(
-            'e.*'
-        )->columns(
-            ['carts' => new \Zend_Db_Expr('COUNT(quote_items.item_id)')]
-        )->columns(
-            'order_items.orders'
-        )->where(
-            'main_table.is_active = ?',
-            1
-        )->group(
-            'quote_items.product_id'
-        );
-
-        return $this;
-    }
-
-    /**
-     * Add store ids to filter
-     *
-     * @param array $storeIds
-     * @return $this
-     */
-    public function addStoreFilter($storeIds)
-    {
-        $this->addFieldToFilter('store_id', ['in' => $storeIds]);
-        return $this;
-    }
-
-    /**
      * Add customer data
      *
-     * @param unknown_type $filter
+     * @param array|null $filter
      * @return $this
      */
     public function addCustomerData($filter = null)
     {
-        $attrFirstname = $this->_customerResource->getAttribute('firstname');
-        $attrFirstnameId = (int)$attrFirstname->getAttributeId();
-        $attrFirstnameTableName = $attrFirstname->getBackend()->getTable();
-
-        $attrLastname = $this->_customerResource->getAttribute('lastname');
-        $attrLastnameId = (int)$attrLastname->getAttributeId();
-        $attrLastnameTableName = $attrLastname->getBackend()->getTable();
-
-        $attrEmail = $this->_customerResource->getAttribute('email');
-        $attrEmailTableName = $attrEmail->getBackend()->getTable();
-
-        $adapter = $this->getSelect()->getAdapter();
-        $customerName = $adapter->getConcatSql(['cust_fname.value', 'cust_lname.value'], ' ');
-        $this->getSelect()->joinInner(
-            ['cust_email' => $attrEmailTableName],
-            'cust_email.entity_id = main_table.customer_id',
-            ['email' => 'cust_email.email']
-        )->joinInner(
-            ['cust_fname' => $attrFirstnameTableName],
-            implode(
-                ' AND ',
-                [
-                    'cust_fname.entity_id = main_table.customer_id',
-                    $adapter->quoteInto('cust_fname.attribute_id = ?', (int)$attrFirstnameId)
-                ]
-            ),
-            ['firstname' => 'cust_fname.value']
-        )->joinInner(
-            ['cust_lname' => $attrLastnameTableName],
-            implode(
-                ' AND ',
-                [
-                    'cust_lname.entity_id = main_table.customer_id',
-                    $adapter->quoteInto('cust_lname.attribute_id = ?', (int)$attrLastnameId)
-                ]
-            ),
-            ['lastname' => 'cust_lname.value', 'customer_name' => $customerName]
+        $customersSelect = $this->customerResource->getReadConnection()->select();
+        $customersSelect->from(
+            ['customer' => $this->customerResource->getTable('customer_entity')],
+            'entity_id'
         );
-
-        $this->_joinedFields['customer_name'] = $customerName;
-        $this->_joinedFields['email'] = 'cust_email.email';
-
-        if ($filter) {
-            if (isset($filter['customer_name'])) {
-                $likeExpr = '%' . $filter['customer_name'] . '%';
-                $this->getSelect()->where($this->_joinedFields['customer_name'] . ' LIKE ?', $likeExpr);
-            }
-            if (isset($filter['email'])) {
-                $likeExpr = '%' . $filter['email'] . '%';
-                $this->getSelect()->where($this->_joinedFields['email'] . ' LIKE ?', $likeExpr);
-            }
+        if (isset($filter['customer_name'])) {
+            $customerName = $customersSelect->getAdapter()
+                ->getConcatSql(['customer.firstname', 'customer.lastname'], ' ');
+            $customersSelect->where($customerName . ' LIKE ?', '%' . $filter['customer_name'] . '%');
         }
-
+        if (isset($filter['email'])) {
+            $customersSelect->where('customer.email LIKE ?', '%' . $filter['email'] . '%');
+        }
+        $filteredCustomers = $this->customerResource->getReadConnection()->fetchCol($customersSelect);
+        $this->getSelect()->where('main_table.customer_id IN (?)', $filteredCustomers);
         return $this;
     }
 
@@ -265,7 +117,8 @@ class Collection extends \Magento\Quote\Model\Resource\Quote\Collection
             $this->getSelect()->columns(
                 ['subtotal' => '(main_table.base_subtotal_with_discount*main_table.base_to_global_rate)']
             );
-            $this->_joinedFields['subtotal'] = '(main_table.base_subtotal_with_discount*main_table.base_to_global_rate)';
+            $this->_joinedFields['subtotal'] =
+                '(main_table.base_subtotal_with_discount*main_table.base_to_global_rate)';
         } else {
             $this->getSelect()->columns(['subtotal' => 'main_table.base_subtotal_with_discount']);
             $this->_joinedFields['subtotal'] = 'main_table.base_subtotal_with_discount';
@@ -292,26 +145,32 @@ class Collection extends \Magento\Quote\Model\Resource\Quote\Collection
     }
 
     /**
-     * Get select count sql
+     * Resolve customers data based on ids quote table.
      *
-     * @return string
+     * @return void
      */
-    public function getSelectCountSql()
+    public function resolveCustomerNames()
     {
-        $countSelect = clone $this->getSelect();
-        $countSelect->reset(\Zend_Db_Select::ORDER);
-        $countSelect->reset(\Zend_Db_Select::LIMIT_COUNT);
-        $countSelect->reset(\Zend_Db_Select::LIMIT_OFFSET);
-        $countSelect->reset(\Zend_Db_Select::COLUMNS);
-        $countSelect->reset(\Zend_Db_Select::GROUP);
-        $countSelect->resetJoinLeft();
+        $select = $this->customerResource->getReadConnection()->select();
+        $customerName = $select->getAdapter()->getConcatSql(['firstname', 'lastname'], ' ');
 
-        if ($this->_selectCountSqlType == self::SELECT_COUNT_SQL_TYPE_CART) {
-            $countSelect->columns("COUNT(DISTINCT e.entity_id)");
-        } else {
-            $countSelect->columns("COUNT(DISTINCT main_table.entity_id)");
+        $select->from(
+            ['customer' => $this->customerResource->getTable('customer_entity')],
+            ['email']
+        )->columns(
+            ['customer_name' => $customerName]
+        )->where(
+            'customer.entity_id IN (?)',
+            array_column(
+                $this->getData(),
+                'customer_id'
+            )
+        );
+        $customersData = $select->getAdapter()->fetchAll($select);
+
+        foreach ($this->getItems() as $item) {
+            $item->setData(array_merge($item->getData(), current($customersData)));
+            next($customersData);
         }
-
-        return $countSelect;
     }
 }

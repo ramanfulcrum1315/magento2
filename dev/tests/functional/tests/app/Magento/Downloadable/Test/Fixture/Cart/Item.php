@@ -6,12 +6,11 @@
 
 namespace Magento\Downloadable\Test\Fixture\Cart;
 
-use Magento\Downloadable\Test\Fixture\DownloadableProductInjectable;
+use Magento\Downloadable\Test\Fixture\DownloadableProduct;
 use Magento\Mtf\Fixture\FixtureInterface;
 
 /**
- * Class Item
- * Data for verify cart item block on checkout page
+ * Data for verify cart item block on checkout page.
  *
  * Data keys:
  *  - product (fixture data for verify)
@@ -26,14 +25,14 @@ class Item extends \Magento\Catalog\Test\Fixture\Cart\Item
     {
         parent::__construct($product);
 
-        /** @var DownloadableProductInjectable $product */
+        /** @var DownloadableProduct $product */
         $checkoutDownloadableOptions = [];
         $checkoutData = $product->getCheckoutData();
         $downloadableOptions = $product->getDownloadableLinks();
         foreach ($checkoutData['options']['links'] as $link) {
             $keyLink = str_replace('link_', '', $link['label']);
             $checkoutDownloadableOptions[] = [
-                'title' => 'Links',
+                'title' => $downloadableOptions['title'],
                 'value' => $downloadableOptions['downloadable']['link'][$keyLink]['title'],
             ];
         }

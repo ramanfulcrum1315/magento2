@@ -10,7 +10,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 /**
  * @magentoAppArea adminhtml
  */
-class TaxTest extends \Magento\Backend\Utility\Controller
+class TaxTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     /**
      * @dataProvider ajaxActionDataProvider
@@ -21,13 +21,13 @@ class TaxTest extends \Magento\Backend\Utility\Controller
      */
     public function testAjaxSaveAction($postData, $expectedData)
     {
-        $this->getRequest()->setPost($postData);
+        $this->getRequest()->setPostValue($postData);
 
         $this->dispatch('backend/tax/tax/ajaxSave');
 
         $jsonBody = $this->getResponse()->getBody();
         $result = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
-            'Magento\Core\Helper\Data'
+            'Magento\Framework\Json\Helper\Data'
         )->jsonDecode(
             $jsonBody
         );
@@ -54,13 +54,12 @@ class TaxTest extends \Magento\Backend\Utility\Controller
             'Magento\Tax\Api\TaxClassRepositoryInterface'
         );
 
-        $taxClassBuilder = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
-            'Magento\Tax\Api\Data\TaxClassDataBuilder'
+        $taxClassFactory = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
+            'Magento\Tax\Api\Data\TaxClassInterfaceFactory'
         );
-
-        $taxClass = $taxClassBuilder->setClassName($taxClassData['class_name'])
-            ->setClassType($taxClassData['class_type'])
-            ->create();
+        $taxClass = $taxClassFactory->create();
+        $taxClass->setClassName($taxClassData['class_name'])
+            ->setClassType($taxClassData['class_type']);
 
         $taxClassId = $taxClassService->save($taxClass);
 
@@ -71,7 +70,7 @@ class TaxTest extends \Magento\Backend\Utility\Controller
         $this->assertEquals($taxClassData['class_type'], $class->getClassType());
 
         $postData = [ 'class_id' => $taxClassId ];
-        $this->getRequest()->setPost($postData);
+        $this->getRequest()->setPostValue($postData);
         $this->dispatch('backend/tax/tax/ajaxDelete');
 
         $isFound = true;
@@ -95,11 +94,11 @@ class TaxTest extends \Magento\Backend\Utility\Controller
             ],
             [
                 ['class_type' => 'PRODUCT', 'class_name' => '11111<22222'],
-                ['class_name' => '11111&lt;22222']
+                ['class_name' => '11111<22222']
             ],
             [
                 ['class_type' => 'CUSTOMER', 'class_name' => '   12<>sa&df    '],
-                ['class_name' => '12&lt;&gt;sa&amp;df']
+                ['class_name' => '12<>sa&df']
             ]
         ];
     }

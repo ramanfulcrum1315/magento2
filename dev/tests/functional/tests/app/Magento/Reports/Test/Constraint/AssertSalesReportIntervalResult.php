@@ -15,10 +15,6 @@ use Magento\Sales\Test\Fixture\OrderInjectable;
  */
 class AssertSalesReportIntervalResult extends AbstractAssertSalesReportResult
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Assert that sales info in report grid is actual
      *
@@ -37,13 +33,29 @@ class AssertSalesReportIntervalResult extends AbstractAssertSalesReportResult
         $this->salesReportPage = $salesReportPage;
         $this->order = $order;
         $this->searchInSalesReportGrid($salesReport);
-        $salesResult = $salesReportPage->getGridBlock()->getLastResult();
-        $prepareInitialResult = $this->prepareExpectedResult($initialSalesResult);
+        $salesResult = $this->prepareSalesResult($salesReportPage->getGridBlock()->getLastResult());
+        $prepareInitialResult = $this->prepareSalesResult($this->prepareExpectedResult($initialSalesResult));
         \PHPUnit_Framework_Assert::assertEquals(
             $prepareInitialResult,
             $salesResult,
             "Grand total Sales result is not correct."
         );
+    }
+
+    /**
+     * Prepare sales result.
+     *
+     * @param array $salesResult
+     * @return array
+     */
+    protected function prepareSalesResult($salesResult)
+    {
+        $data = [];
+        foreach ($salesResult as $key => $result) {
+            $data[$key] = floatval($result);
+        }
+
+        return $data;
     }
 
     /**

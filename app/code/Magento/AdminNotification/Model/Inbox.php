@@ -7,6 +7,7 @@ namespace Magento\AdminNotification\Model;
 
 use Magento\Framework\Notification\MessageInterface;
 use Magento\Framework\Notification\NotifierInterface;
+use Magento\AdminNotification\Model\InboxInterface;
 
 /**
  * AdminNotification Inbox model
@@ -30,7 +31,7 @@ use Magento\Framework\Notification\NotifierInterface;
  *
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Inbox extends \Magento\Framework\Model\AbstractModel implements NotifierInterface
+class Inbox extends \Magento\Framework\Model\AbstractModel implements NotifierInterface, InboxInterface
 {
     /**
      * @return void
@@ -41,10 +42,7 @@ class Inbox extends \Magento\Framework\Model\AbstractModel implements NotifierIn
     }
 
     /**
-     * Retrieve Severity collection array
-     *
-     * @param int|null $severity
-     * @return array|string|null
+     * {@inheritdoc}
      */
     public function getSeverities($severity = null)
     {
@@ -55,7 +53,7 @@ class Inbox extends \Magento\Framework\Model\AbstractModel implements NotifierIn
             MessageInterface::SEVERITY_NOTICE => __('notice'),
         ];
 
-        if (!is_null($severity)) {
+        if ($severity !== null) {
             if (isset($severities[$severity])) {
                 return $severities[$severity];
             }
@@ -66,9 +64,7 @@ class Inbox extends \Magento\Framework\Model\AbstractModel implements NotifierIn
     }
 
     /**
-     * Retrieve Latest Notice
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function loadLatestNotice()
     {
@@ -78,9 +74,7 @@ class Inbox extends \Magento\Framework\Model\AbstractModel implements NotifierIn
     }
 
     /**
-     * Retrieve notice statuses
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getNoticeStatus()
     {
@@ -107,13 +101,13 @@ class Inbox extends \Magento\Framework\Model\AbstractModel implements NotifierIn
      * @param string|string[] $description
      * @param string $url
      * @param bool $isInternal
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return $this
      */
     public function add($severity, $title, $description, $url = '', $isInternal = true)
     {
         if (!$this->getSeverities($severity)) {
-            throw new \Magento\Framework\Model\Exception(__('Wrong message type'));
+            throw new \Magento\Framework\Exception\LocalizedException(__('Wrong message type'));
         }
         if (is_array($description)) {
             $description = '<ul><li>' . implode('</li><li>', $description) . '</li></ul>';

@@ -6,7 +6,7 @@
  */
 namespace Magento\Rss\Controller\Index;
 
-use Magento\Framework\App\Action\NotFoundException;
+use Magento\Framework\Exception\NotFoundException;
 
 class Index extends \Magento\Rss\Controller\Index
 {
@@ -18,11 +18,11 @@ class Index extends \Magento\Rss\Controller\Index
      */
     public function execute()
     {
-        if ($this->_scopeConfig->getValue('rss/config/active', \Magento\Framework\Store\ScopeInterface::SCOPE_STORE)) {
+        if ($this->_scopeConfig->getValue('rss/config/active', \Magento\Store\Model\ScopeInterface::SCOPE_STORE)) {
             $this->_view->loadLayout();
             $this->_view->renderLayout();
         } else {
-            throw new NotFoundException();
+            throw new NotFoundException(__('Page not found.'));
         }
     }
 }

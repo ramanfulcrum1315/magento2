@@ -5,8 +5,14 @@
  */
 namespace Magento\Framework\View\Layout\Generator;
 
+use Magento\Framework\App\State;
+use Magento\Framework\ObjectManager\Config\Reader\Dom;
 use Magento\Framework\View\Layout;
 
+/**
+ * Class Block
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 class Block implements Layout\GeneratorInterface
 {
     /**
@@ -35,23 +41,53 @@ class Block implements Layout\GeneratorInterface
     protected $logger;
 
     /**
-     * Constructor
-     *
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    protected $scopeConfig;
+
+    /**
+     * @var \Magento\Framework\App\ScopeResolverInterface
+     */
+    protected $scopeResolver;
+
+    /**
+     * @var State
+     */
+    protected $appState;
+
+    /**
+     * @var \Magento\Framework\View\Element\ExceptionHandlerBlock
+     */
+    protected $exceptionHandlerBlockFactory;
+
+    /**
      * @param \Magento\Framework\View\Element\BlockFactory $blockFactory
      * @param \Magento\Framework\Data\Argument\InterpreterInterface $argumentInterpreter
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
      * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Framework\App\ScopeResolverInterface $scopeResolver
+     * @param \Magento\Framework\View\Element\ExceptionHandlerBlockFactory $exceptionHandlerBlockFactory
+     * @param State $appState
      */
     public function __construct(
         \Magento\Framework\View\Element\BlockFactory $blockFactory,
         \Magento\Framework\Data\Argument\InterpreterInterface $argumentInterpreter,
         \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Psr\Log\LoggerInterface $logger
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Framework\App\ScopeResolverInterface $scopeResolver,
+        \Magento\Framework\View\Element\ExceptionHandlerBlockFactory $exceptionHandlerBlockFactory,
+        State $appState
     ) {
         $this->blockFactory = $blockFactory;
         $this->argumentInterpreter = $argumentInterpreter;
         $this->eventManager = $eventManager;
         $this->logger = $logger;
+        $this->scopeConfig = $scopeConfig;
+        $this->scopeResolver = $scopeResolver;
+        $this->exceptionHandlerBlockFactory = $exceptionHandlerBlockFactory;
+        $this->appState = $appState;
     }
 
     /**
@@ -70,6 +106,7 @@ class Block implements Layout\GeneratorInterface
      * @param Layout\Reader\Context $readerContext
      * @param Context $generatorContext
      * @return $this
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function process(Layout\Reader\Context $readerContext, Layout\Generator\Context $generatorContext)
     {
@@ -83,28 +120,70 @@ class Block implements Layout\GeneratorInterface
         foreach ($scheduledStructure->getElements() as $elementName => $element) {
             list($type, $data) = $element;
             if ($type === self::TYPE) {
-                $block = $this->generateBlock($scheduledStructure, $structure, $elementName);
-                $blocks[$elementName] = $block;
-                $layout->setBlock($elementName, $block);
-                if (!empty($data['actions'])) {
-                    $blockActions[$elementName] = $data['actions'];
+                try {
+                    $block = $this->generateBlock($scheduledStructure, $structure, $elementName);
+                    $blocks[$elementName] = $block;
+                    $layout->setBlock($elementName, $block);
+                    if (!empty($data['actions'])) {
+                        $blockActions[$elementName] = $data['actions'];
+                    }
+                } catch (\Exception $e) {
+                    $this->handleRenderException($e);
+                    unset($blocks[$elementName]);
                 }
             }
         }
         // Set layout instance to all generated block (trigger _prepareLayout method)
         foreach ($blocks as $elementName => $block) {
-            $block->setLayout($layout);
-            $this->eventManager->dispatch('core_layout_block_create_after', ['block' => $block]);
+            try {
+                $block->setLayout($layout);
+                $this->eventManager->dispatch('core_layout_block_create_after', ['block' => $block]);
+            } catch (\Exception $e) {
+                $this->handleRenderException($e);
+                $layout->setBlock(
+                    $elementName,
+                    $this->exceptionHandlerBlockFactory->create(['blockName' => $elementName])
+                );
+                unset($blockActions[$elementName]);
+            }
             $scheduledStructure->unsetElement($elementName);
         }
         // Run all actions after layout initialization
         foreach ($blockActions as $elementName => $actions) {
-            foreach ($actions as $action) {
-                list($methodName, $actionArguments) = $action;
-                $this->generateAction($blocks[$elementName], $methodName, $actionArguments);
+            try {
+                foreach ($actions as $action) {
+                    list($methodName, $actionArguments, $configPath, $scopeType) = $action;
+                    if (empty($configPath)
+                        || $this->scopeConfig->isSetFlag($configPath, $scopeType, $this->scopeResolver->getScope())
+                    ) {
+                        $this->generateAction($blocks[$elementName], $methodName, $actionArguments);
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->handleRenderException($e);
+                $layout->setBlock(
+                    $elementName,
+                    $this->exceptionHandlerBlockFactory->create(['blockName' => $elementName])
+                );
             }
         }
         return $this;
+    }
+
+    /**
+     * Handle exceptions during rendering process
+     *
+     * @param \Exception $cause
+     * @throws \Exception
+     * @return void
+     */
+    protected function handleRenderException(\Exception $cause)
+    {
+        if ($this->appState->getMode() === State::MODE_DEVELOPER) {
+            throw $cause;
+        }
+        $message = ($cause instanceof LocalizedException) ? $cause->getLogMessage() : $cause->getMessage();
+        $this->logger->critical($message);
     }
 
     /**
@@ -164,7 +243,7 @@ class Block implements Layout\GeneratorInterface
      *
      * @param string|\Magento\Framework\View\Element\AbstractBlock $block
      * @param array $arguments
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return \Magento\Framework\View\Element\AbstractBlock
      */
     protected function getBlockInstance($block, array $arguments = [])
@@ -177,7 +256,9 @@ class Block implements Layout\GeneratorInterface
             }
         }
         if (!$block instanceof \Magento\Framework\View\Element\AbstractBlock) {
-            throw new \Magento\Framework\Model\Exception(__('Invalid block type: %1', $block));
+            throw new \Magento\Framework\Exception\LocalizedException(
+                new \Magento\Framework\Phrase('Invalid block type: %1', [$block])
+            );
         }
         return $block;
     }
@@ -209,6 +290,10 @@ class Block implements Layout\GeneratorInterface
     {
         $result = [];
         foreach ($arguments as $argumentName => $argumentData) {
+            if (!isset($argumentData[Dom::TYPE_ATTRIBUTE])) {
+                $result[$argumentName] = $argumentData;
+                continue;
+            }
             $result[$argumentName] = $this->argumentInterpreter->evaluate($argumentData);
         }
         return $result;

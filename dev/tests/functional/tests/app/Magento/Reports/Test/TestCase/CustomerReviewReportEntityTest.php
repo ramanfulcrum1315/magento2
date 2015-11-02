@@ -10,8 +10,7 @@ use Magento\Catalog\Test\Fixture\CatalogProductSimple;
 use Magento\Catalog\Test\Page\Category\CatalogCategoryView;
 use Magento\Catalog\Test\Page\Product\CatalogProductView;
 use Magento\Cms\Test\Page\CmsIndex;
-use Magento\Customer\Test\Fixture\CustomerInjectable;
-use Magento\Customer\Test\Page\CustomerAccountLogin;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Customer\Test\Page\CustomerAccountLogout;
 use Magento\Reports\Test\Page\Adminhtml\ProductReportReview;
 use Magento\Review\Test\Fixture\Review;
@@ -20,8 +19,6 @@ use Magento\Mtf\Fixture\FixtureFactory;
 use Magento\Mtf\TestCase\Injectable;
 
 /**
- * Test Creation for CustomerReviewReportEntity
- *
  * Preconditions:
  * 1. Create customer
  * 2. Create simple product
@@ -30,7 +27,7 @@ use Magento\Mtf\TestCase\Injectable;
  * 5. Fill data according to DataSet
  * 6. Click Submit review
  *
- * Test Flow:
+ * Steps:
  * 1. Open Reports -> Review : By Customers
  * 2. Assert Reviews qty
  * 3. Click Show Reviews
@@ -38,6 +35,8 @@ use Magento\Mtf\TestCase\Injectable;
  *
  * @group Reports_(MX)
  * @ZephyrId MAGETWO-27555
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class CustomerReviewReportEntityTest extends Injectable
 {
@@ -82,13 +81,6 @@ class CustomerReviewReportEntityTest extends Injectable
     protected $catalogCategoryView;
 
     /**
-     * Customer frontend login page
-     *
-     * @var CustomerAccountLogin
-     */
-    protected $customerAccountLogin;
-
-    /**
      * Prepare data
      *
      * @param FixtureFactory $fixtureFactory
@@ -96,7 +88,7 @@ class CustomerReviewReportEntityTest extends Injectable
      */
     public function __prepare(FixtureFactory $fixtureFactory)
     {
-        $customer = $fixtureFactory->createByCode('customerInjectable', ['dataSet' => 'johndoe_unique']);
+        $customer = $fixtureFactory->createByCode('customer', ['dataset' => 'johndoe_unique']);
         $customer->persist();
 
         return ['customer' => $customer];
@@ -109,7 +101,6 @@ class CustomerReviewReportEntityTest extends Injectable
      * @param CatalogProductView $pageCatalogProductView
      * @param CmsIndex $cmsIndex
      * @param CatalogCategoryView $catalogCategoryView
-     * @param CustomerAccountLogin $customerAccountLogin
      * @param CustomerAccountLogout $customerAccountLogout
      * @return void
      */
@@ -118,14 +109,12 @@ class CustomerReviewReportEntityTest extends Injectable
         CatalogProductView $pageCatalogProductView,
         CmsIndex $cmsIndex,
         CatalogCategoryView $catalogCategoryView,
-        CustomerAccountLogin $customerAccountLogin,
         CustomerAccountLogout $customerAccountLogout
     ) {
         $this->productReportReview = $productReportReview;
         $this->pageCatalogProductView = $pageCatalogProductView;
         $this->cmsIndex = $cmsIndex;
         $this->catalogCategoryView = $catalogCategoryView;
-        $this->customerAccountLogin = $customerAccountLogin;
         $this->customerAccountLogout = $customerAccountLogout;
     }
 
@@ -133,7 +122,7 @@ class CustomerReviewReportEntityTest extends Injectable
      * Test Creation for CustomerReviewReportEntity
      *
      * @param Review $review
-     * @param CustomerInjectable $customer
+     * @param Customer $customer
      * @param $customerLogin
      * @param CatalogProductSimple $product
      * @param BrowserInterface $browser
@@ -143,7 +132,7 @@ class CustomerReviewReportEntityTest extends Injectable
      */
     public function test(
         Review $review,
-        CustomerInjectable $customer,
+        Customer $customer,
         CatalogProductSimple $product,
         BrowserInterface $browser,
         $customerLogin
@@ -152,8 +141,10 @@ class CustomerReviewReportEntityTest extends Injectable
         $product->persist();
         $this->cmsIndex->open();
         if ($customerLogin == 'Yes') {
-            $this->cmsIndex->getLinksBlock()->openLink("Log In");
-            $this->customerAccountLogin->getLoginBlock()->login($customer);
+            $this->objectManager->create(
+                'Magento\Customer\Test\TestStep\LoginCustomerOnFrontendStep',
+                ['customer' => $customer]
+            )->run();
         }
         // Steps
         $browser->open($_ENV['app_frontend_url'] . $product->getUrlKey() . '.html');

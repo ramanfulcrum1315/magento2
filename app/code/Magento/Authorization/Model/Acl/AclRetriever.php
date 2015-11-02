@@ -75,7 +75,9 @@ class AclRetriever
         try {
             $role = $this->_getUserRole($userType, $userId);
             if (!$role) {
-                throw new AuthorizationException('The role associated with the specified user cannot be found.');
+                throw new AuthorizationException(
+                    __('We can\'t find the role for the user you wanted.')
+                );
             }
             $allowedResources = $this->getAllowedResourcesByRole($role->getId());
         } catch (AuthorizationException $e) {
@@ -83,7 +85,10 @@ class AclRetriever
         } catch (\Exception $e) {
             $this->logger->critical($e);
             throw new LocalizedException(
-                'Error happened while getting a list of allowed resources. Check exception log for details.'
+                __(
+                    'Something went wrong while compiling a list of allowed resources. '
+                    . 'You can find out more in the exceptions log.'
+                )
             );
         }
         return $allowedResources;

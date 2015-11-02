@@ -9,9 +9,9 @@ namespace Magento\Bundle\Model\Product;
 class OptionList
 {
     /**
-     * @var \Magento\Bundle\Api\Data\OptionDataBuilder
+     * @var \Magento\Bundle\Api\Data\OptionInterfaceFactory
      */
-    protected $optionBuilder;
+    protected $optionFactory;
 
     /**
      * @var Type
@@ -24,18 +24,34 @@ class OptionList
     protected $linkList;
 
     /**
+     * @var \Magento\Framework\Api\DataObjectHelper
+     */
+    protected $dataObjectHelper;
+
+    /**
+     * @var \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface
+     */
+    protected $extensionAttributesJoinProcessor;
+
+    /**
      * @param Type $type
-     * @param \Magento\Bundle\Api\Data\OptionDataBuilder $optionBuilder
+     * @param \Magento\Bundle\Api\Data\OptionInterfaceFactory $optionFactory
      * @param LinksList $linkList
+     * @param \Magento\Framework\Api\DataObjectHelper $dataObjectHelper
+     * @param \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $extensionAttributesJoinProcessor
      */
     public function __construct(
         \Magento\Bundle\Model\Product\Type $type,
-        \Magento\Bundle\Api\Data\OptionDataBuilder $optionBuilder,
-        \Magento\Bundle\Model\Product\LinksList $linkList
+        \Magento\Bundle\Api\Data\OptionInterfaceFactory $optionFactory,
+        \Magento\Bundle\Model\Product\LinksList $linkList,
+        \Magento\Framework\Api\DataObjectHelper $dataObjectHelper,
+        \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $extensionAttributesJoinProcessor
     ) {
         $this->type = $type;
-        $this->optionBuilder = $optionBuilder;
+        $this->optionFactory = $optionFactory;
         $this->linkList = $linkList;
+        $this->dataObjectHelper = $dataObjectHelper;
+        $this->extensionAttributesJoinProcessor = $extensionAttributesJoinProcessor;
     }
 
     /**
@@ -45,16 +61,23 @@ class OptionList
     public function getItems(\Magento\Catalog\Api\Data\ProductInterface $product)
     {
         $optionCollection = $this->type->getOptionsCollection($product);
+        $this->extensionAttributesJoinProcessor->process($optionCollection);
         $optionList = [];
         /** @var \Magento\Bundle\Model\Option $option */
         foreach ($optionCollection as $option) {
             $productLinks = $this->linkList->getItems($product, $option->getOptionId());
-            $this->optionBuilder->populateWithArray($option->getData())
-                ->setOptionId($option->getOptionId())
-                ->setTitle(is_null($option->getTitle()) ? $option->getDefaultTitle() : $option->getTitle())
+            /** @var \Magento\Bundle\Api\Data\OptionInterface $optionDataObject */
+            $optionDataObject = $this->optionFactory->create();
+            $this->dataObjectHelper->populateWithArray(
+                $optionDataObject,
+                $option->getData(),
+                '\Magento\Bundle\Api\Data\OptionInterface'
+            );
+            $optionDataObject->setOptionId($option->getOptionId())
+                ->setTitle($option->getTitle() === null ? $option->getDefaultTitle() : $option->getTitle())
                 ->setSku($product->getSku())
                 ->setProductLinks($productLinks);
-            $optionList[] = $this->optionBuilder->create();
+            $optionList[] = $optionDataObject;
         }
         return $optionList;
     }

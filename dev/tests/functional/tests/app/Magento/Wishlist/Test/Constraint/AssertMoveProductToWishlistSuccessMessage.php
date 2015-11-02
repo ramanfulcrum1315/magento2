@@ -16,10 +16,6 @@ use Magento\Mtf\Fixture\InjectableFixture;
  */
 class AssertMoveProductToWishlistSuccessMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Success add message
      */
@@ -48,6 +44,6 @@ class AssertMoveProductToWishlistSuccessMessage extends AbstractConstraint
      */
     public function toString()
     {
-        return 'Success message appears on Checkout Cart page after moving product to wishlist.';
+        return 'Success message appears on Checkout Cart page after moving product to Wish List.';
     }
 }

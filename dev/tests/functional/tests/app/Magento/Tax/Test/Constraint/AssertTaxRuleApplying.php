@@ -9,17 +9,14 @@ namespace Magento\Tax\Test\Constraint;
 use Magento\Catalog\Test\Fixture\CatalogProductSimple;
 use Magento\Catalog\Test\Page\Product\CatalogProductView;
 use Magento\Checkout\Test\Page\CheckoutCart;
-use Magento\Customer\Test\Fixture\AddressInjectable;
-use Magento\Customer\Test\Fixture\CustomerInjectable;
-use Magento\Customer\Test\Page\CustomerAccountLogin;
-use Magento\Customer\Test\Page\CustomerAccountLogout;
+use Magento\Customer\Test\Fixture\Address;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Tax\Test\Fixture\TaxRule;
 use Magento\Mtf\Client\BrowserInterface;
 use Magento\Mtf\Constraint\AbstractConstraint;
 use Magento\Mtf\Fixture\FixtureFactory;
 
 /**
- * Class AssertTaxRuleApplying
  * Abstract class for implementing assert applying
  */
 abstract class AssertTaxRuleApplying extends AbstractConstraint
@@ -82,28 +79,22 @@ abstract class AssertTaxRuleApplying extends AbstractConstraint
      *
      * @param FixtureFactory $fixtureFactory
      * @param TaxRule $taxRule
-     * @param CustomerAccountLogin $customerAccountLogin
-     * @param CustomerAccountLogout $customerAccountLogout
-     * @param CustomerInjectable $customer
+     * @param Customer $customer
      * @param CatalogProductView $catalogProductView
      * @param CheckoutCart $checkoutCart
-     * @param AddressInjectable $address
+     * @param Address $address
      * @param array $shipping
      * @param BrowserInterface $browser
      * @param TaxRule $initialTaxRule
      * @return void
-     *
-     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function processAssert(
         FixtureFactory $fixtureFactory,
         TaxRule $taxRule,
-        CustomerAccountLogin $customerAccountLogin,
-        CustomerAccountLogout $customerAccountLogout,
-        CustomerInjectable $customer,
+        Customer $customer,
         CatalogProductView $catalogProductView,
         CheckoutCart $checkoutCart,
-        AddressInjectable $address,
+        Address $address,
         array $shipping,
         BrowserInterface $browser,
         TaxRule $initialTaxRule = null
@@ -126,7 +117,7 @@ abstract class AssertTaxRuleApplying extends AbstractConstraint
         $this->productSimple = $fixtureFactory->createByCode(
             'catalogProductSimple',
             [
-                'dataSet' => 'product_100_dollar_for_tax_rule',
+                'dataset' => 'product_100_dollar_for_tax_rule',
                 'data' => [
                     'tax_class_id' => ['tax_product_class' => $taxProductClass],
                 ]
@@ -134,14 +125,17 @@ abstract class AssertTaxRuleApplying extends AbstractConstraint
         );
         $this->productSimple->persist();
         // Customer login
-        $customerAccountLogout->open();
-        $customerAccountLogin->open();
-        $customerAccountLogin->getLoginBlock()->login($customer);
+        $this->objectManager->create(
+            'Magento\Customer\Test\TestStep\LoginCustomerOnFrontendStep',
+            ['customer' => $customer]
+        )->run();
         // Clearing shopping cart and adding product to shopping cart
         $checkoutCart->open()->getCartBlock()->clearShoppingCart();
         $browser->open($_ENV['app_frontend_url'] . $this->productSimple->getUrlKey() . '.html');
         $catalogProductView->getViewBlock()->clickAddToCart();
+        $catalogProductView->getMessagesBlock()->waitSuccessMessage();
         // Estimate Shipping and Tax
+        $checkoutCart->open();
         $checkoutCart->getShippingBlock()->openEstimateShippingAndTax();
         $checkoutCart->getShippingBlock()->fill($address);
         $checkoutCart->getShippingBlock()->clickGetQuote();

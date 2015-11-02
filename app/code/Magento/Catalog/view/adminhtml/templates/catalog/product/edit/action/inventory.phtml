@@ -50,7 +50,7 @@
                                 class="select" disabled="disabled">
                             <option value="1"><?php echo __('Yes') ?></option>
                             <option
-                                value="0"<?php if ($block->getConfigFieldValue('manage_stock') == 0): ?> selected="selected"<?php endif; ?>><?php echo __('No') ?></option>
+                                value="0"<?php if ($block->getFieldValue('manage_stock') == 0): ?> selected="selected"<?php endif; ?>><?php echo __('No') ?></option>
                         </select>
                     </div>
                     <div class="field choice">
@@ -94,7 +94,7 @@
 
         <div class="field with-addon">
             <label class="label" for="inventory_min_qty">
-                <span><?php echo __('Minimum Qty for Item\'s Status to be Out of Stock') ?></span>
+                <span><?php echo __('Out-of-Stock Threshold') ?></span>
             </label>
 
             <div class="control">

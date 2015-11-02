@@ -22,14 +22,34 @@ interface ValidationResultsInterface
     /**
      * Check if the provided data is valid.
      *
+     * @api
      * @return bool
      */
     public function isValid();
 
     /**
+     * Set if the provided data is valid.
+     *
+     * @api
+     * @param bool $isValid
+     * @return $this
+     */
+    public function setIsValid($isValid);
+
+    /**
      * Get error messages as array in case of validation failure, else return empty array.
      *
+     * @api
      * @return string[]
      */
     public function getMessages();
+
+    /**
+     * Set error messages as array in case of validation failure.
+     *
+     * @api
+     * @param string[] $messages
+     * @return string[]
+     */
+    public function setMessages(array $messages);
 }

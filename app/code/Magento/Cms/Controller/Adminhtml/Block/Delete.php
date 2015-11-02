@@ -11,10 +11,12 @@ class Delete extends \Magento\Cms\Controller\Adminhtml\Block
     /**
      * Delete action
      *
-     * @return void
+     * @return \Magento\Framework\Controller\ResultInterface
      */
     public function execute()
     {
+        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultRedirectFactory->create();
         // check if we know what should be deleted
         $id = $this->getRequest()->getParam('block_id');
         if ($id) {
@@ -24,21 +26,19 @@ class Delete extends \Magento\Cms\Controller\Adminhtml\Block
                 $model->load($id);
                 $model->delete();
                 // display success message
-                $this->messageManager->addSuccess(__('The block has been deleted.'));
+                $this->messageManager->addSuccess(__('You deleted the block.'));
                 // go to grid
-                $this->_redirect('*/*/');
-                return;
+                return $resultRedirect->setPath('*/*/');
             } catch (\Exception $e) {
                 // display error message
                 $this->messageManager->addError($e->getMessage());
                 // go back to edit form
-                $this->_redirect('*/*/edit', ['block_id' => $id]);
-                return;
+                return $resultRedirect->setPath('*/*/edit', ['block_id' => $id]);
             }
         }
         // display error message
         $this->messageManager->addError(__('We can\'t find a block to delete.'));
         // go to grid
-        $this->_redirect('*/*/');
+        return $resultRedirect->setPath('*/*/');
     }
 }

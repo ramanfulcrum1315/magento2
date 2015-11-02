@@ -40,14 +40,14 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         /** @var $order \Magento\Sales\Model\Order */
         $order = Bootstrap::getObjectManager()->create('Magento\Sales\Model\Order');
         $order->loadByIncrementId('100000001');
-        $this->assertFalse($order->getShippingAddress());
+        $this->assertNull($order->getShippingAddress());
 
         /** @var $objectManager \Magento\TestFramework\ObjectManager */
         $objectManager = Bootstrap::getObjectManager();
         $objectManager->get('Magento\Framework\Registry')->unregister('rule_data');
         $this->_model->initFromOrder($order);
 
-        $this->assertFalse($order->getShippingAddress());
+        $this->assertNull($order->getShippingAddress());
     }
 
     /**
@@ -83,7 +83,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
 
         /** @var $order \Magento\Sales\Model\Order */
         $order = $objectManager->create('Magento\Sales\Model\Order');
-        $order->loadByIncrementId('100000001');
+        $order->loadByIncrementId('100000002');
 
         $this->assertNull($order->getShippingAddress()->getSameAsBilling());
 
@@ -154,9 +154,9 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(
             'Magento\Wishlist\Model\Wishlist',
             $wishlist,
-            'New wishlist is expected to be created if existing customer does not have one yet.'
+            'New Wish List is expected to be created if existing Customer does not have one yet.'
         );
-        $this->assertEquals(0, $wishlist->getItemsCount(), 'New wishlist must be empty just after creation.');
+        $this->assertEquals(0, $wishlist->getItemsCount(), 'New Wish List must be empty just after creation.');
 
         /** Add new item to wishlist and try to get it using getCustomerWishlist once again */
         $wishlist->addNewItem($productIdFromFixture)->save();
@@ -164,7 +164,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(
             1,
             $updatedWishlist->getItemsCount(),
-            'Wishlist must contain a product which was added to it earlier.'
+            'Wish List must contain a Product which was added to it earlier.'
         );
 
         /** Try to load wishlist from cache in the class after it is deleted from DB */
@@ -172,12 +172,12 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         $this->assertSame(
             $updatedWishlist,
             $this->_model->getCustomerWishlist(false),
-            'Wishlist cached in class variable is expected to be returned.'
+            'Wish List cached in class variable is expected to be returned.'
         );
         $this->assertNotSame(
             $updatedWishlist,
             $this->_model->getCustomerWishlist(true),
-            'New wishlist is expected to be created when cache is forced to be refreshed.'
+            'New Wish List is expected to be created when cache is forced to be refreshed.'
         );
     }
 
@@ -234,7 +234,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         try {
             $this->_model->createOrder();
             $this->fail('Validation errors are expected to lead to exception during createOrder() call.');
-        } catch (\Magento\Framework\Model\Exception $e) {
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             /** createOrder is expected to throw exception with empty message when validation error occurs */
         }
         $errorMessages = [];
@@ -503,7 +503,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         /** Set current customer */
         /** @var \Magento\Backend\Model\Session\Quote $session */
         $session = Bootstrap::getObjectManager()->get('Magento\Backend\Model\Session\Quote');
-        if (!is_null($customerIdFromFixture)) {
+        if ($customerIdFromFixture !== null) {
             $session->setCustomerId($customerIdFromFixture);
 
             /** Unset fake IDs for default billing and shipping customer addresses */
@@ -550,7 +550,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         );
         $this->assertEquals(
             'Simple Product',
-            $this->_model->getQuote()->getAllItems()[0]->getData('name'),
+            $this->_model->getQuote()->getItemByProduct($product)->getData('name'),
             'Precondition failed: Quote items data is invalid in create order model'
         );
         $this->assertEquals(

@@ -166,8 +166,7 @@ class Stock extends \Magento\Framework\Data\Form\Element\Select
     {
         return "
             <script type='text/javascript'>
-                require(['jquery'], function(jQuery) {
-                    jQuery(function($) {
+                require(['jquery', 'prototype', 'domReady!'], function($) {
                         var qty = $('#{$quantityFieldId}'),
                             productType = $('#product_type_id').val(),
                             stockAvailabilityField = $('#{$inStockFieldId}'),
@@ -231,13 +230,10 @@ class Stock extends \Magento\Framework\Data\Form\Element\Select
                         $.each(fieldsAssociations, function(generalTabField, advancedTabField) {
                             $('#' + generalTabField + ', #' + advancedTabField)
                                 .bind('focus blur change keyup click', filler)
-                                .bind('keyup change blur', disabler);
-                            filler.call($('#' + generalTabField));
-                            filler.call($('#' + advancedTabField));
+                                .bind('keyup change blur', disabler)
+                                .trigger('change');
                         });
 
-                        $(window).load(disabler);
-                    });
                 })
             </script>
         ";

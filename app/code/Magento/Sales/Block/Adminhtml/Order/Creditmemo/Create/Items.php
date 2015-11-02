@@ -63,7 +63,7 @@ class Items extends \Magento\Sales\Block\Adminhtml\Items\AbstractItems
                     'Magento\Backend\Block\Widget\Button',
                     [
                         'label' => __('Refund'),
-                        'class' => 'save submit-button refund',
+                        'class' => 'save submit-button refund primary',
                         'onclick' => 'disableElements(\'submit-button\');submitCreditMemo()'
                     ]
                 );
@@ -73,7 +73,7 @@ class Items extends \Magento\Sales\Block\Adminhtml\Items\AbstractItems
                 'Magento\Backend\Block\Widget\Button',
                 [
                     'label' => __('Refund Offline'),
-                    'class' => 'save submit-button',
+                    'class' => 'save submit-button primary',
                     'onclick' => 'disableElements(\'submit-button\');submitCreditMemoOffline()'
                 ]
             );
@@ -196,7 +196,7 @@ class Items extends \Magento\Sales\Block\Adminhtml\Items\AbstractItems
      */
     public function canReturnItemsToStock()
     {
-        if (is_null($this->_canReturnToStock)) {
+        if ($this->_canReturnToStock === null) {
             $this->_canReturnToStock = $this->canReturnToStock();
             if ($this->_canReturnToStock) {
                 $canReturnToStock = false;

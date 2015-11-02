@@ -50,7 +50,6 @@ class ListProducts extends \Magento\Framework\View\Element\Template
         $this->_linksFactory = $linksFactory;
         $this->_itemsFactory = $itemsFactory;
         parent::__construct($context, $data);
-        $this->_isScopePrivate = true;
     }
 
     /**
@@ -99,7 +98,7 @@ class ListProducts extends \Magento\Framework\View\Element\Template
             'downloadable.customer.products.pager'
         )->setCollection(
             $this->getItems()
-        );
+        )->setPath('downloadable/customer/products');
         $this->setChild('pager', $pager);
         $this->getItems()->load();
         foreach ($this->getItems() as $item) {
@@ -136,7 +135,7 @@ class ListProducts extends \Magento\Framework\View\Element\Template
      * Return number of left downloads or unlimited
      *
      * @param Item $item
-     * @return string
+     * @return \Magento\Framework\Phrase|int
      */
     public function getRemainingDownloads($item)
     {
@@ -155,7 +154,7 @@ class ListProducts extends \Magento\Framework\View\Element\Template
      */
     public function getDownloadUrl($item)
     {
-        return $this->getUrl('*/download/link', ['id' => $item->getLinkHash(), '_secure' => true]);
+        return $this->getUrl('downloadable/download/link', ['id' => $item->getLinkHash(), '_secure' => true]);
     }
 
     /**
@@ -166,6 +165,6 @@ class ListProducts extends \Magento\Framework\View\Element\Template
      */
     public function getIsOpenInNewWindow()
     {
-        return $this->_scopeConfig->isSetFlag(\Magento\Downloadable\Model\Link::XML_PATH_TARGET_NEW_WINDOW, \Magento\Framework\Store\ScopeInterface::SCOPE_STORE);
+        return $this->_scopeConfig->isSetFlag(\Magento\Downloadable\Model\Link::XML_PATH_TARGET_NEW_WINDOW, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 }

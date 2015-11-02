@@ -14,11 +14,7 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertTaxRateSuccessSaveMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'high';
-    /* end tags */
-
-    const SUCCESS_MESSAGE = 'The tax rate has been saved.';
+    const SUCCESS_MESSAGE = 'You saved the tax rate.';
 
     /**
      * Assert that success message is displayed after tax rate saved

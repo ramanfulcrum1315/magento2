@@ -87,6 +87,7 @@ class Config
      * Return currently selected cache type: built in or varnish
      *
      * @return int
+     * @api
      */
     public function getType()
     {
@@ -97,6 +98,7 @@ class Config
      * Return page lifetime
      *
      * @return int
+     * @api
      */
     public function getTtl()
     {
@@ -108,6 +110,7 @@ class Config
      *
      * @param string $vclTemplatePath
      * @return string
+     * @api
      */
     public function getVclFile($vclTemplatePath)
     {
@@ -125,11 +128,11 @@ class Config
         return [
             '/* {{ host }} */' => $this->_scopeConfig->getValue(
                 self::XML_VARNISH_PAGECACHE_BACKEND_HOST,
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             ),
             '/* {{ port }} */' => $this->_scopeConfig->getValue(
                 self::XML_VARNISH_PAGECACHE_BACKEND_PORT,
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             ),
             '/* {{ ips }} */' => $this->_getAccessList(),
             '/* {{ design_exceptions_code }} */' => $this->_getDesignExceptions()
@@ -152,7 +155,7 @@ class Config
         $tpl = "    \"%s\";";
         $accessList = $this->_scopeConfig->getValue(
             self::XML_VARNISH_PAGECACHE_ACCESS_LIST,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
         if (!empty($accessList)) {
             $ips = explode(',', $accessList);
@@ -179,7 +182,7 @@ class Config
 
         $expressions = $this->_scopeConfig->getValue(
             self::XML_VARNISH_PAGECACHE_DESIGN_THEME_REGEX,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
         if ($expressions) {
             $rules = array_values(unserialize($expressions));
@@ -202,6 +205,7 @@ class Config
      * Whether a cache type is enabled in Cache Management Grid
      *
      * @return bool
+     * @api
      */
     public function isEnabled()
     {

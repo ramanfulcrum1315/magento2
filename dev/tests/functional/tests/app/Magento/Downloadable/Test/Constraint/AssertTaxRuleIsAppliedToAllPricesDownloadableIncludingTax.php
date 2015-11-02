@@ -6,6 +6,8 @@
 
 namespace Magento\Downloadable\Test\Constraint;
 
+use Magento\Mtf\Fixture\FixtureInterface;
+
 /**
  * Checks that prices incl tax on category, product and cart pages are equal to specified in dataset.
  */
@@ -22,15 +24,16 @@ class AssertTaxRuleIsAppliedToAllPricesDownloadableIncludingTax extends
     /**
      * Get prices on category page.
      *
-     * @param string $productName
+     * @param FixtureInterface $product
      * @param array $actualPrices
      * @return array
      */
-    public function getCategoryPrices($productName, $actualPrices)
+    public function getCategoryPrices(FixtureInterface $product, $actualPrices)
     {
-        $priceBlock = $this->catalogCategoryView->getListProductBlock()->getProductPriceBlock($productName);
-        $actualPrices['category_price_excl_tax'] = null;
-        $actualPrices['category_price_incl_tax'] = $priceBlock->getEffectivePrice();
+        $priceBlock = $this->catalogCategoryView->getListProductBlock()->getProductItem($product)->getPriceBlock();
+        $actualPrices['category_special_price'] = $priceBlock->getSpecialPrice();
+        $actualPrices['category_price_excl_tax'] = $priceBlock->getPriceExcludingTax();
+        $actualPrices['category_price_incl_tax'] = $priceBlock->getPriceIncludingTax();
 
         return $actualPrices;
     }
@@ -43,9 +46,10 @@ class AssertTaxRuleIsAppliedToAllPricesDownloadableIncludingTax extends
      */
     public function getProductPagePrices($actualPrices)
     {
-        $viewBlock = $this->catalogProductView->getViewBlock();
-        $actualPrices['product_view_price_excl_tax'] = null;
-        $actualPrices['product_view_price_incl_tax'] = $viewBlock->getPriceBlock()->getEffectivePrice();
+        $priceBlock = $this->catalogProductView->getViewBlock()->getPriceBlock();
+        $actualPrices['product_view_special_price'] = $priceBlock->getSpecialPrice();
+        $actualPrices['product_view_price_excl_tax'] = $priceBlock->getPriceExcludingTax();
+        $actualPrices['product_view_price_incl_tax'] = $priceBlock->getPriceIncludingTax();
 
         return $actualPrices;
     }

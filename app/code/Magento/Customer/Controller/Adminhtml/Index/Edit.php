@@ -20,7 +20,7 @@ class Edit extends \Magento\Customer\Controller\Adminhtml\Index
      */
     public function execute()
     {
-        $customerId = $this->_initCustomer();
+        $customerId = $this->initCurrentCustomer();
 
         $customerData = [];
         $customerData['account'] = [];
@@ -42,7 +42,7 @@ class Edit extends \Magento\Customer\Controller\Adminhtml\Index
                     //do nothing
                 }
             } catch (NoSuchEntityException $e) {
-                $this->messageManager->addException($e, __('An error occurred while editing the customer.'));
+                $this->messageManager->addException($e, __('Something went wrong while editing the customer.'));
                 $resultRedirect = $this->resultRedirectFactory->create();
                 $resultRedirect->setPath('customer/*/index');
                 return $resultRedirect;
@@ -72,7 +72,12 @@ class Edit extends \Magento\Customer\Controller\Adminhtml\Index
                 );
                 $formData = $customerForm->extractData($request, 'account');
                 $customerData['account'] = $customerForm->restoreData($formData);
-                $customer = $this->customerDataBuilder->populateWithArray($customerData['account'])->create();
+                $customer = $this->customerDataFactory->create();
+                $this->dataObjectHelper->populateWithArray(
+                    $customer,
+                    $customerData['account'],
+                    '\Magento\Customer\Api\Data\CustomerInterface'
+                );
             }
 
             if (isset($data['address']) && is_array($data['address'])) {
@@ -83,24 +88,25 @@ class Edit extends \Magento\Customer\Controller\Adminhtml\Index
 
                     try {
                         $address = $this->addressRepository->getById($addressId);
-                        if (!empty($customerId) && $address->getCustomerId() == $customerId) {
-                            $this->addressDataBuilder->populateWithArray($this->addressMapper->toFlatArray($address));
+                        if (empty($customerId) || $address->getCustomerId() != $customerId) {
+                            //reinitialize address data object
+                            $address = $this->addressDataFactory->create();
                         }
                     } catch (NoSuchEntityException $e) {
-                        $this->addressDataBuilder->setId($addressId);
+                        $address = $this->addressDataFactory->create();
+                        $address->setId($addressId);
                     }
                     if (!empty($customerId)) {
-                        $this->addressDataBuilder->setCustomerId($customerId);
+                        $address->setCustomerId($customerId);
                     }
-                    $this->addressDataBuilder->setDefaultBilling(
+                    $address->setIsDefaultBilling(
                         !empty($data['account'][CustomerInterface::DEFAULT_BILLING]) &&
                         $data['account'][CustomerInterface::DEFAULT_BILLING] == $addressId
                     );
-                    $this->addressDataBuilder->setDefaultShipping(
+                    $address->setIsDefaultShipping(
                         !empty($data['account'][CustomerInterface::DEFAULT_SHIPPING]) &&
                         $data['account'][CustomerInterface::DEFAULT_SHIPPING] == $addressId
                     );
-                    $address = $this->addressDataBuilder->create();
                     $requestScope = sprintf('address/%s', $addressId);
                     $addressForm = $this->_formFactory->create(
                         'customer_address',

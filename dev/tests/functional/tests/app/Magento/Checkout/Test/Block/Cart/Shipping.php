@@ -6,60 +6,66 @@
 
 namespace Magento\Checkout\Test\Block\Cart;
 
-use Magento\Customer\Test\Fixture\AddressInjectable;
+use Magento\Customer\Test\Fixture\Address;
 use Magento\Mtf\Block\Form;
 use Magento\Mtf\Client\Locator;
 
 /**
- * Class Shipping
- * Cart shipping block
+ * Cart shipping block.
  */
 class Shipping extends Form
 {
     /**
-     * Form wrapper selector
+     * Form wrapper selector.
      *
      * @var string
      */
     protected $formWrapper = '.content';
 
     /**
-     * Open shipping form selector
+     * Open shipping form selector.
      *
      * @var string
      */
     protected $openForm = '.title';
 
     /**
-     * Get quote selector
+     * Get quote selector.
      *
      * @var string
      */
     protected $getQuote = '.action.quote';
 
     /**
-     * Update total selector
+     * Update total selector.
      *
      * @var string
      */
     protected $updateTotalSelector = '.action.update';
 
     /**
-     * Selector to access the shipping carrier method
+     * Selector to access the shipping carrier method.
      *
      * @var string
      */
     protected $shippingMethod = '//span[text()="%s"]/following::*//*[contains(text(), "%s")]';
 
     /**
-     * From with shipping available shipping methods
+     * From with shipping available shipping methods.
      *
      * @var string
      */
     protected $shippingMethodForm = '#co-shipping-method-form';
 
     /**
-     * Open estimate shipping and tax form
+     * Fields that are used in estimation shipping form.
+     *
+     * @var array
+     */
+    protected $estimationFields = ['country_id', 'region_id', 'region', 'postcode'];
+
+    /**
+     * Open estimate shipping and tax form.
      *
      * @return void
      */
@@ -71,7 +77,7 @@ class Shipping extends Form
     }
 
     /**
-     * Click Get quote button
+     * Click Get quote button.
      *
      * @return void
      */
@@ -81,14 +87,14 @@ class Shipping extends Form
     }
 
     /**
-     * Select shipping method
+     * Select shipping method.
      *
      * @param array $shipping
      * @return void
      */
     public function selectShippingMethod(array $shipping)
     {
-        $selector = sprintf($this->shippingMethod, $shipping['carrier'], $shipping['method']);
+        $selector = sprintf($this->shippingMethod, $shipping['shipping_service'], $shipping['shipping_method']);
         if (!$this->_rootElement->find($selector, Locator::SELECTOR_XPATH)->isVisible()) {
             $this->openEstimateShippingAndTax();
         }
@@ -97,20 +103,22 @@ class Shipping extends Form
     }
 
     /**
-     * Fill shipping and tax form
+     * Fill shipping and tax form.
      *
-     * @param AddressInjectable $address
+     * @param Address $address
      * @return void
      */
-    public function fillEstimateShippingAndTax(AddressInjectable $address)
+    public function fillEstimateShippingAndTax(Address $address)
     {
         $this->openEstimateShippingAndTax();
-        $this->fill($address);
+        $data = $address->getData();
+        $mapping = $this->dataMapping(array_intersect_key($data, array_flip($this->estimationFields)));
+        $this->_fill($mapping, $this->_rootElement);
         $this->clickGetQuote();
     }
 
     /**
-     * Determines if the specified shipping carrier/method is visible on the cart
+     * Determines if the specified shipping carrier/method is visible on the cart.
      *
      * @param $carrier
      * @param $method

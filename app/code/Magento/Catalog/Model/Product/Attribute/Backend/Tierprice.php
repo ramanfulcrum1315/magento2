@@ -22,18 +22,20 @@ class Tierprice extends \Magento\Catalog\Model\Product\Attribute\Backend\GroupPr
 
     /**
      * @param \Magento\Directory\Model\CurrencyFactory $currencyFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Catalog\Helper\Data $catalogData
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $config
+     * @param \Magento\Framework\Locale\FormatInterface $localeFormat
      * @param \Magento\Catalog\Model\Product\Type $catalogProductType
      * @param \Magento\Customer\Api\GroupManagementInterface $groupManagement
      * @param \Magento\Catalog\Model\Resource\Product\Attribute\Backend\Tierprice $productAttributeTierprice
      */
     public function __construct(
         \Magento\Directory\Model\CurrencyFactory $currencyFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Catalog\Helper\Data $catalogData,
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
+        \Magento\Framework\Locale\FormatInterface $localeFormat,
         \Magento\Catalog\Model\Product\Type $catalogProductType,
         \Magento\Customer\Api\GroupManagementInterface $groupManagement,
         \Magento\Catalog\Model\Resource\Product\Attribute\Backend\Tierprice $productAttributeTierprice
@@ -44,6 +46,7 @@ class Tierprice extends \Magento\Catalog\Model\Product\Attribute\Backend\GroupPr
             $storeManager,
             $catalogData,
             $config,
+            $localeFormat,
             $catalogProductType,
             $groupManagement
         );
@@ -75,7 +78,7 @@ class Tierprice extends \Magento\Catalog\Model\Product\Attribute\Backend\GroupPr
     /**
      * Error message when duplicates
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     protected function _getDuplicateErrorMessage()
     {

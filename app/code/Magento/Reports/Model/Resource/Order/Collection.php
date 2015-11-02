@@ -4,8 +4,6 @@
  * See COPYING.txt for license details.
  */
 
-// @codingStandardsIgnoreFile
-
 namespace Magento\Reports\Model\Resource\Order;
 
 use Magento\Framework\DB\Select;
@@ -40,37 +38,48 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
     protected $_scopeConfig;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * Store manager instance
+     *
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
+     * Locale date instance
+     *
      * @var \Magento\Framework\Stdlib\DateTime\TimezoneInterface
      */
     protected $_localeDate;
 
     /**
+     * Order config instance
+     *
      * @var \Magento\Sales\Model\Order\Config
      */
     protected $_orderConfig;
 
     /**
+     * Reports order factory
+     *
      * @var \Magento\Sales\Model\Resource\Report\OrderFactory
      */
     protected $_reportOrderFactory;
 
     /**
+     * Constructor
+     *
      * @param \Magento\Framework\Data\Collection\EntityFactory $entityFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param \Magento\Framework\Model\Resource\Db\VersionControl\Snapshot $entitySnapshot
      * @param \Magento\Framework\DB\Helper $coreResourceHelper
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Sales\Model\Order\Config $orderConfig
      * @param \Magento\Sales\Model\Resource\Report\OrderFactory $reportOrderFactory
-     * @param mixed $connection
+     * @param null $connection
      * @param \Magento\Framework\Model\Resource\Db\AbstractDb $resource
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -80,9 +89,10 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy,
         \Magento\Framework\Event\ManagerInterface $eventManager,
+        \Magento\Framework\Model\Resource\Db\VersionControl\Snapshot $entitySnapshot,
         \Magento\Framework\DB\Helper $coreResourceHelper,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Sales\Model\Order\Config $orderConfig,
         \Magento\Sales\Model\Resource\Report\OrderFactory $reportOrderFactory,
@@ -94,6 +104,7 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
             $logger,
             $fetchStrategy,
             $eventManager,
+            $entitySnapshot,
             $coreResourceHelper,
             $connection,
             $resource
@@ -116,7 +127,7 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
     {
         $this->_isLive = (bool)(!$this->_scopeConfig->getValue(
             'sales/dashboard/use_aggregated_data',
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         ));
         return $this;
     }
@@ -125,6 +136,7 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
      * Retrieve is live flag for rep
      *
      * @return bool
+     * @codeCoverageIgnore
      */
     public function isLive()
     {
@@ -159,7 +171,7 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
      */
     protected function _getSalesAmountExpression()
     {
-        if (is_null($this->_salesAmountExpression)) {
+        if (null === $this->_salesAmountExpression) {
             $adapter = $this->getConnection();
             $expressionTransferObject = new \Magento\Framework\Object(
                 [
@@ -254,8 +266,8 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
      * Prepare report summary from aggregated data
      *
      * @param string $range
-     * @param mixed $customStart
-     * @param mixed $customEnd
+     * @param string|null $customStart
+     * @param string|null $customEnd
      * @return $this
      */
     protected function _prepareSummaryAggregated($range, $customStart, $customEnd)
@@ -268,13 +280,13 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
         $rangePeriod = $this->_getRangeExpressionForAttribute($range, 'main_table.period');
 
         $tableName = $this->getConnection()->quoteIdentifier('main_table.period');
-        $rangePeriod2 = str_replace($tableName, "MIN({$tableName})", $rangePeriod);
+        $rangePeriodAggregateStmt = str_replace($tableName, "MIN({$tableName})", $rangePeriod);
 
         $this->getSelect()->columns(
             [
                 'revenue' => 'SUM(main_table.total_revenue_amount)',
                 'quantity' => 'SUM(main_table.orders_count)',
-                'range' => $rangePeriod2,
+                'range' => $rangePeriodAggregateStmt,
             ]
         )->order(
             'range'
@@ -346,8 +358,8 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
      *
      * @param string $range
      * @param string $attribute
-     * @param mixed $from
-     * @param mixed $to
+     * @param string|null $from
+     * @param string|null $to
      * @return string
      */
     protected function _getTZRangeOffsetExpression($range, $attribute, $from = null, $to = null)
@@ -372,12 +384,16 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
     protected function _getTZRangeExpressionForAttribute($range, $attribute, $tzFrom = '+00:00', $tzTo = null)
     {
         if (null == $tzTo) {
-            $tzTo = $this->_localeDate->scopeDate()->toString(\Zend_Date::GMT_DIFF_SEP);
+            $tzTo = $this->_localeDate->scopeDate()->format('P');
         }
         $adapter = $this->getConnection();
         $expression = $this->_getRangeExpression($range);
         $attribute = $adapter->quoteIdentifier($attribute);
-        $periodExpr = $adapter->getDateAddSql($attribute, $tzTo, \Magento\Framework\DB\Adapter\AdapterInterface::INTERVAL_HOUR);
+        $periodExpr = $adapter->getDateAddSql(
+            $attribute,
+            $tzTo,
+            \Magento\Framework\DB\Adapter\AdapterInterface::INTERVAL_HOUR
+        );
 
         return str_replace('{{attribute}}', $periodExpr, $expression);
     }
@@ -394,37 +410,35 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
      */
     public function getDateRange($range, $customStart, $customEnd, $returnObjects = false)
     {
-        $dateEnd = $this->_localeDate->date();
-        $dateStart = clone $dateEnd;
+        $dateEnd = new \DateTime();
+        $dateStart = new \DateTime();
 
         // go to the end of a day
-        $dateEnd->setHour(23);
-        $dateEnd->setMinute(59);
-        $dateEnd->setSecond(59);
+        $dateEnd->setTime(23, 59, 59);
 
-        $dateStart->setHour(0);
-        $dateStart->setMinute(0);
-        $dateStart->setSecond(0);
+        $dateStart->setTime(0, 0, 0);
 
         switch ($range) {
             case '24h':
-                $dateEnd = $this->_localeDate->date();
-                $dateEnd->addHour(1);
+                $dateEnd = new \DateTime();
+                $dateEnd->modify('+1 hour');
                 $dateStart = clone $dateEnd;
-                $dateStart->subDay(1);
+                $dateStart->modify('-1 day');
                 break;
 
             case '7d':
                 // substract 6 days we need to include
                 // only today and not hte last one from range
-                $dateStart->subDay(6);
+                $dateStart->modify('-6 days');
                 break;
 
             case '1m':
-                $dateStart->setDay(
+                $dateStart->setDate(
+                    $dateStart->format('Y'),
+                    $dateStart->format('m'),
                     $this->_scopeConfig->getValue(
                         'reports/dashboard/mtd_start',
-                        \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
                     )
                 );
                 break;
@@ -440,21 +454,17 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
                     ',',
                     $this->_scopeConfig->getValue(
                         'reports/dashboard/ytd_start',
-                        \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
                     )
                 );
                 $startMonth = isset($startMonthDay[0]) ? (int)$startMonthDay[0] : 1;
                 $startDay = isset($startMonthDay[1]) ? (int)$startMonthDay[1] : 1;
-                $dateStart->setMonth($startMonth);
-                $dateStart->setDay($startDay);
+                $dateStart->setDate($dateStart->format('Y'), $startMonth, $startDay);
                 if ($range == '2y') {
-                    $dateStart->subYear(1);
+                    $dateStart->modify('-1 year');
                 }
                 break;
         }
-
-        $dateStart->setTimezone('Etc/UTC');
-        $dateEnd->setTimezone('Etc/UTC');
 
         if ($returnObjects) {
             return [$dateStart, $dateEnd];
@@ -591,7 +601,7 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
 
         if ($this->_scopeConfig->getValue(
             'sales/dashboard/use_aggregated_data',
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         )
         ) {
             $this->setMainTable('sales_order_aggregated_created');
@@ -664,7 +674,7 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
     /**
      * Set store filter collection
      *
-     * @param array $storeIds
+     * @param int[] $storeIds
      * @return $this
      */
     public function setStoreIds($storeIds)
@@ -777,16 +787,15 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
      */
     public function addSumAvgTotals($storeId = 0)
     {
-        $adapter = $this->getConnection();
-        $baseSubtotalRefunded = $adapter->getIfNullSql('main_table.base_subtotal_refunded', 0);
-        $baseSubtotalCanceled = $adapter->getIfNullSql('main_table.base_subtotal_canceled', 0);
-        $baseDiscountCanceled = $adapter->getIfNullSql('main_table.base_discount_canceled', 0);
-
         /**
          * calculate average and total amount
          */
-        $expr = $storeId ==
-            0 ? "(main_table.base_subtotal -\n            {$baseSubtotalRefunded} - {$baseSubtotalCanceled} - ABS(main_table.base_discount_amount) -\n            {$baseDiscountCanceled}) * main_table.base_to_global_rate" : "main_table.base_subtotal - {$baseSubtotalCanceled} - {$baseSubtotalRefunded} -\n            ABS(main_table.base_discount_amount) - {$baseDiscountCanceled}";
+        $expr = $this->getTotalsExpression(
+            $storeId,
+            $this->getConnection()->getIfNullSql('main_table.base_subtotal_refunded', 0),
+            $this->getConnection()->getIfNullSql('main_table.base_subtotal_canceled', 0),
+            $this->getConnection()->getIfNullSql('main_table.base_discount_canceled', 0)
+        );
 
         $this->getSelect()->columns(
             ['orders_avg_amount' => "AVG({$expr})"]
@@ -795,6 +804,28 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
         );
 
         return $this;
+    }
+
+    /**
+     * Get SQL expression for totals
+     *
+     * @param int $storeId
+     * @param string $baseSubtotalRefunded
+     * @param string $baseSubtotalCanceled
+     * @param string $baseDiscountCanceled
+     * @return string
+     */
+    protected function getTotalsExpression(
+        $storeId,
+        $baseSubtotalRefunded,
+        $baseSubtotalCanceled,
+        $baseDiscountCanceled
+    ) {
+        $template = ($storeId != 0)
+            ? 'main_table.base_subtotal - %2$s - %1$s - ABS(main_table.base_discount_amount) - %3$s'
+            : '(main_table.base_subtotal - %1$s - %2$s - ABS(main_table.base_discount_amount) - %3$s) '
+                . ' * main_table.base_to_global_rate';
+        return sprintf($template, $baseSubtotalRefunded, $baseSubtotalCanceled, $baseDiscountCanceled);
     }
 
     /**
@@ -868,6 +899,7 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
      * Initialize initial fields to select
      *
      * @return $this
+     * @codeCoverageIgnore
      */
     protected function _initInitialFieldsToSelect()
     {
@@ -896,8 +928,8 @@ class Collection extends \Magento\Sales\Model\Resource\Order\Collection
         $this->addFieldToFilter(
             $fieldToFilter,
             [
-                'from' => $from->toString(\Magento\Framework\Stdlib\DateTime::DATETIME_INTERNAL_FORMAT),
-                'to' => $to->toString(\Magento\Framework\Stdlib\DateTime::DATETIME_INTERNAL_FORMAT)
+                'from' => $from->format(\Magento\Framework\Stdlib\DateTime::DATETIME_PHP_FORMAT),
+                'to' => $to->format(\Magento\Framework\Stdlib\DateTime::DATETIME_PHP_FORMAT)
             ]
         );
 

@@ -8,7 +8,7 @@ namespace Magento\ConfigurableProduct\Test\Constraint;
 
 use Magento\CatalogSearch\Test\Page\CatalogsearchResult;
 use Magento\Cms\Test\Page\CmsIndex;
-use Magento\ConfigurableProduct\Test\Fixture\ConfigurableProductInjectable;
+use Magento\ConfigurableProduct\Test\Fixture\ConfigurableProduct;
 use Magento\Mtf\Constraint\AbstractConstraint;
 
 /**
@@ -26,24 +26,32 @@ class AssertChildProductIsNotDisplayedSeparately extends AbstractConstraint
      *
      * @param CatalogSearchResult $catalogSearchResult
      * @param CmsIndex $cmsIndex
-     * @param ConfigurableProductInjectable $product
+     * @param ConfigurableProduct $product
      * @return void
      */
     public function processAssert(
         CatalogsearchResult $catalogSearchResult,
         CmsIndex $cmsIndex,
-        ConfigurableProductInjectable $product
+        ConfigurableProduct $product
     ) {
         $configurableAttributesData = $product->getConfigurableAttributesData();
         $errors = [];
 
         $cmsIndex->open();
         foreach ($configurableAttributesData['matrix'] as $variation) {
-            $cmsIndex->getSearchBlock()->search($variation['sku']);
+            $product = $this->objectManager->create(
+                'Magento\Catalog\Test\Fixture\CatalogProductSimple',
+                [
+                    'data' => [
+                        'name' => $variation['name']
+                    ]
+                ]
+            );
 
-            $isVisibleProduct = $catalogSearchResult->getListProductBlock()->isProductVisible($variation['name']);
+            $cmsIndex->getSearchBlock()->search($variation['sku']);
+            $isVisibleProduct = $catalogSearchResult->getListProductBlock()->getProductItem($product)->isVisible();
             while (!$isVisibleProduct && $catalogSearchResult->getBottomToolbar()->nextPage()) {
-                $isVisibleProduct = $catalogSearchResult->getListProductBlock()->isProductVisible($product->getName());
+                $isVisibleProduct = $catalogSearchResult->getListProductBlock()->getProductItem($product)->isVisible();
             }
             if ($isVisibleProduct) {
                 $errors[] = sprintf(

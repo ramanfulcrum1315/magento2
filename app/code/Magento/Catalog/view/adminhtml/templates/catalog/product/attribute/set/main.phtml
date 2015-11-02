@@ -10,7 +10,7 @@
 <div class="attribute-set">
     <div class="edit-attribute-set attribute-set-col">
         <?php echo $block->getSetFormHtml() ?>
-        <script type="text/javascript">
+        <script>
 require([
     "jquery",
     "mage/mage"
@@ -27,7 +27,7 @@ require([
         </div>
         <?php if (!$block->getIsReadOnly()): ?>
         <?php echo $block->getAddGroupButton() ?>&nbsp;<?php echo $block->getDeleteGroupButton() ?>
-        <p class="note-block"><?php echo __('Double click on a group to rename it') ?></p>
+        <p class="note-block"><?php echo __('Double click on a group to rename it.') ?></p>
         <?php endif; ?>
 
         <?php echo $block->getSetsFilterHtml() ?>
@@ -38,8 +38,11 @@ require([
             <span class="title"><?php echo __('Unassigned Attributes') ?></span>
         </div>
         <div id="tree-div2" class="attribute-set-tree"></div>
+        <!--[if IE]>
+        <script id="ie-deferred-loader" defer="defer" src=""></script>
+        <![endif]-->
             <script>
-require(["jquery", "extjs/ext-tree-checkbox"], function(jQuery){
+define("tree-panel", ["jquery", "extjs/ext-tree-checkbox", "prototype"], function(jQuery){
 
             //<![CDATA[
             var allowDragAndDrop = <?php echo($block->getIsReadOnly() ? 'false' : 'true'); ?>;
@@ -319,7 +322,7 @@ require(["jquery", "extjs/ext-tree-checkbox"], function(jQuery){
                     },
 
                     failure : function(o) {
-                        alert('<?php echo $block->escapeJsQuote(__('We\'re unable to complete this request.')) ?>');
+                        alert('<?php echo $block->escapeJsQuote(__('Sorry, we\'re unable to complete this request.')) ?>');
                     },
 
                     groupBeforeMove : function(tree, nodeThis, oldParent, newParent) {
@@ -334,7 +337,7 @@ require(["jquery", "extjs/ext-tree-checkbox"], function(jQuery){
 
                     rightBeforeAppend : function(tree, nodeThis, node, newParent) {
                         if (node.attributes.is_user_defined == 0) {
-                            alert('<?php echo $block->escapeJsQuote(__('You cannot remove system attributes from this set.')) ?>');
+                            alert('<?php echo $block->escapeJsQuote(__('You can\'t remove attributes from this product template.')) ?>');
                             return false;
                         } else {
                             return true;
@@ -348,7 +351,7 @@ require(["jquery", "extjs/ext-tree-checkbox"], function(jQuery){
                         }
 
                         if (node.attributes.is_unassignable == 0) {
-                            alert('<?php echo $block->escapeJsQuote(__('You cannot remove system attributes from this set.')) ?>');
+                            alert('<?php echo $block->escapeJsQuote(__('You can\'t remove attributes from this product template.')) ?>');
                             return false;
                         } else {
                             return true;
@@ -406,6 +409,7 @@ require(["jquery", "extjs/ext-tree-checkbox"], function(jQuery){
             //]]>
 
 });
+require(["tree-panel"]);
 </script>
     </div>
 </div>

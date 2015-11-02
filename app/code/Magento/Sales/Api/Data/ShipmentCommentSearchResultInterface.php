@@ -10,6 +10,7 @@ namespace Magento\Sales\Api\Data;
  *
  * A shipment is a delivery package that contains products. A shipment document accompanies the shipment. This
  * document lists the products and their quantities in the delivery package. A shipment document can contain comments.
+ * @api
  */
 interface ShipmentCommentSearchResultInterface extends \Magento\Framework\Api\SearchResultsInterface
 {
@@ -19,4 +20,12 @@ interface ShipmentCommentSearchResultInterface extends \Magento\Framework\Api\Se
      * @return \Magento\Sales\Api\Data\ShipmentCommentInterface[] Array of collection items.
      */
     public function getItems();
+
+    /**
+     * Set collection items.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentCommentInterface[] $items
+     * @return $this
+     */
+    public function setItems(array $items);
 }

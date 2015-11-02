@@ -6,7 +6,7 @@
 
 namespace Magento\Sales\Test\TestStep;
 
-use Magento\Customer\Test\Fixture\AddressInjectable;
+use Magento\Customer\Test\Fixture\Address;
 use Magento\Sales\Test\Page\Adminhtml\OrderCreateIndex;
 use Magento\Mtf\TestStep\TestStepInterface;
 
@@ -25,29 +25,52 @@ class FillBillingAddressStep implements TestStepInterface
     /**
      * Address.
      *
-     * @var AddressInjectable
+     * @var Address
      */
     protected $billingAddress;
 
     /**
+     * Save Address.
+     *
+     * @var string
+     */
+    protected $saveAddress;
+
+    /**
+     * Flag for set same as billing shipping address.
+     *
+     * @var string
+     */
+    protected $setShippingAddress;
+
+    /**
      * @constructor
      * @param OrderCreateIndex $orderCreateIndex
-     * @param AddressInjectable $billingAddress
+     * @param Address $billingAddress
+     * @param string $saveAddress
+     * @param bool $setShippingAddress [optional]
      */
-    public function __construct(OrderCreateIndex $orderCreateIndex, AddressInjectable $billingAddress)
-    {
+    public function __construct(
+        OrderCreateIndex $orderCreateIndex,
+        Address $billingAddress,
+        $saveAddress = 'No',
+        $setShippingAddress = true
+    ) {
         $this->orderCreateIndex = $orderCreateIndex;
         $this->billingAddress = $billingAddress;
+        $this->saveAddress = $saveAddress;
+        $this->setShippingAddress = $setShippingAddress;
     }
 
     /**
      * Fill Sales Data.
      *
-     * @return AddressInjectable
+     * @return Address
      */
     public function run()
     {
-        $this->orderCreateIndex->getCreateBlock()->fillAddresses($this->billingAddress);
+        $this->orderCreateIndex->getCreateBlock()
+            ->fillAddresses($this->billingAddress, $this->saveAddress, $this->setShippingAddress);
 
         return ['billingAddress' => $this->billingAddress];
     }

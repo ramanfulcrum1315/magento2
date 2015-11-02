@@ -46,13 +46,6 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
     protected $_sidResolver;
 
     /**
-     * Translator
-     *
-     * @var \Magento\Framework\TranslateInterface
-     */
-    protected $_translator;
-
-    /**
      * Block name in layout
      *
      * @var string
@@ -65,6 +58,13 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
      * @var \Magento\Framework\View\LayoutInterface
      */
     protected $_layout;
+
+    /**
+     * JS layout configuration
+     *
+     * @var array
+     */
+    protected $jsLayout = [];
 
     /**
      * Request
@@ -172,7 +172,6 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
         $this->_layout = $context->getLayout();
         $this->_eventManager = $context->getEventManager();
         $this->_urlBuilder = $context->getUrlBuilder();
-        $this->_translator = $context->getTranslator();
         $this->_cache = $context->getCache();
         $this->_design = $context->getDesignPackage();
         $this->_session = $context->getSession();
@@ -186,8 +185,22 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
         $this->filterManager = $context->getFilterManager();
         $this->_localeDate = $context->getLocaleDate();
         $this->inlineTranslation = $context->getInlineTranslation();
+        if (isset($data['jsLayout'])) {
+            $this->jsLayout = $data['jsLayout'];
+            unset($data['jsLayout']);
+        }
         parent::__construct($data);
         $this->_construct();
+    }
+
+    /**
+     * Retrieve serialized JS layout configuration ready to use in template
+     *
+     * @return string
+     */
+    public function getJsLayout()
+    {
+        return json_encode($this->jsLayout);
     }
 
     /**
@@ -261,12 +274,14 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
      * Retrieve layout object
      *
      * @return \Magento\Framework\View\LayoutInterface
-     * @throws \Magento\Framework\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getLayout()
     {
         if (!$this->_layout) {
-            throw new \Magento\Framework\Exception('Layout must be initialized');
+            throw new \Magento\Framework\Exception\LocalizedException(
+                new \Magento\Framework\Phrase('Layout must be initialized')
+            );
         }
         return $this->_layout;
     }
@@ -622,7 +637,7 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
         $this->_eventManager->dispatch('view_block_abstract_to_html_before', ['block' => $this]);
         if ($this->_scopeConfig->getValue(
             'advanced/modules_disable_output/' . $this->getModuleName(),
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         )) {
             return '';
         }
@@ -701,19 +716,19 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
     public function getJsId($arg1 = null, $arg2 = null, $arg3 = null, $arg4 = null, $arg5 = null)
     {
         $args = [];
-        if (!is_null($arg1)) {
+        if ($arg1 !== null) {
             $args[] = $arg1;
         }
-        if (!is_null($arg2)) {
+        if ($arg2 !== null) {
             $args[] = $arg2;
         }
-        if (!is_null($arg3)) {
+        if ($arg3 !== null) {
             $args[] = $arg3;
         }
-        if (!is_null($arg4)) {
+        if ($arg4 !== null) {
             $args[] = $arg4;
         }
-        if (!is_null($arg5)) {
+        if ($arg5 !== null) {
             $args[] = $arg5;
         }
         $rawId = $this->_nameInLayout . '-' . implode('-', $args);
@@ -744,7 +759,7 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
         try {
             $params = array_merge(['_secure' => $this->getRequest()->isSecure()], $params);
             return $this->_assetRepo->getUrlWithParams($fileId, $params);
-        } catch (\Magento\Framework\Exception $e) {
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->_logger->critical($e);
             return $this->_getNotFoundUrl();
         }
@@ -765,33 +780,43 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
     /**
      * Retrieve formatting date
      *
-     * @param   \Zend_Date|string|null $date
-     * @param   string $format
+     * @param   \DateTime|string|null $date
+     * @param   int $format
      * @param   bool $showTime
      * @return  string
      */
     public function formatDate(
         $date = null,
-        $format = \Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_SHORT,
+        $format = \IntlDateFormatter::SHORT,
         $showTime = false
     ) {
-        return $this->_localeDate->formatDate($date, $format, $showTime);
+        $date = $date instanceof \DateTimeInterface ? $date : new \DateTime($date);
+        return $this->_localeDate->formatDateTime(
+            $date,
+            $format,
+            $showTime ? $format : \IntlDateFormatter::NONE
+        );
     }
 
     /**
      * Retrieve formatting time
      *
-     * @param   \Zend_Date|string|null $time
-     * @param   string $format
+     * @param   \DateTime|string|null $time
+     * @param   int $format
      * @param   bool $showDate
      * @return  string
      */
     public function formatTime(
         $time = null,
-        $format = \Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_SHORT,
+        $format = \IntlDateFormatter::SHORT,
         $showDate = false
     ) {
-        return $this->_localeDate->formatTime($time, $format, $showDate);
+        $time = $time instanceof \DateTimeInterface ? $time : new \DateTime($time);
+        return $this->_localeDate->formatDateTime(
+            $time,
+            $showDate ? $format : \IntlDateFormatter::NONE,
+            $format
+        );
     }
 
     /**
@@ -860,6 +885,17 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
     public function escapeUrl($data)
     {
         return $this->_escaper->escapeUrl($data);
+    }
+
+    /**
+     * Escape xss in urls
+     *
+     * @param string $data
+     * @return string
+     */
+    public function escapeXssInUrl($data)
+    {
+        return $this->_escaper->escapeXssInUrl($data);
     }
 
     /**
@@ -969,7 +1005,7 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
      */
     protected function _loadCache()
     {
-        if (is_null($this->getCacheLifetime()) || !$this->_cacheState->isEnabled(self::CACHE_GROUP)) {
+        if ($this->getCacheLifetime() === null || !$this->_cacheState->isEnabled(self::CACHE_GROUP)) {
             return false;
         }
         $cacheKey = $this->getCacheKey();
@@ -992,7 +1028,7 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
      */
     protected function _saveCache($data)
     {
-        if (is_null($this->getCacheLifetime()) || !$this->_cacheState->isEnabled(self::CACHE_GROUP)) {
+        if ($this->getCacheLifetime() === null || !$this->_cacheState->isEnabled(self::CACHE_GROUP)) {
             return false;
         }
         $cacheKey = $this->getCacheKey();
@@ -1014,7 +1050,7 @@ abstract class AbstractBlock extends \Magento\Framework\Object implements BlockI
      */
     protected function _getSidPlaceholder($cacheKey = null)
     {
-        if (is_null($cacheKey)) {
+        if ($cacheKey === null) {
             $cacheKey = $this->getCacheKey();
         }
 

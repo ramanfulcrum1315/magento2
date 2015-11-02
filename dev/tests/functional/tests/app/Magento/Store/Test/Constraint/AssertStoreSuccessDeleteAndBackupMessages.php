@@ -15,10 +15,6 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertStoreSuccessDeleteAndBackupMessages extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Success backup message
      */
@@ -27,7 +23,7 @@ class AssertStoreSuccessDeleteAndBackupMessages extends AbstractConstraint
     /**
      * Success store delete message
      */
-    const SUCCESS_DELETE_MESSAGE = 'The store view has been deleted.';
+    const SUCCESS_DELETE_MESSAGE = 'You deleted the store view.';
 
     /**
      * Assert that store success delete and backup messages are present

@@ -14,11 +14,7 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertCustomerGroupSuccessSaveMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
-    const SUCCESS_MESSAGE = 'The customer group has been saved.';
+    const SUCCESS_MESSAGE = 'You saved the customer group.';
 
     /**
      * Assert that success message is displayed after customer group save

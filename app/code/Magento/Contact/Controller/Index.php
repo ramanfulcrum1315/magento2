@@ -5,9 +5,9 @@
  */
 namespace Magento\Contact\Controller;
 
-use Magento\Framework\App\Action\NotFoundException;
+use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Store\ScopeInterface;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * Contact index controller
@@ -50,7 +50,7 @@ class Index extends \Magento\Framework\App\Action\Action
     protected $scopeConfig;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
 
@@ -59,14 +59,14 @@ class Index extends \Magento\Framework\App\Action\Action
      * @param \Magento\Framework\Mail\Template\TransportBuilder $transportBuilder
      * @param \Magento\Framework\Translate\Inline\StateInterface $inlineTranslation
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Mail\Template\TransportBuilder $transportBuilder,
         \Magento\Framework\Translate\Inline\StateInterface $inlineTranslation,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager
     ) {
         parent::__construct($context);
         $this->_transportBuilder = $transportBuilder;
@@ -80,12 +80,12 @@ class Index extends \Magento\Framework\App\Action\Action
      *
      * @param RequestInterface $request
      * @return \Magento\Framework\App\ResponseInterface
-     * @throws \Magento\Framework\App\Action\NotFoundException
+     * @throws \Magento\Framework\Exception\NotFoundException
      */
     public function dispatch(RequestInterface $request)
     {
         if (!$this->scopeConfig->isSetFlag(self::XML_PATH_ENABLED, ScopeInterface::SCOPE_STORE)) {
-            throw new NotFoundException();
+            throw new NotFoundException(__('Page not found.'));
         }
         return parent::dispatch($request);
     }

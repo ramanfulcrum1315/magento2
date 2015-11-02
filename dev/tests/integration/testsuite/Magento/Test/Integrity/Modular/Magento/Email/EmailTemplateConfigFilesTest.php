@@ -26,7 +26,7 @@ class EmailTemplateConfigFilesTest extends \PHPUnit_Framework_TestCase
      */
     public function fileFormatDataProvider()
     {
-        return \Magento\Framework\Test\Utility\Files::init()->getConfigFiles('email_templates.xml');
+        return \Magento\Framework\App\Utility\Files::init()->getConfigFiles('email_templates.xml');
     }
 
     /**
@@ -55,8 +55,8 @@ class EmailTemplateConfigFilesTest extends \PHPUnit_Framework_TestCase
         $emailConfig = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->create(
             'Magento\Email\Model\Template\Config'
         );
-        foreach ($emailConfig->getAvailableTemplates() as $templateId) {
-            $data[$templateId] = [$templateId];
+        foreach ($emailConfig->getAvailableTemplates() as $template) {
+            $data[$template['value']] = [$template['value']];
         }
         return $data;
     }

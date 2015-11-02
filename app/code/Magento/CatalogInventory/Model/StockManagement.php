@@ -67,7 +67,7 @@ class StockManagement implements StockManagementInterface
      * @param string[] $items
      * @param int $websiteId
      * @return StockItemInterface[]
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function registerProductsSale($items, $websiteId = null)
@@ -84,14 +84,14 @@ class StockManagement implements StockManagementInterface
             $orderedQty = $items[$productId];
             $stockItem = $this->stockRegistryProvider->getStockItem($productId, $websiteId);
             $canSubtractQty = $stockItem->getItemId() && $this->canSubtractQty($stockItem);
-            if (!$canSubtractQty || !$this->stockConfiguration->isQty($this->getProductType($productId))) {
+            if (!$canSubtractQty || !$this->stockConfiguration->isQty($lockedItemRecord['type_id'])) {
                 continue;
             }
             if (!$stockItem->hasAdminArea()
                 && !$this->stockState->checkQty($productId, $orderedQty, $stockItem->getWebsiteId())
             ) {
                 $this->getResource()->commit();
-                throw new \Magento\Framework\Model\Exception(
+                throw new \Magento\Framework\Exception\LocalizedException(
                     __('Not all of your products are available in the requested quantity.')
                 );
             }

@@ -28,14 +28,12 @@ class Wishlist extends \Magento\Wishlist\Block\AbstractBlock
     /**
      * @param \Magento\Catalog\Block\Product\Context $context
      * @param \Magento\Framework\App\Http\Context $httpContext
-     * @param \Magento\Catalog\Api\ProductRepositoryInterface $productRepository
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param array $data
      */
     public function __construct(
         \Magento\Catalog\Block\Product\Context $context,
         \Magento\Framework\App\Http\Context $httpContext,
-        \Magento\Catalog\Api\ProductRepositoryInterface $productRepository,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
         array $data = []
     ) {
@@ -43,7 +41,6 @@ class Wishlist extends \Magento\Wishlist\Block\AbstractBlock
         parent::__construct(
             $context,
             $httpContext,
-            $productRepository,
             $data
         );
     }
@@ -68,7 +65,7 @@ class Wishlist extends \Magento\Wishlist\Block\AbstractBlock
      */
     public function getWishlistCustomer()
     {
-        if (is_null($this->_customer)) {
+        if ($this->_customer === null) {
             $this->_customer = $this->customerRepository->getById($this->_getWishlist()->getCustomerId());
         }
 
@@ -78,7 +75,7 @@ class Wishlist extends \Magento\Wishlist\Block\AbstractBlock
     /**
      * Retrieve Page Header
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getHeader()
     {

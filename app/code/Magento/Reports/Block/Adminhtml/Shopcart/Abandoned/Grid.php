@@ -8,6 +8,8 @@ namespace Magento\Reports\Block\Adminhtml\Shopcart\Abandoned;
 /**
  * Adminhtml abandoned shopping carts report grid block
  *
+ * @method \Magento\Reports\Model\Resource\Quote\Collection getCollection
+ *
  * @author      Magento Core Team <core@magentocommerce.com>
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
@@ -64,7 +66,9 @@ class Grid extends \Magento\Reports\Block\Adminhtml\Grid\Shopcart
         }
 
         $this->setCollection($collection);
-        return parent::_prepareCollection();
+        parent::_prepareCollection();
+        $this->getCollection()->resolveCustomerNames();
+        return $this;
     }
 
     /**

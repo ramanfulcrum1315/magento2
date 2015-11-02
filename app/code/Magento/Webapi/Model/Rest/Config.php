@@ -67,7 +67,7 @@ class Config
         /** @var $route \Magento\Webapi\Controller\Rest\Router\Route */
         $route = $this->_routeFactory->createRoute(
             'Magento\Webapi\Controller\Rest\Router\Route',
-            $this->_formatRoutePath($routeData[self::KEY_ROUTE_PATH])
+            $routeData[self::KEY_ROUTE_PATH]
         );
 
         $route->setServiceClass($routeData[self::KEY_CLASS])
@@ -79,25 +79,9 @@ class Config
     }
 
     /**
-     * Lowercase all parts of the given route path except for the path parameters.
-     *
-     * @param string $routePath The route path (e.g. '/V1/Categories/:categoryId')
-     * @return string The modified route path (e.g. '/v1/categories/:categoryId')
-     */
-    protected function _formatRoutePath($routePath)
-    {
-        $routePathParts = explode('/', $routePath);
-        $pathParts = [];
-        foreach ($routePathParts as $pathPart) {
-            $pathParts[] = substr($pathPart, 0, 1) === ":" ? $pathPart : strtolower($pathPart);
-        }
-        return implode('/', $pathParts);
-    }
-
-    /**
      * Get service base URL
      *
-     * @param \Magento\Webapi\Controller\Rest\Request $request
+     * @param \Magento\Framework\Webapi\Rest\Request $request
      * @return string|null
      */
     protected function _getServiceBaseUrl($request)
@@ -111,11 +95,11 @@ class Config
     /**
      * Generate the list of available REST routes. Current HTTP method is taken into account.
      *
-     * @param \Magento\Webapi\Controller\Rest\Request $request
+     * @param \Magento\Framework\Webapi\Rest\Request $request
      * @return Route[] matched routes
-     * @throws \Magento\Webapi\Exception
+     * @throws \Magento\Framework\Webapi\Exception
      */
-    public function getRestRoutes(\Magento\Webapi\Controller\Rest\Request $request)
+    public function getRestRoutes(\Magento\Framework\Webapi\Rest\Request $request)
     {
         $requestHttpMethod = $request->getHttpMethod();
         $servicesRoutes = $this->_config->getServices()[Converter::KEY_ROUTES];

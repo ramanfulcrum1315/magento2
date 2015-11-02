@@ -6,7 +6,7 @@
 
 // @codingStandardsIgnoreFile
 
-require __DIR__ . '/../../../Magento/Core/_files/store.php';
+require __DIR__ . '/../../../Magento/Store/_files/core_fixturestore.php';
 
 require __DIR__ . '/../../../Magento/Catalog/_files/product_simple_duplicated.php';
 /** @var \Magento\Catalog\Model\Product $product */
@@ -33,7 +33,9 @@ $order = $objectManager->create('Magento\Sales\Model\Order');
 $order->setIncrementId(
     '100000004'
 )->setState(
-    \Magento\Sales\Model\Order::STATE_PROCESSING, true
+    \Magento\Sales\Model\Order::STATE_PROCESSING
+)->setStatus(
+    $order->getConfig()->getStateDefaultStatus(\Magento\Sales\Model\Order::STATE_PROCESSING)
 )->setSubtotal(
     100
 )->setBaseSubtotal(
@@ -47,7 +49,7 @@ $order->setIncrementId(
 )->setShippingAddress(
     $shippingAddress
 )->setStoreId(
-    $objectManager->get('Magento\Framework\Store\StoreManagerInterface')->getStore('fixturestore')->getId()
+    $objectManager->get('Magento\Store\Model\StoreManagerInterface')->getStore('fixturestore')->getId()
 )->addItem(
     $orderItem
 )->setPayment(

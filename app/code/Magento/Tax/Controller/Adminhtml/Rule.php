@@ -12,6 +12,7 @@
 namespace Magento\Tax\Controller\Adminhtml;
 
 use Magento\Backend\App\Action;
+use Magento\Framework\Controller\ResultFactory;
 
 class Rule extends \Magento\Backend\App\Action
 {
@@ -25,45 +26,39 @@ class Rule extends \Magento\Backend\App\Action
     /** @var \Magento\Tax\Api\TaxRuleRepositoryInterface */
     protected $ruleService;
 
-    /** @var \Magento\Tax\Api\Data\TaxRuleDataBuilder */
-    protected $ruleBuilder;
+    /** @var \Magento\Tax\Api\Data\TaxRuleInterfaceFactory */
+    protected $taxRuleDataObjectFactory;
 
     /**
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Registry $coreRegistry
      * @param \Magento\Tax\Api\TaxRuleRepositoryInterface $ruleService
-     * @param \Magento\Tax\Api\Data\TaxRuleDataBuilder $ruleBuilder
+     * @param \Magento\Tax\Api\Data\TaxRuleInterfaceFactory $taxRuleDataObjectFactory
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\Registry $coreRegistry,
         \Magento\Tax\Api\TaxRuleRepositoryInterface $ruleService,
-        \Magento\Tax\Api\Data\TaxRuleDataBuilder $ruleBuilder
+        \Magento\Tax\Api\Data\TaxRuleInterfaceFactory $taxRuleDataObjectFactory
     ) {
         $this->_coreRegistry = $coreRegistry;
         $this->ruleService = $ruleService;
-        $this->ruleBuilder = $ruleBuilder;
+        $this->taxRuleDataObjectFactory = $taxRuleDataObjectFactory;
         parent::__construct($context);
     }
 
     /**
      * Initialize action
      *
-     * @return $this
+     * @return \Magento\Backend\Model\View\Result\Page
      */
-    protected function _initAction()
+    protected function initResultPage()
     {
-        $this->_view->loadLayout();
-        $this->_setActiveMenu(
-            'Magento_Tax::sales_tax_rules'
-        )->_addBreadcrumb(
-            __('Tax'),
-            __('Tax')
-        )->_addBreadcrumb(
-            __('Tax Rules'),
-            __('Tax Rules')
-        );
-        return $this;
+        $resultPage = $this->resultFactory->create(ResultFactory::TYPE_PAGE);
+        $resultPage->setActiveMenu('Magento_Tax::sales_tax_rules')
+            ->addBreadcrumb(__('Tax'), __('Tax'))
+            ->addBreadcrumb(__('Tax Rules'), __('Tax Rules'));
+        return $resultPage;
     }
 
     /**
@@ -85,30 +80,31 @@ class Rule extends \Magento\Backend\App\Action
      */
     protected function populateTaxRule($postData)
     {
+        $taxRule = $this->taxRuleDataObjectFactory->create();
         if (isset($postData['tax_calculation_rule_id'])) {
-            $this->ruleBuilder->setId($postData['tax_calculation_rule_id']);
+            $taxRule->setId($postData['tax_calculation_rule_id']);
         }
         if (isset($postData['code'])) {
-            $this->ruleBuilder->setCode($postData['code']);
+            $taxRule->setCode($postData['code']);
         }
         if (isset($postData['tax_rate'])) {
-            $this->ruleBuilder->setTaxRateIds($postData['tax_rate']);
+            $taxRule->setTaxRateIds($postData['tax_rate']);
         }
         if (isset($postData['tax_customer_class'])) {
-            $this->ruleBuilder->setCustomerTaxClassIds($postData['tax_customer_class']);
+            $taxRule->setCustomerTaxClassIds($postData['tax_customer_class']);
         }
         if (isset($postData['tax_product_class'])) {
-            $this->ruleBuilder->setProductTaxClassIds($postData['tax_product_class']);
+            $taxRule->setProductTaxClassIds($postData['tax_product_class']);
         }
         if (isset($postData['priority'])) {
-            $this->ruleBuilder->setPriority($postData['priority']);
+            $taxRule->setPriority($postData['priority']);
         }
         if (isset($postData['calculate_subtotal'])) {
-            $this->ruleBuilder->setCalculateSubtotal($postData['calculate_subtotal']);
+            $taxRule->setCalculateSubtotal($postData['calculate_subtotal']);
         }
         if (isset($postData['position'])) {
-            $this->ruleBuilder->setPosition($postData['position']);
+            $taxRule->setPosition($postData['position']);
         }
-        return $this->ruleBuilder->create();
+        return $taxRule;
     }
 }

@@ -5,19 +5,17 @@
  */
 namespace Magento\Framework\Url;
 
+/**
+ * This ScopeResolverInterface adds the ability to get the Magento area the code is executing in.
+ *
+ * @api
+ */
 interface ScopeResolverInterface extends \Magento\Framework\App\ScopeResolverInterface
 {
     /**
-     * Retrieve scopes array
-     *
-     * @return \Magento\Framework\Url\ScopeInterface[]
-     */
-    public function getScopes();
-
-    /**
      * Retrieve area code
      *
-     * @return \Magento\Framework\Url\ScopeInterface[]
+     * @return string|null
      */
     public function getAreaCode();
 }

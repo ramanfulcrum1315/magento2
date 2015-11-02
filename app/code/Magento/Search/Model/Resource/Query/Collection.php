@@ -23,14 +23,14 @@ class Collection extends \Magento\Framework\Model\Resource\Db\Collection\Abstrac
     /**
      * Store manager
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * Search resource helper
      *
-     * @var \Magento\Search\Model\Resource\Helper
+     * @var \Magento\Framework\DB\Helper
      */
     protected $_resourceHelper;
 
@@ -39,8 +39,8 @@ class Collection extends \Magento\Framework\Model\Resource\Db\Collection\Abstrac
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
-     * @param \Magento\Search\Model\Resource\Helper $resourceHelper
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\DB\Helper $resourceHelper
      * @param \Zend_Db_Adapter_Abstract $connection
      * @param \Magento\Framework\Model\Resource\Db\AbstractDb $resource
      */
@@ -49,8 +49,8 @@ class Collection extends \Magento\Framework\Model\Resource\Db\Collection\Abstrac
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy,
         \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
-        \Magento\Search\Model\Resource\Helper $resourceHelper,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\DB\Helper $resourceHelper,
         $connection = null,
         \Magento\Framework\Model\Resource\Db\AbstractDb $resource = null
     ) {

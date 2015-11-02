@@ -6,7 +6,7 @@
 
 namespace Magento\Wishlist\Test\Constraint;
 
-use Magento\Customer\Test\Fixture\CustomerInjectable;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Customer\Test\Page\Adminhtml\CustomerIndex;
 use Magento\Customer\Test\Page\Adminhtml\CustomerIndexEdit;
 use Magento\Mtf\Constraint\AbstractConstraint;
@@ -19,22 +19,18 @@ use Magento\Mtf\Fixture\InjectableFixture;
  */
 class AssertProductIsPresentInCustomerBackendWishlist extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Assert that products added to wishlist are present on Customers account on backend.
      *
      * @param CustomerIndex $customerIndex
-     * @param CustomerInjectable $customer
+     * @param Customer $customer
      * @param CustomerIndexEdit $customerIndexEdit
      * @param InjectableFixture $product
      * @return void
      */
     public function processAssert(
         CustomerIndex $customerIndex,
-        CustomerInjectable $customer,
+        Customer $customer,
         CustomerIndexEdit $customerIndexEdit,
         InjectableFixture $product
     ) {
@@ -42,10 +38,10 @@ class AssertProductIsPresentInCustomerBackendWishlist extends AbstractConstraint
         $customerIndex->getCustomerGridBlock()->searchAndOpen(['email' => $customer->getEmail()]);
         $customerIndexEdit->getCustomerForm()->openTab('wishlist');
         /** @var \Magento\Wishlist\Test\Block\Adminhtml\Customer\Edit\Tab\Wishlist\Grid $wishlistGrid */
-        $wishlistGrid = $customerIndexEdit->getCustomerForm()->getTabElement('wishlist')->getSearchGridBlock();
+        $wishlistGrid = $customerIndexEdit->getCustomerForm()->getTab('wishlist')->getSearchGridBlock();
 
         \PHPUnit_Framework_Assert::assertTrue(
-            $wishlistGrid->isRowVisible(['product_name' => $product->getName()], true, false),
+            $wishlistGrid->isRowVisible(['product_name' => $product->getName()]),
             $product->getName() . " is not visible in customer wishlist on backend."
         );
     }

@@ -7,12 +7,18 @@ namespace Magento\Framework\Search\Request;
 
 use Magento\Framework\Exception\StateException;
 use Magento\Framework\Search\Request\Query\Filter;
+use Magento\Framework\Phrase;
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Mapper
 {
+    /**
+     * @var QueryInterface
+     */
+    private $rootQuery;
+
     /**
      * @var array
      */
@@ -44,9 +50,9 @@ class Mapper
     private $objectManager;
 
     /**
-     * @var QueryInterface
+     * @var string
      */
-    private $rootQuery = null;
+    private $rootQueryName;
 
     /**
      * @param \Magento\Framework\ObjectManagerInterface $objectManager
@@ -69,26 +75,26 @@ class Mapper
         $this->queries = $queries;
         $this->aggregations = $aggregations;
         $this->filters = $filters;
-
-        $this->rootQuery = $this->get($rootQueryName);
+        $this->rootQueryName = $rootQueryName;
     }
 
     /**
      * Get Query Interface by name
      *
-     * @param string $queryName
      * @return QueryInterface
      * @throws \Exception
      * @throws \InvalidArgumentException
      * @throws StateException
      */
-    private function get($queryName)
+    public function getRootQuery()
     {
-        $this->mappedQueries = [];
-        $this->mappedFilters = [];
-        $query = $this->mapQuery($queryName);
-        $this->validate();
-        return $query;
+        if (!$this->rootQuery) {
+            $this->mappedQueries = [];
+            $this->mappedFilters = [];
+            $this->rootQuery = $this->mapQuery($this->rootQueryName);
+            $this->validate();
+        }
+        return $this->rootQuery;
     }
 
     /**
@@ -106,7 +112,9 @@ class Mapper
         if (!isset($this->queries[$queryName])) {
             throw new \Exception('Query ' . $queryName . ' does not exist');
         } elseif (in_array($queryName, $this->mappedQueries)) {
-            throw new StateException('Cycle found. Query %1 already used in request hierarchy', [$queryName]);
+            throw new StateException(
+                new Phrase('Cycle found. Query %1 already used in request hierarchy', [$queryName])
+            );
         }
         $this->mappedQueries[] = $queryName;
         $query = $this->queries[$queryName];
@@ -173,7 +181,9 @@ class Mapper
         if (!isset($this->filters[$filterName])) {
             throw new \Exception('Filter ' . $filterName . ' does not exist');
         } elseif (in_array($filterName, $this->mappedFilters)) {
-            throw new StateException('Cycle found. Filter %1 already used in request hierarchy', [$filterName]);
+            throw new StateException(
+                new Phrase('Cycle found. Filter %1 already used in request hierarchy', [$filterName])
+            );
         }
         $this->mappedFilters[] = $filterName;
         $filter = $this->filters[$filterName];
@@ -286,7 +296,7 @@ class Mapper
         $allElements = array_keys($elements);
         $notUsedElements = implode(', ', array_diff($allElements, $mappedElements));
         if (!empty($notUsedElements)) {
-            throw new StateException($errorMessage, [$notUsedElements]);
+            throw new StateException(new Phrase($errorMessage, [$notUsedElements]));
         }
     }
 
@@ -297,14 +307,6 @@ class Mapper
     private function validateFilters()
     {
         $this->validateNotUsed($this->filters, $this->mappedFilters, 'Filter %1 is not used in request hierarchy');
-    }
-
-    /**
-     * @return QueryInterface
-     */
-    public function getRootQuery()
-    {
-        return $this->rootQuery;
     }
 
     /**
@@ -348,7 +350,8 @@ class Mapper
                     );
                     break;
                 default:
-                    throw new StateException('Invalid bucket type');
+                    throw new StateException(new Phrase('Invalid bucket type'));
+                    break;
             }
             $buckets[] = $bucket;
         }

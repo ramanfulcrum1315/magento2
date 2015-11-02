@@ -93,8 +93,8 @@ class AccountTest extends \PHPUnit_Framework_TestCase
         $this->assertNotContains('field-confirmation', $result);
         $this->assertNotContains('_accountconfirmation', $result);
 
-        // Prefix is present but empty
-        $this->assertRegExp('/<input id="_accountprefix"[^>]*value=""/', $result);
+        // Prefix is present and not empty
+        $this->assertRegExp('/<input id="_accountprefix"[^>]*value="Mr."/', $result);
 
         // Does not contain send email controls
         $this->assertNotContains('<input id="_accountsendemail"', $result);
@@ -116,7 +116,7 @@ class AccountTest extends \PHPUnit_Framework_TestCase
         $result = $this->accountBlock->initForm()->toHtml();
 
         // Verify confirmation controls are present
-        $this->assertContains('<div class="field field-confirmation "', $result);
+        $this->assertContains('<div class="admin__field field field-confirmation "', $result);
         $this->assertContains('<select id="_accountconfirmation"', $result);
     }
 
@@ -159,7 +159,7 @@ class AccountTest extends \PHPUnit_Framework_TestCase
         $element = $this->accountBlock->getForm()->getElement('firstname');
 
         // Make sure readonly has not been set (is null) or set to false
-        $this->assertTrue(is_null($element->getReadonly()) || !$element->getReadonly());
+        $this->assertTrue($element->getReadonly() === null || !$element->getReadonly());
     }
 
     /**
@@ -167,10 +167,10 @@ class AccountTest extends \PHPUnit_Framework_TestCase
      */
     public function testNewCustomer()
     {
-        /** @var \Magento\Customer\Api\Data\CustomerDataBuilder $customerBuilder */
-        $customerBuilder = $this->objectManager->get('Magento\Customer\Api\Data\CustomerDataBuilder');
+        /** @var \Magento\Customer\Api\Data\CustomerInterfaceFactory $customerFactory */
+        $customerFactory = $this->objectManager->get('Magento\Customer\Api\Data\CustomerInterfaceFactory');
         $customerData = $this->dataObjectProcessor
-            ->buildOutputDataArray($customerBuilder->create(), '\Magento\Customer\Api\Data\CustomerInterface');
+            ->buildOutputDataArray($customerFactory->create(), '\Magento\Customer\Api\Data\CustomerInterface');
         $this->backendSession->setCustomerData(
             ['customer_id' => 0, 'account' => $customerData]
         );

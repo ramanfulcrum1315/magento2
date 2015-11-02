@@ -16,10 +16,6 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertWishlistIsEmpty extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Assert wish list is empty
      *
@@ -29,10 +25,11 @@ class AssertWishlistIsEmpty extends AbstractConstraint
      */
     public function processAssert(CmsIndex $cmsIndex, WishlistIndex $wishlistIndex)
     {
+        $cmsIndex->getCmsPageBlock()->waitPageInit();
         $cmsIndex->getLinksBlock()->openLink("My Wish List");
         \PHPUnit_Framework_Assert::assertTrue(
             $wishlistIndex->getWishlistBlock()->isEmptyBlockVisible(),
-            'Wish list is not empty.'
+            'Wish List is not empty.'
         );
     }
 
@@ -43,6 +40,6 @@ class AssertWishlistIsEmpty extends AbstractConstraint
      */
     public function toString()
     {
-        return 'Wish list is empty.';
+        return 'Wish List is empty.';
     }
 }

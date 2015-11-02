@@ -8,14 +8,14 @@ namespace Magento\Widget\Controller\Adminhtml;
 /**
  * @magentoAppArea adminhtml
  */
-class WidgetTest extends \Magento\Backend\Utility\Controller
+class WidgetTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     /**
      * Partially covers \Magento\Widget\Block\Adminhtml\Widget\Options::_addField()
      */
     public function testLoadOptionsAction()
     {
-        $this->getRequest()->setPost(
+        $this->getRequest()->setPostValue(
             'widget',
             '{"widget_type":"Magento\\\\Cms\\\\Block\\\\Widget\\\\Page\\\\Link","values":{}}'
         );

@@ -27,16 +27,24 @@ class Detail extends \Magento\Backend\Block\Widget\Container
     protected $_coreRegistry = null;
 
     /**
+     * @var \Magento\Sales\Helper\Admin
+     */
+    private $adminHelper;
+
+    /**
      * @param \Magento\Backend\Block\Widget\Context $context
      * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Sales\Helper\Admin $adminHelper
      * @param array $data
      */
     public function __construct(
         \Magento\Backend\Block\Widget\Context $context,
         \Magento\Framework\Registry $registry,
+        \Magento\Sales\Helper\Admin $adminHelper,
         array $data = []
     ) {
         $this->_coreRegistry = $registry;
+        $this->adminHelper = $adminHelper;
         parent::__construct($context, $data);
     }
 
@@ -75,7 +83,7 @@ class Detail extends \Magento\Backend\Block\Widget\Container
     /**
      * Retrieve header text
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getHeaderText()
     {
@@ -84,7 +92,7 @@ class Detail extends \Magento\Backend\Block\Widget\Container
             $this->_txn->getTxnId(),
             $this->formatDate(
                 $this->_txn->getCreatedAt(),
-                \Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_MEDIUM,
+                \IntlDateFormatter::MEDIUM,
                 true
             )
         );
@@ -97,7 +105,10 @@ class Detail extends \Magento\Backend\Block\Widget\Container
      */
     protected function _toHtml()
     {
-        $this->setTxnIdHtml($this->escapeHtml($this->_txn->getTxnId()));
+        $this->setTxnIdHtml($this->adminHelper->escapeHtmlWithLinks(
+            $this->_txn->getHtmlTxnId(),
+            ['a']
+        ));
 
         $this->setParentTxnIdUrlHtml(
             $this->escapeHtml($this->getUrl('sales/transactions/view', ['txn_id' => $this->_txn->getParentId()]))
@@ -119,7 +130,7 @@ class Detail extends \Magento\Backend\Block\Widget\Container
             $this->_txn->getCreatedAt()
         ) ? $this->formatDate(
             $this->_txn->getCreatedAt(),
-            \Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_MEDIUM,
+            \IntlDateFormatter::MEDIUM,
             true
         ) : __(
             'N/A'

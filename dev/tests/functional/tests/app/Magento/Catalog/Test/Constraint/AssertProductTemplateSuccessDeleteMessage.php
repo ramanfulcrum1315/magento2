@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertProductTemplateSuccessDeleteMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'high';
-    /* end tags */
-
     /**
      * Text value to be checked
      */
-    const SUCCESS_DELETE_MESSAGE = 'The attribute set has been removed.';
+    const SUCCESS_DELETE_MESSAGE = 'The product template has been removed.';
 
     /**
      * Assert that after deleting product template success delete message appears

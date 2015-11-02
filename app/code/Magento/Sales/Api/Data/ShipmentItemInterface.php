@@ -10,6 +10,7 @@ namespace Magento\Sales\Api\Data;
  *
  * A shipment is a delivery package that contains products. A shipment document accompanies the shipment. This
  * document lists the products and their quantities in the delivery package. A product is an item in a shipment.
+ * @api
  */
 interface ShipmentItemInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
@@ -68,28 +69,36 @@ interface ShipmentItemInterface extends \Magento\Framework\Api\ExtensibleDataInt
     /**
      * Gets the additional data for the shipment item.
      *
-     * @return string Additional data.
+     * @return string|null Additional data.
      */
     public function getAdditionalData();
 
     /**
      * Gets the description for the shipment item.
      *
-     * @return string Description.
+     * @return string|null Description.
      */
     public function getDescription();
 
     /**
      * Gets the ID for the shipment item.
      *
-     * @return int Shipment item ID.
+     * @return int|null Shipment item ID.
      */
     public function getEntityId();
 
     /**
+     * Sets entity ID.
+     *
+     * @param int $entityId
+     * @return $this
+     */
+    public function setEntityId($entityId);
+
+    /**
      * Gets the name for the shipment item.
      *
-     * @return string Name.
+     * @return string|null Name.
      */
     public function getName();
 
@@ -103,21 +112,21 @@ interface ShipmentItemInterface extends \Magento\Framework\Api\ExtensibleDataInt
     /**
      * Gets the parent ID for the shipment item.
      *
-     * @return int Parent ID.
+     * @return int|null Parent ID.
      */
     public function getParentId();
 
     /**
      * Gets the price for the shipment item.
      *
-     * @return float Price.
+     * @return float|null Price.
      */
     public function getPrice();
 
     /**
      * Gets the product ID for the shipment item.
      *
-     * @return int Product ID.
+     * @return int|null Product ID.
      */
     public function getProductId();
 
@@ -131,21 +140,124 @@ interface ShipmentItemInterface extends \Magento\Framework\Api\ExtensibleDataInt
     /**
      * Gets the row total for the shipment item.
      *
-     * @return float Row total.
+     * @return float|null Row total.
      */
     public function getRowTotal();
 
     /**
      * Gets the SKU for the shipment item.
      *
-     * @return string SKU.
+     * @return string|null SKU.
      */
     public function getSku();
 
     /**
      * Gets the weight for the shipment item.
      *
-     * @return float Weight.
+     * @return float|null Weight.
      */
     public function getWeight();
+
+    /**
+     * Sets the parent ID for the shipment item.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setParentId($id);
+
+    /**
+     * Sets the row total for the shipment item.
+     *
+     * @param float $amount
+     * @return $this
+     */
+    public function setRowTotal($amount);
+
+    /**
+     * Sets the price for the shipment item.
+     *
+     * @param float $price
+     * @return $this
+     */
+    public function setPrice($price);
+
+    /**
+     * Sets the weight for the shipment item.
+     *
+     * @param float $weight
+     * @return $this
+     */
+    public function setWeight($weight);
+
+    /**
+     * Sets the quantity for the shipment item.
+     *
+     * @param float $qty
+     * @return $this
+     */
+    public function setQty($qty);
+
+    /**
+     * Sets the product ID for the shipment item.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setProductId($id);
+
+    /**
+     * Sets the order item ID for the shipment item.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setOrderItemId($id);
+
+    /**
+     * Sets the additional data for the shipment item.
+     *
+     * @param string $additionalData
+     * @return $this
+     */
+    public function setAdditionalData($additionalData);
+
+    /**
+     * Sets the description for the shipment item.
+     *
+     * @param string $description
+     * @return $this
+     */
+    public function setDescription($description);
+
+    /**
+     * Sets the name for the shipment item.
+     *
+     * @param string $name
+     * @return $this
+     */
+    public function setName($name);
+
+    /**
+     * Sets the SKU for the shipment item.
+     *
+     * @param string $sku
+     * @return $this
+     */
+    public function setSku($sku);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Sales\Api\Data\ShipmentItemExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentItemExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(\Magento\Sales\Api\Data\ShipmentItemExtensionInterface $extensionAttributes);
 }

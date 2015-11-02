@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertChangePasswordFailMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Fail message
      */
-    const FAIL_MESSAGE = "Password doesn't match for this account.";
+    const FAIL_MESSAGE = 'The password doesn\'t match this account.';
 
     /**
      * Assert that fail message is present

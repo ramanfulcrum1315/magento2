@@ -13,11 +13,6 @@ use Magento\Framework\View\Result\PageFactory;
 class Gallery extends \Magento\Catalog\Controller\Product
 {
     /**
-     * @var Result\Redirect
-     */
-    protected $resultRedirectFactory;
-
-    /**
      * @var Result\ForwardFactory
      */
     protected $resultForwardFactory;
@@ -31,17 +26,14 @@ class Gallery extends \Magento\Catalog\Controller\Product
      * Constructor
      *
      * @param Context $context
-     * @param Result\RedirectFactory $resultRedirectFactory
      * @param Result\ForwardFactory $resultForwardFactory
      * @param PageFactory $resultPageFactory
      */
     public function __construct(
         Context $context,
-        Result\RedirectFactory $resultRedirectFactory,
         Result\ForwardFactory $resultForwardFactory,
         PageFactory $resultPageFactory
     ) {
-        $this->resultRedirectFactory = $resultRedirectFactory;
         $this->resultForwardFactory = $resultForwardFactory;
         $this->resultPageFactory = $resultPageFactory;
         parent::__construct($context);
@@ -56,7 +48,8 @@ class Gallery extends \Magento\Catalog\Controller\Product
     {
         $result = null;
         if (!$this->_initProduct()) {
-            if (isset($_GET['store']) && !$this->getResponse()->isRedirect()) {
+            $store = $this->getRequest()->getQuery('store');
+            if (isset($store) && !$this->getResponse()->isRedirect()) {
                 $result = $this->resultRedirectFactory->create();
                 $result->setPath('');
             } elseif (!$this->getResponse()->isRedirect()) {

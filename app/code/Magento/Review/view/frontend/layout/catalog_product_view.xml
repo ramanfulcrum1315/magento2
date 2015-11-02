@@ -6,9 +6,10 @@
  */
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../../lib/internal/Magento/Framework/View/Layout/etc/page_configuration.xsd">
+    <update handle="review_product_form_component"/>
     <body>
         <referenceContainer name="content">
-            <block class="Magento\Core\Block\RequireCookie" name="require-cookie" template="Magento_Core::require_cookie.phtml">
+            <block class="Magento\Cookie\Block\RequireCookie" name="require-cookie" template="Magento_Cookie::require_cookie.phtml">
                 <arguments>
                     <argument name="triggers" xsi:type="array">
                         <item name="submitReviewButton" xsi:type="string">.review .action.submit</item>

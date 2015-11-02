@@ -24,7 +24,7 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
     protected $_menuConfig;
 
     /**
-     * @var \Magento\Backend\Model\Config\Structure
+     * @var \Magento\Config\Model\Config\Structure
      */
     protected $_configStructure;
 
@@ -46,9 +46,9 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
     protected $_jsonEncoder;
 
     /**
-     * @var \Magento\Core\Helper\Data
+     * @var \Magento\Framework\Json\Helper\Data
      */
-    protected $_coreHelper;
+    protected $jsonHelper;
 
     /**
      * @var \Magento\Backend\Block\Widget\Button\ButtonList
@@ -65,9 +65,9 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
      * @param \Magento\Framework\Json\EncoderInterface $jsonEncoder
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Backend\Model\Menu\Config $menuConfig
-     * @param \Magento\Backend\Model\Config\Structure $configStructure
+     * @param \Magento\Config\Model\Config\Structure $configStructure
      * @param \Magento\Email\Model\Template\Config $emailConfig
-     * @param \Magento\Core\Helper\Data $coreHelper
+     * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Magento\Backend\Block\Widget\Button\ButtonList $buttonList
      * @param \Magento\Backend\Block\Widget\Button\ToolbarInterface $toolbar
      * @param array $data
@@ -79,14 +79,14 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
         \Magento\Framework\Json\EncoderInterface $jsonEncoder,
         \Magento\Framework\Registry $registry,
         \Magento\Backend\Model\Menu\Config $menuConfig,
-        \Magento\Backend\Model\Config\Structure $configStructure,
+        \Magento\Config\Model\Config\Structure $configStructure,
         \Magento\Email\Model\Template\Config $emailConfig,
-        \Magento\Core\Helper\Data $coreHelper,
+        \Magento\Framework\Json\Helper\Data $jsonHelper,
         \Magento\Backend\Block\Widget\Button\ButtonList $buttonList,
         \Magento\Backend\Block\Widget\Button\ToolbarInterface $toolbar,
         array $data = []
     ) {
-        $this->_coreHelper = $coreHelper;
+        $this->jsonHelper = $jsonHelper;
         $this->_jsonEncoder = $jsonEncoder;
         $this->_registryManager = $registry;
         $this->_menuConfig = $menuConfig;
@@ -250,14 +250,10 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
      */
     protected function _getDefaultTemplatesAsOptionsArray()
     {
-        $options = [['value' => '', 'label' => '', 'group' => '']];
-        foreach ($this->_emailConfig->getAvailableTemplates() as $templateId) {
-            $options[] = [
-                'value' => $templateId,
-                'label' => $this->_emailConfig->getTemplateLabel($templateId),
-                'group' => $this->_emailConfig->getTemplateModule($templateId),
-            ];
-        }
+        $options = array_merge(
+            [['value' => '', 'label' => '', 'group' => '']],
+            $this->_emailConfig->getAvailableTemplates()
+        );
         uasort(
             $options,
             function (array $firstElement, array $secondElement) {
@@ -290,7 +286,7 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
     /**
      * Return header text for form
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getHeaderText()
     {
@@ -371,34 +367,16 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
     }
 
     /**
-     * Get paths of where current template is used as default
-     *
-     * @param bool $asJSON
-     * @return string
-     */
-    public function getUsedDefaultForPaths($asJSON = true)
-    {
-        /** @var $template \Magento\Email\Model\BackendTemplate */
-        $template = $this->getEmailTemplate();
-        $paths = $template->getSystemConfigPathsWhereUsedAsDefault();
-        $pathsParts = $this->_getSystemConfigPathsParts($paths);
-        if ($asJSON) {
-            return $this->_coreHelper->jsonEncode($pathsParts);
-        }
-        return $pathsParts;
-    }
-
-    /**
      * Get paths of where current template is currently used
      *
      * @param bool $asJSON
      * @return string
      */
-    public function getUsedCurrentlyForPaths($asJSON = true)
+    public function getCurrentlyUsedForPaths($asJSON = true)
     {
         /** @var $template \Magento\Email\Model\BackendTemplate */
         $template = $this->getEmailTemplate();
-        $paths = $template->getSystemConfigPathsWhereUsedCurrently();
+        $paths = $template->getSystemConfigPathsWhereCurrentlyUsed();
         $pathsParts = $this->_getSystemConfigPathsParts($paths);
         if ($asJSON) {
             return $this->_jsonEncoder->encode($pathsParts);
@@ -416,14 +394,14 @@ class Edit extends \Magento\Backend\Block\Widget implements \Magento\Backend\Blo
     protected function _getSystemConfigPathsParts($paths)
     {
         $result = $urlParams = $prefixParts = [];
-        $scopeLabel = __('GLOBAL');
+        $scopeLabel = __('Default Config');
         if ($paths) {
             /** @var $menu \Magento\Backend\Model\Menu */
             $menu = $this->_menuConfig->getMenu();
             $item = $menu->get('Magento_Backend::stores');
             // create prefix path parts
             $prefixParts[] = ['title' => __($item->getTitle())];
-            $item = $menu->get('Magento_Backend::system_config');
+            $item = $menu->get('Magento_Config::system_config');
             $prefixParts[] = [
                 'title' => __($item->getTitle()),
                 'url' => $this->getUrl('adminhtml/system_config/'),

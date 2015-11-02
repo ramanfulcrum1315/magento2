@@ -234,7 +234,7 @@ class Config
         if (empty($this->metadata['media_type'])) {
             $this->metadata['media_type'] = $this->scopeConfig->getValue(
                 'design/head/default_media_type',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
         }
         return $this->metadata['media_type'];
@@ -260,7 +260,7 @@ class Config
         if (empty($this->metadata['charset'])) {
             $this->metadata['charset'] = $this->scopeConfig->getValue(
                 'design/head/default_charset',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
         }
         return $this->metadata['charset'];
@@ -286,7 +286,7 @@ class Config
         if (empty($this->metadata['description'])) {
             $this->metadata['description'] = $this->scopeConfig->getValue(
                 'design/head/default_description',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
         }
         return $this->metadata['description'];
@@ -312,7 +312,7 @@ class Config
         if (empty($this->metadata['keywords'])) {
             $this->metadata['keywords'] = $this->scopeConfig->getValue(
                 'design/head/default_keywords',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
         }
         return $this->metadata['keywords'];
@@ -338,7 +338,7 @@ class Config
         if (empty($this->metadata['robots'])) {
             $this->metadata['robots'] = $this->scopeConfig->getValue(
                 'design/search_engine_robots/default_robots',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
         }
         return $this->metadata['robots'];
@@ -433,13 +433,15 @@ class Config
      * @param string $attribute
      * @param mixed $value
      * @return $this
-     * @throws \Magento\Framework\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function setElementAttribute($elementType, $attribute, $value)
     {
         $this->build();
         if (array_search($elementType, $this->allowedTypes) === false) {
-            throw new \Magento\Framework\Exception($elementType . ' isn\'t allowed');
+            throw new \Magento\Framework\Exception\LocalizedException(
+                new \Magento\Framework\Phrase('%1 isn\'t allowed', [$elementType])
+            );
         }
         $this->elements[$elementType][$attribute] = $value;
         return $this;
@@ -516,7 +518,7 @@ class Config
         if (empty($this->includes)) {
             $this->includes = $this->scopeConfig->getValue(
                 'design/head/includes',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
         }
         return $this->includes;

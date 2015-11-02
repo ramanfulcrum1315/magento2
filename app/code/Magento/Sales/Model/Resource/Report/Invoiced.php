@@ -25,17 +25,12 @@ class Invoiced extends AbstractReport
     /**
      * Aggregate Invoiced data
      *
-     * @param string|int|\Zend_Date|array|null $from
-     * @param string|int|\Zend_Date|array|null $to
+     * @param string|int|\DateTime|array|null $from
+     * @param string|int|\DateTime|array|null $to
      * @return $this
      */
     public function aggregate($from = null, $to = null)
     {
-        // convert input dates to UTC to be comparable with DATETIME fields in DB
-        $from = $this->_dateToUtc($from);
-        $to = $this->_dateToUtc($to);
-
-        $this->_checkDates($from, $to);
         $this->_aggregateByOrderCreatedAt($from, $to);
         $this->_aggregateByInvoiceCreatedAt($from, $to);
 
@@ -77,7 +72,7 @@ class Invoiced extends AbstractReport
             }
 
             $this->_clearTableByDateRange($table, $from, $to, $subSelect);
-            // convert dates from UTC to current admin timezone
+            // convert dates to current admin timezone
             $periodExpr = $adapter->getDatePartSql(
                 $this->getStoreTZOffsetQuery(
                     ['source_table' => $sourceTable],
@@ -188,7 +183,7 @@ class Invoiced extends AbstractReport
         }
 
         $this->_clearTableByDateRange($table, $from, $to, $subSelect);
-        // convert dates from UTC to current admin timezone
+        // convert dates to current admin timezone
         $periodExpr = $adapter->getDatePartSql($this->getStoreTZOffsetQuery($sourceTable, 'created_at', $from, $to));
 
         $columns = [

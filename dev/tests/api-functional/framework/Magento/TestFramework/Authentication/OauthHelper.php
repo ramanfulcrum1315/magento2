@@ -11,6 +11,7 @@ use Magento\TestFramework\Authentication\Rest\OauthClient;
 use Magento\TestFramework\Helper\Bootstrap;
 use OAuth\Common\Consumer\Credentials;
 use Zend\Stdlib\Exception\LogicException;
+use Magento\Integration\Model\Integration;
 
 class OauthHelper
 {
@@ -35,13 +36,13 @@ class OauthHelper
     {
         $integration = self::_createIntegration('all');
         $objectManager = Bootstrap::getObjectManager();
-        /** @var $oauthService \Magento\Integration\Service\V1\Oauth */
-        $oauthService = $objectManager->get('Magento\Integration\Service\V1\Oauth');
+        /** @var $oauthService \Magento\Integration\Api\OauthServiceInterface */
+        $oauthService = $objectManager->get('Magento\Integration\Api\OauthServiceInterface');
         $consumer = $oauthService->loadConsumer($integration->getConsumerId());
         $url = TESTS_BASE_URL;
         $consumer->setCallbackUrl($url);
         $consumer->setRejectedCallbackUrl($url);
-        if (!is_null($date)) {
+        if ($date !== null) {
             $consumer->setCreatedAt($date);
         }
         $consumer->save();
@@ -93,6 +94,7 @@ class OauthHelper
      * Create an access token, tied to integration which has permissions to all API resources in the system.
      *
      * @param array $resources list of resources to grant to the integration
+     * @param \Magento\Integration\Model\Integration|null $integrationModel
      * @return array
      * <pre>
      * array (
@@ -104,13 +106,13 @@ class OauthHelper
      * </pre>
      * @throws LogicException
      */
-    public static function getApiAccessCredentials($resources = null)
+    public static function getApiAccessCredentials($resources = null, Integration $integrationModel = null)
     {
         if (!self::$_apiCredentials) {
-            $integration = self::_createIntegration($resources);
+            $integration = $integrationModel === null ? self::_createIntegration($resources) : $integrationModel;
             $objectManager = Bootstrap::getObjectManager();
-            /** @var \Magento\Integration\Service\V1\Oauth $oauthService */
-            $oauthService = $objectManager->get('Magento\Integration\Service\V1\Oauth');
+            /** @var \Magento\Integration\Api\OauthServiceInterface $oauthService */
+            $oauthService = $objectManager->get('Magento\Integration\Api\OauthServiceInterface');
             $oauthService->createAccessToken($integration->getConsumerId());
             $accessToken = $oauthService->getAccessToken($integration->getConsumerId());
             if (!$accessToken) {
@@ -173,8 +175,8 @@ class OauthHelper
     protected static function _createIntegration($resources)
     {
         $objectManager = Bootstrap::getObjectManager();
-        /** @var $integrationService \Magento\Integration\Service\V1\IntegrationInterface */
-        $integrationService = $objectManager->get('Magento\Integration\Service\V1\IntegrationInterface');
+        /** @var $integrationService \Magento\Integration\Api\IntegrationServiceInterface */
+        $integrationService = $objectManager->get('Magento\Integration\Api\IntegrationServiceInterface');
 
         $params = ['name' => 'Integration' . microtime()];
 
@@ -187,7 +189,7 @@ class OauthHelper
         $integration->setStatus(\Magento\Integration\Model\Integration::STATUS_ACTIVE)->save();
 
         /** Magento cache must be cleared to activate just created ACL role. */
-        $varPath = realpath('../../../var');
+        $varPath = realpath(BP . '/var');
         if (!$varPath) {
             throw new LogicException("Magento cache cannot be cleared after new ACL role creation.");
         } else {

@@ -63,11 +63,11 @@ class Save extends \Magento\Newsletter\Controller\Adminhtml\Template
 
             $this->_redirect('*/template');
             return;
-        } catch (\Magento\Framework\Model\Exception $e) {
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->messageManager->addError(nl2br($e->getMessage()));
             $this->_getSession()->setData('newsletter_template_form_data', $this->getRequest()->getParams());
         } catch (\Exception $e) {
-            $this->messageManager->addException($e, __('An error occurred while saving this template.'));
+            $this->messageManager->addException($e, __('Something went wrong while saving this template.'));
             $this->_getSession()->setData('newsletter_template_form_data', $this->getRequest()->getParams());
         }
 

@@ -6,6 +6,7 @@
 namespace Magento\Downloadable\Model\Product;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface;
 
 /**
  * Downloadable product type model
@@ -60,14 +61,18 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
     private $typeHandler;
 
     /**
+     * @var JoinProcessorInterface
+     */
+    private $extensionAttributesJoinProcessor;
+
+    /**
      * Construct
      *
      * @param \Magento\Catalog\Model\Product\Option $catalogProductOption
      * @param \Magento\Eav\Model\Config $eavConfig
      * @param \Magento\Catalog\Model\Product\Type $catalogProductType
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
-     * @param \Magento\Core\Helper\Data $coreData
-     * @param \Magento\Core\Helper\File\Storage\Database $fileStorageDb
+     * @param \Magento\MediaStorage\Helper\File\Storage\Database $fileStorageDb
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\Framework\Registry $coreRegistry
      * @param \Psr\Log\LoggerInterface $logger
@@ -79,6 +84,7 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
      * @param \Magento\Downloadable\Model\SampleFactory $sampleFactory
      * @param \Magento\Downloadable\Model\LinkFactory $linkFactory
      * @param TypeHandler\TypeHandlerInterface $typeHandler
+     * @param JoinProcessorInterface $extensionAttributesJoinProcessor
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -86,8 +92,7 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
         \Magento\Eav\Model\Config $eavConfig,
         \Magento\Catalog\Model\Product\Type $catalogProductType,
         \Magento\Framework\Event\ManagerInterface $eventManager,
-        \Magento\Core\Helper\Data $coreData,
-        \Magento\Core\Helper\File\Storage\Database $fileStorageDb,
+        \Magento\MediaStorage\Helper\File\Storage\Database $fileStorageDb,
         \Magento\Framework\Filesystem $filesystem,
         \Magento\Framework\Registry $coreRegistry,
         \Psr\Log\LoggerInterface $logger,
@@ -98,7 +103,8 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
         \Magento\Downloadable\Model\Resource\Sample\CollectionFactory $samplesFactory,
         \Magento\Downloadable\Model\SampleFactory $sampleFactory,
         \Magento\Downloadable\Model\LinkFactory $linkFactory,
-        \Magento\Downloadable\Model\Product\TypeHandler\TypeHandlerInterface $typeHandler
+        \Magento\Downloadable\Model\Product\TypeHandler\TypeHandlerInterface $typeHandler,
+        JoinProcessorInterface $extensionAttributesJoinProcessor
     ) {
         $this->_sampleResFactory = $sampleResFactory;
         $this->_linkResource = $linkResource;
@@ -107,12 +113,12 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
         $this->_sampleFactory = $sampleFactory;
         $this->_linkFactory = $linkFactory;
         $this->typeHandler = $typeHandler;
+        $this->extensionAttributesJoinProcessor = $extensionAttributesJoinProcessor;
         parent::__construct(
             $catalogProductOption,
             $eavConfig,
             $catalogProductType,
             $eventManager,
-            $coreData,
             $fileStorageDb,
             $filesystem,
             $coreRegistry,
@@ -129,18 +135,19 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
      */
     public function getLinks($product)
     {
-        if (is_null($product->getDownloadableLinks())) {
-            $_linkCollection = $this->_linksFactory->create()->addProductToFilter(
+        if ($product->getDownloadableLinks() === null) {
+            /** @var \Magento\Downloadable\Model\Resource\Link\Collection $linkCollection */
+            $linkCollection = $this->_linksFactory->create()->addProductToFilter(
                 $product->getId()
             )->addTitleToResult(
                 $product->getStoreId()
             )->addPriceToResult(
                 $product->getStore()->getWebsiteId()
             );
+            $this->extensionAttributesJoinProcessor->process($linkCollection);
             $linksCollectionById = [];
-            foreach ($_linkCollection as $link) {
+            foreach ($linkCollection as $link) {
                 /* @var \Magento\Downloadable\Model\Link $link */
-
                 $link->setProduct($product);
                 $linksCollectionById[$link->getId()] = $link;
             }
@@ -205,13 +212,14 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
      */
     public function getSamples($product)
     {
-        if (is_null($product->getDownloadableSamples())) {
-            $_sampleCollection = $this->_samplesFactory->create()->addProductToFilter(
+        if ($product->getDownloadableSamples() === null) {
+            $sampleCollection = $this->_samplesFactory->create()->addProductToFilter(
                 $product->getId()
             )->addTitleToResult(
                 $product->getStoreId()
             );
-            $product->setDownloadableSamples($_sampleCollection);
+            $this->extensionAttributesJoinProcessor->process($sampleCollection);
+            $product->setDownloadableSamples($sampleCollection);
         }
 
         return $product->getDownloadableSamples();
@@ -253,7 +261,7 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
      *
      * @param \Magento\Catalog\Model\Product $product
      * @return $this
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function checkProductBuyState($product)
     {
@@ -267,7 +275,7 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
                     $buyRequest->setLinks($allLinksIds);
                     $product->addCustomOption('info_buyRequest', serialize($buyRequest->getData()));
                 } else {
-                    throw new \Magento\Framework\Model\Exception(__('Please specify product link(s).'));
+                    throw new \Magento\Framework\Exception\LocalizedException(__('Please specify product link(s).'));
                 }
             }
         }
@@ -446,7 +454,7 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
      * @param \Magento\Framework\Object $buyRequest
      * @param \Magento\Catalog\Model\Product $product
      * @param string $processMode
-     * @return array|string
+     * @return \Magento\Framework\Phrase|array|string
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
@@ -485,7 +493,7 @@ class Type extends \Magento\Catalog\Model\Product\Type\Virtual
             return $result;
         }
         if ($this->getLinkSelectionRequired($product) && $this->_isStrictProcessMode($processMode)) {
-            return __('Please specify product link(s).');
+            return __('Please specify product link(s).')->render();
         }
         return $result;
     }

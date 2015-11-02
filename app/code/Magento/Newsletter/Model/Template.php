@@ -37,13 +37,6 @@ namespace Magento\Newsletter\Model;
 class Template extends \Magento\Email\Model\AbstractTemplate
 {
     /**
-     * Template Text Preprocessed flag
-     *
-     * @var bool
-     */
-    protected $_preprocessFlag = false;
-
-    /**
      * Mail object
      *
      * @var \Zend_Mail
@@ -53,7 +46,7 @@ class Template extends \Magento\Email\Model\AbstractTemplate
     /**
      * Store manager to emulate design
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -65,42 +58,27 @@ class Template extends \Magento\Email\Model\AbstractTemplate
     protected $_request;
 
     /**
-     * Filter for newsletter text
+     * Filter factory
      *
-     * @var \Magento\Newsletter\Model\Template\Filter
+     * @var \Magento\Newsletter\Model\Template\FilterFactory
      */
-    protected $_templateFilter;
-
-    /**
-     * Core store config
-     *
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
-    protected $_scopeConfig;
-
-    /**
-     * Template factory
-     *
-     * @var \Magento\Newsletter\Model\TemplateFactory
-     */
-    protected $_templateFactory;
-
-    /**
-     * @var \Magento\Framework\Filter\FilterManager
-     */
-    protected $_filterManager;
+    protected $_filterFactory;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\View\DesignInterface $design
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Store\Model\App\Emulation $appEmulation
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\App\RequestInterface $request
-     * @param \Magento\Newsletter\Model\Template\Filter $filter
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\View\Asset\Repository $assetRepo
+     * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Newsletter\Model\TemplateFactory $templateFactory
-     * @param \Magento\Framework\Filter\FilterManager $filterManager
+     * @param \Magento\Email\Model\Template\Config $emailConfig
+     * @param \Magento\Email\Model\TemplateFactory $templateFactory The template directive requires an email
+     *        template model, not newsletter model, as templates overridden in backend are loaded from email table.
+     * @param \Magento\Framework\Url $urlModel
+     * @param \Magento\Framework\App\RequestInterface $request
+     * @param \Magento\Newsletter\Model\Template\FilterFactory $filterFactory,
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -109,21 +87,34 @@ class Template extends \Magento\Email\Model\AbstractTemplate
         \Magento\Framework\View\DesignInterface $design,
         \Magento\Framework\Registry $registry,
         \Magento\Store\Model\App\Emulation $appEmulation,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
-        \Magento\Framework\App\RequestInterface $request,
-        \Magento\Newsletter\Model\Template\Filter $filter,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\View\Asset\Repository $assetRepo,
+        \Magento\Framework\Filesystem $filesystem,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Newsletter\Model\TemplateFactory $templateFactory,
-        \Magento\Framework\Filter\FilterManager $filterManager,
+        \Magento\Email\Model\Template\Config $emailConfig,
+        \Magento\Email\Model\TemplateFactory $templateFactory,
+        \Magento\Framework\UrlInterface $urlModel,
+        \Magento\Framework\App\RequestInterface $request,
+        \Magento\Newsletter\Model\Template\FilterFactory $filterFactory,
         array $data = []
     ) {
-        parent::__construct($context, $design, $registry, $appEmulation, $storeManager, $data);
+        parent::__construct(
+            $context,
+            $design,
+            $registry,
+            $appEmulation,
+            $storeManager,
+            $assetRepo,
+            $filesystem,
+            $scopeConfig,
+            $emailConfig,
+            $templateFactory,
+            $urlModel,
+            $data
+        );
         $this->_storeManager = $storeManager;
         $this->_request = $request;
-        $this->_filter = $filter;
-        $this->_scopeConfig = $scopeConfig;
-        $this->_templateFactory = $templateFactory;
-        $this->_filterManager = $filterManager;
+        $this->_filterFactory = $filterFactory;
     }
 
     /**
@@ -140,7 +131,7 @@ class Template extends \Magento\Email\Model\AbstractTemplate
      * Validate Newsletter template
      *
      * @return void
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function validate()
     {
@@ -168,7 +159,7 @@ class Template extends \Magento\Email\Model\AbstractTemplate
                 }
             }
 
-            throw new \Magento\Framework\Model\Exception(join("\n", $errorMessages));
+            throw new \Magento\Framework\Exception\LocalizedException(__(join("\n", $errorMessages)));
         }
     }
 
@@ -184,18 +175,6 @@ class Template extends \Magento\Email\Model\AbstractTemplate
     }
 
     /**
-     * Load template by code
-     *
-     * @param string $templateCode
-     * @return $this
-     */
-    public function loadByCode($templateCode)
-    {
-        $this->_getResource()->loadByCode($this, $templateCode);
-        return $this;
-    }
-
-    /**
      * Getter for template type
      *
      * @return int|string
@@ -206,92 +185,6 @@ class Template extends \Magento\Email\Model\AbstractTemplate
     }
 
     /**
-     * Check is Preprocessed
-     *
-     * @return bool
-     */
-    public function isPreprocessed()
-    {
-        return strlen($this->getTemplateTextPreprocessed()) > 0;
-    }
-
-    /**
-     * Check Template Text Preprocessed
-     *
-     * @return bool
-     * @SuppressWarnings(PHPMD.BooleanGetMethodName)
-     */
-    public function getTemplateTextPreprocessed()
-    {
-        if ($this->_preprocessFlag) {
-            $this->setTemplateTextPreprocessed($this->getProcessedTemplate());
-        }
-
-        return $this->getData('template_text_preprocessed');
-    }
-
-    /**
-     * Retrieve processed template
-     *
-     * @param array $variables
-     * @param bool $usePreprocess
-     * @return string
-     */
-    public function getProcessedTemplate(array $variables = [], $usePreprocess = false)
-    {
-        if (!$this->_preprocessFlag) {
-            $variables['this'] = $this;
-        }
-
-        if ($this->_storeManager->hasSingleStore()) {
-            $this->_filter->setStoreId($this->_storeManager->getStore()->getId());
-        } else {
-            $this->_filter->setStoreId($this->_request->getParam('store_id'));
-        }
-
-        $this->_filter->setIncludeProcessor([$this, 'getInclude'])->setVariables($variables);
-
-        if ($usePreprocess && $this->isPreprocessed()) {
-            return $this->_filter->filter($this->getPreparedTemplateText(true));
-        }
-
-        return $this->_filter->filter($this->getPreparedTemplateText());
-    }
-
-    /**
-     * Makes additional text preparations for HTML templates
-     *
-     * @param bool $usePreprocess Use Preprocessed text or original text
-     * @return string
-     */
-    public function getPreparedTemplateText($usePreprocess = false)
-    {
-        $text = $usePreprocess ? $this->getTemplateTextPreprocessed() : $this->getTemplateText();
-
-        if ($this->_preprocessFlag || $this->isPlain() || !$this->getTemplateStyles()) {
-            return $text;
-        }
-        // wrap styles into style tag
-        $html = "<style type=\"text/css\">\n%s\n</style>\n%s";
-        return sprintf($html, $this->getTemplateStyles(), $text);
-    }
-
-    /**
-     * Retrieve included template
-     *
-     * @param string $templateCode
-     * @param array $variables
-     * @return string
-     */
-    public function getInclude($templateCode, array $variables)
-    {
-        /** @var \Magento\Newsletter\Model\Template $template */
-        $template = $this->_templateFactory->create();
-        $template->loadByCode($templateCode)->getProcessedTemplate($variables);
-        return $template;
-    }
-
-    /**
      * Retrieve processed template subject
      *
      * @param array $variables
@@ -299,10 +192,11 @@ class Template extends \Magento\Email\Model\AbstractTemplate
      */
     public function getProcessedTemplateSubject(array $variables)
     {
-        if (!$this->_preprocessFlag) {
-            $variables['this'] = $this;
-        }
-        return $this->_filterManager->template($this->getTemplateSubject(), ['variables' => $variables]);
+        $variables['this'] = $this;
+
+        return $this->getTemplateFilter()
+            ->setVariables($variables)
+            ->filter($this->getTemplateSubject());
     }
 
     /**
@@ -327,15 +221,23 @@ class Template extends \Magento\Email\Model\AbstractTemplate
     }
 
     /**
+     * @return \Magento\Newsletter\Model\Template\FilterFactory
+     */
+    protected function getFilterFactory()
+    {
+        return $this->_filterFactory;
+    }
+
+    /**
      * Check if template can be added to newsletter queue
      *
      * @return boolean
      */
     public function isValidForSend()
     {
-        return !$this->_scopeConfig->isSetFlag(
+        return !$this->scopeConfig->isSetFlag(
             \Magento\Email\Model\Template::XML_PATH_SYSTEM_SMTP_DISABLE,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         ) && $this->getTemplateSenderName() && $this->getTemplateSenderEmail() && $this->getTemplateSubject();
     }
 }

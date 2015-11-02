@@ -78,7 +78,7 @@ class Url extends \Magento\Framework\Model\Resource\Db\AbstractDb
     /**
      * Store manager
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -88,27 +88,29 @@ class Url extends \Magento\Framework\Model\Resource\Db\AbstractDb
     protected $productResource;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Eav\Model\Config $eavConfig
      * @param Product $productResource
      * @param \Magento\Catalog\Model\Category $catalogCategory
      * @param \Psr\Log\LoggerInterface $logger
+     * @param string|null $resourcePrefix
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Framework\Model\Resource\Db\Context $context,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Eav\Model\Config $eavConfig,
         Product $productResource,
         \Magento\Catalog\Model\Category $catalogCategory,
-        \Psr\Log\LoggerInterface $logger
+        \Psr\Log\LoggerInterface $logger,
+        $resourcePrefix = null
     ) {
         $this->_storeManager = $storeManager;
         $this->_eavConfig = $eavConfig;
         $this->productResource = $productResource;
         $this->_catalogCategory = $catalogCategory;
         $this->_logger = $logger;
-        parent::__construct($resource);
+        parent::__construct($context, $resourcePrefix);
     }
 
     /**
@@ -430,7 +432,8 @@ class Url extends \Magento\Framework\Model\Resource\Db\AbstractDb
             }
 
             $category = new \Magento\Framework\Object($row);
-            $category->setIdFieldName('entity_id');
+            $category->setId($row['entity_id']);
+            $category->setEntityId($row['entity_id']);
             $category->setStoreId($storeId);
             $this->_prepareCategoryParentId($category);
 
@@ -533,7 +536,8 @@ class Url extends \Magento\Framework\Model\Resource\Db\AbstractDb
         $rowSet = $adapter->fetchAll($select, $bind);
         foreach ($rowSet as $row) {
             $product = new \Magento\Framework\Object($row);
-            $product->setIdFieldName('entity_id');
+            $product->setId($row['entity_id']);
+            $product->setEntityId($row['entity_id']);
             $product->setCategoryIds([]);
             $product->setStoreId($storeId);
             $products[$product->getId()] = $product;

@@ -52,7 +52,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -83,14 +83,11 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
 
     private function reindexAll()
     {
-        /** @var \Magento\Indexer\Model\Indexer[] $indexerList */
-        $indexerList = $this->objectManager->get('Magento\Indexer\Model\Indexer\CollectionFactory')
+        /** @var \Magento\Indexer\Model\Indexer $indexer */
+        $indexer = $this->objectManager->get('Magento\Indexer\Model\Indexer\CollectionFactory')
             ->create()
-            ->getItems();
-
-        foreach ($indexerList as $indexer) {
-            $indexer->reindexAll();
-        }
+            ->getItemByColumnValue('indexer_id', 'catalogsearch_fulltext');
+        $indexer->reindexAll();
     }
 
     /**
@@ -98,7 +95,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -121,7 +118,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -142,7 +139,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -161,7 +158,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -179,7 +176,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -197,7 +194,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -216,7 +213,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -234,7 +231,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -252,7 +249,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -276,6 +273,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
             /** @var \Magento\Framework\Search\Document $document */
             $actualIds[] = $document->getId();
         }
+        sort($actualIds);
         $this->assertEquals($expectedIds, $actualIds);
     }
 
@@ -284,7 +282,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -311,7 +309,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */
@@ -339,7 +337,7 @@ class AdapterTest extends \PHPUnit_Framework_TestCase
      * @dataProvider advancedSearchDataProvider
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @magentoConfigFixture current_store catalog/search/engine Magento\CatalogSearch\Model\Resource\Engine
+     * @magentoConfigFixture current_store catalog/search/engine mysql
      * @magentoConfigFixture current_store catalog/search/search_type 2
      * @magentoDataFixture Magento/Framework/Search/_files/products.php
      */

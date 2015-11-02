@@ -6,7 +6,7 @@
  */
 namespace Magento\DesignEditor\Controller\Adminhtml\System\Design\Editor\Tools;
 
-use Magento\Framework\Model\Exception as CoreException;
+use Magento\Framework\Exception\LocalizedException as CoreException;
 
 class Upload extends \Magento\DesignEditor\Controller\Adminhtml\System\Design\Editor\Tools
 {
@@ -42,11 +42,11 @@ class Upload extends \Magento\DesignEditor\Controller\Adminhtml\System\Design\Ed
             $response = ['error' => true, 'message' => $e->getMessage()];
             $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
         } catch (\Exception $e) {
-            $response = ['error' => true, 'message' => __('We cannot upload the CSS file.')];
+            $response = ['error' => true, 'message' => __('We can\'t upload the CSS file right now.')];
             $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
         }
         $this->getResponse()->representJson(
-            $this->_objectManager->get('Magento\Core\Helper\Data')->jsonEncode($response)
+            $this->_objectManager->get('Magento\Framework\Json\Helper\Data')->jsonEncode($response)
         );
     }
 }

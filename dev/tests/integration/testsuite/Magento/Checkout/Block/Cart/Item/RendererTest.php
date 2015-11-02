@@ -6,6 +6,7 @@
 namespace Magento\Checkout\Block\Cart\Item;
 
 /**
+ * @magentoDbIsolation enabled
  * @magentoDataFixture Magento/Checkout/_files/quote_with_simple_product_and_image.php
  */
 class RendererTest extends \PHPUnit_Framework_TestCase
@@ -38,6 +39,17 @@ class RendererTest extends \PHPUnit_Framework_TestCase
         $this->_block->setItem($item);
     }
 
+    protected function tearDown()
+    {
+        /** @var $objectManager \Magento\TestFramework\ObjectManager */
+        $objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
+
+        $objectManager->removeSharedInstance('Magento\Checkout\Model\Session');
+        $objectManager->removeSharedInstance('Magento\Checkout\Model\Session\Storage');
+
+        unset($_SESSION);
+    }
+
     public function testThumbnail()
     {
         $size = $this->_block->getThumbnailSize();
@@ -48,12 +60,6 @@ class RendererTest extends \PHPUnit_Framework_TestCase
         $this->assertContains('/' . $sidebarSize, $this->_block->getProductThumbnailSidebarUrl());
         $this->assertStringEndsWith('magento_image.jpg', $this->_block->getProductThumbnailUrl());
         $this->assertStringEndsWith('magento_image.jpg', $this->_block->getProductThumbnailSidebarUrl());
-    }
-
-    public function testGetConfigureUrl()
-    {
-        $testString = 'checkout/cart/configure/id/' . $this->_block->getItem()->getId() . '/product_id/1/';
-        $this->assertStringEndsWith($testString, $this->_block->getConfigureUrl());
     }
 
     /**

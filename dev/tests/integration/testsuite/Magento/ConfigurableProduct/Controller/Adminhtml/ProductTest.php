@@ -8,7 +8,7 @@ namespace Magento\ConfigurableProduct\Controller\Adminhtml;
 /**
  * @magentoAppArea adminhtml
  */
-class ProductTest extends \Magento\Backend\Utility\Controller
+class ProductTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     /**
      * @magentoDataFixture Magento/ConfigurableProduct/_files/product_configurable.php
@@ -16,7 +16,7 @@ class ProductTest extends \Magento\Backend\Utility\Controller
     public function testSaveActionAssociatedProductIds()
     {
         $associatedProductIds = [3, 14, 15, 92];
-        $this->getRequest()->setPost(
+        $this->getRequest()->setPostValue(
             [
                 'attributes' => [$this->_getConfigurableAttribute()->getId()],
                 'associated_product_ids' => $associatedProductIds,

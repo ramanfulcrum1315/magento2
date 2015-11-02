@@ -22,17 +22,21 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
     /**
      * Construct
      *
-     * @param \Magento\Framework\App\Resource $resource
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
+     * @param \Magento\Indexer\Model\Indexer\Table\StrategyInterface $tableStrategy
      * @param \Magento\Eav\Model\Config $eavConfig
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param string|null $resourcePrefix
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
+        \Magento\Framework\Model\Resource\Db\Context $context,
+        \Magento\Indexer\Model\Indexer\Table\StrategyInterface $tableStrategy,
         \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Framework\Event\ManagerInterface $eventManager
+        \Magento\Framework\Event\ManagerInterface $eventManager,
+        $resourcePrefix = null
     ) {
         $this->_eventManager = $eventManager;
-        parent::__construct($resource, $eavConfig);
+        parent::__construct($context, $tableStrategy, $eavConfig, $resourcePrefix);
     }
 
     /**
@@ -43,21 +47,19 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
      */
     public function reindexAll()
     {
-        $this->useIdxTable(true);
+        $this->tableStrategy->setUseIdxTable(true);
         $this->beginTransaction();
         try {
             $this->clearTemporaryIndexTable();
             $this->_prepareIndex();
             $this->_prepareRelationIndex();
             $this->_removeNotVisibleEntityFromIndex();
-
             $this->syncData();
             $this->commit();
         } catch (\Exception $e) {
             $this->rollBack();
             throw $e;
         }
-
         return $this;
     }
 
@@ -105,7 +107,6 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
             $adapter->rollBack();
             throw $e;
         }
-
         return $this;
     }
 
@@ -172,12 +173,12 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
     }
 
     /**
-     * Prepare data index for product relations
+     * Prepare data index select for product relations
      *
      * @param array $parentIds the parent entity ids limitation
-     * @return $this
+     * @return \Magento\Framework\DB\Select
      */
-    protected function _prepareRelationIndex($parentIds = null)
+    protected function _prepareRelationIndexSelect($parentIds = null)
     {
         $write = $this->_getWriteAdapter();
         $idxTable = $this->getIdxTable();
@@ -196,7 +197,7 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
         )->group(
             ['l.parent_id', 'i.attribute_id', 'i.store_id', 'i.value']
         );
-        if (!is_null($parentIds)) {
+        if ($parentIds !== null) {
             $select->where('l.parent_id IN(?)', $parentIds);
         }
 
@@ -213,8 +214,22 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
             ]
         );
 
+        return $select;
+    }
+
+    /**
+     * Prepare data index for product relations
+     *
+     * @param array $parentIds the parent entity ids limitation
+     * @return $this
+     */
+    protected function _prepareRelationIndex($parentIds = null)
+    {
+        $write = $this->_getWriteAdapter();
+        $idxTable = $this->getIdxTable();
+
         $query = $write->insertFromSelect(
-            $select,
+            $this->_prepareRelationIndexSelect($parentIds),
             $idxTable,
             [],
             \Magento\Framework\DB\Adapter\AdapterInterface::INSERT_IGNORE
@@ -257,10 +272,9 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
             $adapter->delete($this->getMainTable(), $where);
             $adapter->commit();
         } catch (\Exception $e) {
-            $adapter->rollback();
+            $adapter->rollBack();
             throw $e;
         }
-
         return $this;
     }
 
@@ -282,13 +296,11 @@ abstract class AbstractEav extends \Magento\Catalog\Model\Resource\Product\Index
 
             // insert new index
             $this->insertFromTable($this->getIdxTable(), $this->getMainTable());
-
             $adapter->commit();
         } catch (\Exception $e) {
-            $adapter->rollback();
+            $adapter->rollBack();
             throw $e;
         }
-
         return $this;
     }
 }

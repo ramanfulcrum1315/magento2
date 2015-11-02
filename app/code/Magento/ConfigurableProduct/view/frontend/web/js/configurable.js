@@ -6,36 +6,25 @@
 define([
     "jquery",
     "underscore",
-    "handlebars",
+    "mage/template",
+    "priceUtils",
+    "priceBox",
     "jquery/ui",
     "jquery/jquery.parsequery",
-    "Magento_Catalog/js/price-box"
-], function($, _){
-
-    function getPrices(elems){
-        var prices = {};
-
-        elems.forEach(function(elem){
-            var selected    = elem.options[elem.selectedIndex],
-                config      = selected && selected.config;
-
-            prices[elem.attributeId] = config ? 
-                _.clone(config.prices) :
-                {};
-        });
-
-        return prices;
-    }
+    "mage/gallery"
+], function($, _, mageTemplate, utils){
 
     $.widget('mage.configurable', {
         options: {
             superSelector: '.super-attribute-select',
+            selectSimpleProduct: '[name="selected_configurable_option"]',
             priceHolderSelector: '.price-box',
             state: {},
-            optionTemplate: '{{label}}' +
-                            '{{#if finalPrice.value}}' +
-                                ' {{finalPrice.formatted}}' +
-                            '{{/if}}',
+            priceFormat: {},
+            optionTemplate: '<%- data.label %>' +
+                            '<% if (data.finalPrice.value) { %>' +
+                                ' <%- data.finalPrice.formatted %>' +
+                            '<% } %>',
             mediaGallerySelector: '[data-role=media-gallery]'
         },
 
@@ -65,10 +54,15 @@ define([
          */
         _initializeOptions: function() {
             var priceBoxOptions = $(this.options.priceHolderSelector).priceBox('option');
+
             if(priceBoxOptions.priceConfig && priceBoxOptions.priceConfig.optionTemplate) {
                 this.options.optionTemplate = priceBoxOptions.priceConfig.optionTemplate;
             }
-            this.options.optionTemplate = Handlebars.compile(this.options.optionTemplate);
+
+            if(priceBoxOptions.priceConfig && priceBoxOptions.priceConfig.priceFormat) {
+                this.options.priceFormat = priceBoxOptions.priceConfig.priceFormat;
+            }
+            this.options.optionTemplate = mageTemplate(this.options.optionTemplate);
 
             this.options.settings = (this.options.spConfig.containerId) ?
                 $(this.options.spConfig.containerId).find(this.options.superSelector) :
@@ -76,6 +70,11 @@ define([
 
             this.options.values = this.options.spConfig.defaultValues || {};
             this.options.parentImage = $('[data-role=base-image-container] img').attr('src');
+
+            this.initialGalleryImages = $(this.options.mediaGallerySelector).data('mageGallery')
+                ? $(this.options.mediaGallerySelector).gallery('option', 'images')
+                : [];
+            this.inputSimpleProduct = this.element.find(this.options.selectSimpleProduct);
         },
 
         /**
@@ -160,11 +159,11 @@ define([
 
             while (index--) {
                 option = settings[index];
-                
+
                 !index ?
                     this._fillSelect(option) :
                     (option.disabled = true);
-                
+
                 _.extend(option, {
                     childSettings:  childSettings.slice(),
                     prevSetting:    settings[index - 1],
@@ -208,13 +207,14 @@ define([
          * @param element The element associated with a configurable option.
          */
         _configureElement: function(element) {
-            this._reloadOptionLabels(element);
             if (element.value) {
                 this.options.state[element.config.id] = element.value;
                 if (element.nextSetting) {
                     element.nextSetting.disabled = false;
                     this._fillSelect(element.nextSetting);
                     this._resetChildren(element.nextSetting);
+                } else {
+                    this.inputSimpleProduct.val(element.selectedOptions[0].config.allowedProducts[0]);
                 }
             }
             else {
@@ -231,12 +231,7 @@ define([
         _changeProductImage: function () {
             var images = this.options.spConfig.images,
                 imagesArray = null,
-                galleryElement = $(this.options.mediaGallerySelector),
-                baseImage = {
-                    small: this.options.spConfig.baseImage,
-                    medium: this.options.spConfig.baseImage,
-                    large: this.options.spConfig.baseImage
-                };
+                galleryElement = $(this.options.mediaGallerySelector);
             $.each(this.options.settings, function (k, v) {
                 var selectValue = parseInt(v.value, 10),
                     attributeId = v.id.replace(/[a-z]*/, '');
@@ -256,38 +251,16 @@ define([
             });
 
             var result = [];
-            $.each(imagesArray || baseImage, function (k, v) {
+            $.each(imagesArray || {}, function (k, v) {
                 result.push({
                     small: v,
                     medium: v,
                     large: v
                 });
             });
-            if (result.length !== 1) {
-                result = [baseImage];
-            }
+
             if (galleryElement.length && galleryElement.data('mageGallery')) {
-                galleryElement.gallery('option', 'images', result);
-            }
-        },
-
-        /**
-         * Option labels show the option value and its price. This method reloads these labels
-         * for a specified option.
-         * @private
-         * @param element The element associated with the configurable option.
-         */
-        _reloadOptionLabels: function(element) {
-            if (!(element && element.options[element.selectedIndex])) {
-                return false;
-            }
-            var selOption = element.options[element.selectedIndex];
-
-            for (var i = 0; i < element.options.length; i++) {
-                if (element.options[i].config) {
-                    element.options[i].text =
-                        this._getOptionLabel(element.options[i].config, selOption.config);
-                }
+                galleryElement.gallery('option', 'images', result.length > 0 ? result : this.initialGalleryImages);
             }
         },
 
@@ -363,58 +336,7 @@ define([
          * @return {String} The option label with option value and price (e.g. Black +1.99)
          */
         _getOptionLabel: function(option, selOption) {
-            var parsePrice  = this._parsePrice.bind(this, option, selOption),
-                data;
-
-            data = _.map(option.prices, parsePrice);
-            data = _.indexBy(data, 'name');
-
-            data.label = option.label;
-
-            return this.options.optionTemplate(data);
-        },
-
-        _parsePrice: function(option, selOption, price, name){
-            var selected = 0;
-
-            if (!this.options.spConfig.stablePrices && selOption) {
-                selected = parseFloat(selOption.prices[name].amount);
-            }
-
-            price = parseFloat(price.amount - selected);
-
-            return {
-                value:      price,
-                name:       name,
-                formatted:  this._formatPrice(price, true)
-            };
-        },
-
-        /**
-         * Format's the price of a configurable option's choice. Add sign as needed, round,
-         * and format the rounded price with the appropriate sign.
-         * @private
-         * @param price An option choice's price
-         * @param showSign Whether to show the sign as '-' or '+' in the formatted price.
-         * @return {String} Returns the formatted price with or without the sign.
-         */
-        _formatPrice: function(price, showSign) {
-            var str = '';
-            price = parseFloat(price);
-            if (showSign) {
-                if (price < 0) {
-                    str += '-';
-                    price = -price;
-                }
-                else {
-                    str += '+';
-                }
-            }
-            var roundedPrice = (Math.round(price * 100) / 100).toString();
-            str = (this.options.spConfig.prices && this.options.spConfig.prices[roundedPrice]) ?
-                str + this.options.spConfig.prices[roundedPrice] :
-                str + this.options.spConfig.template.replace(/#\{(.*?)\}/, price.toFixed(2));
-            return str;
+            return option.label;
         },
 
         /**
@@ -447,14 +369,38 @@ define([
          * @return {Number} The price of the configurable product including selected options.
          */
         _reloadPrice: function() {
-            var options     = this.options,
-                settings    = _.toArray(options.settings),
-                prices      = getPrices(settings);
+            $(this.options.priceHolderSelector).trigger('updatePrice', this._getPrices());
+        },
 
-            $(options.priceHolderSelector)
-                .trigger('updatePrice', prices);
+        _getPrices: function () {
+            var prices = {},
+                elements = _.toArray(this.options.settings);
+
+            _.each(elements, function(element) {
+                var selected = element.options[element.selectedIndex],
+                    config = selected && selected.config;
+
+                prices[element.attributeId] = config && config.allowedProducts.length === 1
+                    ? this._calculatePrice(config)
+                    : {};
+            }, this);
+
+            return prices;
+        },
+
+        _calculatePrice: function (config) {
+            var displayPrices = $(this.options.priceHolderSelector).priceBox('option').prices;
+            var newPrices = this.options.spConfig.optionPrices[_.first(config.allowedProducts)];
+
+            _.each(displayPrices, function (price, code) {
+                if (newPrices[code]) {
+                    displayPrices[code].amount =  newPrices[code].amount - displayPrices[code].amount
+                }
+            });
+            return displayPrices;
         }
+
     });
-    
+
     return $.mage.configurable;
 });

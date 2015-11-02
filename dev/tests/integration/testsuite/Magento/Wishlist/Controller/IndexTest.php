@@ -107,7 +107,7 @@ class IndexTest extends \Magento\TestFramework\TestCase\AbstractController
 
         $this->assertEquals(0, $quoteCount);
         $this->assertSessionMessages(
-            $this->contains('You can buy this product only in increments of 5 for "Simple Product".'),
+            $this->contains('You can buy this product only in quantities of 5 at a time for "Simple Product".'),
             \Magento\Framework\Message\MessageInterface::TYPE_ERROR
         );
     }
@@ -127,7 +127,7 @@ class IndexTest extends \Magento\TestFramework\TestCase\AbstractController
             'rss_url' => null, // no rss
         ];
 
-        $this->getRequest()->setPost($request);
+        $this->getRequest()->setPostValue($request);
 
         $this->_objectManager->get('Magento\Framework\Registry')->register(
             'wishlist',
@@ -143,8 +143,8 @@ class IndexTest extends \Magento\TestFramework\TestCase\AbstractController
         );
 
         $this->assertStringMatchesFormat(
-            '%AThank you, %A'
-            . $this->_customerViewHelper->getCustomerName($this->_customerSession->getCustomerDataObject()) . '%A',
+            '%A' . $this->_customerViewHelper->getCustomerName($this->_customerSession->getCustomerDataObject())
+            . ' wants to share this Wish List%A',
             $actualResult
         );
     }

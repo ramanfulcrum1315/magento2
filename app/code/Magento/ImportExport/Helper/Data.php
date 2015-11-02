@@ -13,7 +13,7 @@ namespace Magento\ImportExport\Helper;
  *
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Data extends \Magento\Core\Helper\Data
+class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
     /**#@+
      * XML path for config data
@@ -31,45 +31,30 @@ class Data extends \Magento\Core\Helper\Data
 
     /**
      * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
-     * @param \Magento\Framework\App\State $appState
-     * @param \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrency
      * @param \Magento\Framework\File\Size $fileSize
-     * @param bool $dbCompatibleMode
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
-        \Magento\Framework\App\State $appState,
-        \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrency,
-        \Magento\Framework\File\Size $fileSize,
-        $dbCompatibleMode = true
+        \Magento\Framework\File\Size $fileSize
     ) {
         $this->_fileSize = $fileSize;
         parent::__construct(
-            $context,
-            $scopeConfig,
-            $storeManager,
-            $appState,
-            $priceCurrency,
-            $dbCompatibleMode
+            $context
         );
     }
 
     /**
      * Get maximum upload size message
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getMaxUploadSizeMessage()
     {
         $maxImageSize = $this->_fileSize->getMaxFileSizeInMb();
         if ($maxImageSize) {
-            $message = __('The total size of the uploadable files can\'t be more than %1M', $maxImageSize);
+            $message = __('Make sure your file isn\'t more than %1M.', $maxImageSize);
         } else {
-            $message = __('System doesn\'t allow to get file upload settings');
+            $message = __('We can\'t provide the upload settings right now.');
         }
         return $message;
     }
@@ -81,7 +66,7 @@ class Data extends \Magento\Core\Helper\Data
      */
     public function getLocalValidPaths()
     {
-        $paths = $this->_scopeConfig->getValue(self::XML_PATH_EXPORT_LOCAL_VALID_PATH, \Magento\Framework\Store\ScopeInterface::SCOPE_STORE);
+        $paths = $this->scopeConfig->getValue(self::XML_PATH_EXPORT_LOCAL_VALID_PATH, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
         return $paths;
     }
 
@@ -92,6 +77,6 @@ class Data extends \Magento\Core\Helper\Data
      */
     public function getBunchSize()
     {
-        return (int)$this->_scopeConfig->getValue(self::XML_PATH_BUNCH_SIZE, \Magento\Framework\Store\ScopeInterface::SCOPE_STORE);
+        return (int)$this->scopeConfig->getValue(self::XML_PATH_BUNCH_SIZE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 }

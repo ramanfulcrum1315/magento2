@@ -9,6 +9,7 @@ namespace Magento\Sales\Api\Data;
  * Transaction interface.
  *
  * A transaction is an interaction between a merchant and a customer such as a purchase, a credit, a refund, and so on.
+ * @api
  */
 interface TransactionInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
@@ -76,6 +77,14 @@ interface TransactionInterface extends \Magento\Framework\Api\ExtensibleDataInte
     public function getTransactionId();
 
     /**
+     * Sets the transaction ID for the transaction.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setTransactionId($id);
+
+    /**
      * Gets the parent ID for the transaction.
      *
      * @return int|null The parent ID for the transaction. Otherwise, null.
@@ -139,9 +148,100 @@ interface TransactionInterface extends \Magento\Framework\Api\ExtensibleDataInte
     public function getCreatedAt();
 
     /**
+     * Sets the created-at timestamp for the transaction.
+     *
+     * @param string $createdAt timestamp
+     * @return $this
+     */
+    public function setCreatedAt($createdAt);
+
+    /**
      * Gets an array of child transactions for the transaction.
      *
      * @return \Magento\Sales\Api\Data\TransactionInterface[] Array of child transactions.
      */
     public function getChildTransactions();
+
+    /**
+     * Sets the parent ID for the transaction.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setParentId($id);
+
+    /**
+     * Sets the order ID for the transaction.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setOrderId($id);
+
+    /**
+     * Sets the payment ID for the transaction.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setPaymentId($id);
+
+    /**
+     * Sets the transaction business ID for the transaction.
+     *
+     * @param string $id
+     * @return $this
+     */
+    public function setTxnId($id);
+
+    /**
+     * Sets the parent transaction business ID for the transaction.
+     *
+     * @param string $id
+     * @return $this
+     */
+    public function setParentTxnId($id);
+
+    /**
+     * Sets the transaction type for the transaction.
+     *
+     * @param string $txnType
+     * @return $this
+     */
+    public function setTxnType($txnType);
+
+    /**
+     * Sets the value of the is-closed flag for the transaction.
+     *
+     * @param int $isClosed
+     * @return $this
+     */
+    public function setIsClosed($isClosed);
+
+    /**
+     * Additional information setter
+     * Updates data inside the 'additional_information' array
+     * Does not allow setting of arrays
+     *
+     * @param string $key
+     * @param mixed $value
+     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function setAdditionalInformation($key, $value);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Sales\Api\Data\TransactionExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Sales\Api\Data\TransactionExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(\Magento\Sales\Api\Data\TransactionExtensionInterface $extensionAttributes);
 }

@@ -12,24 +12,32 @@ namespace Magento\Quote\Model\Cart;
 class ShippingMethodConverter
 {
     /**
-     * Shipping method builder.
+     * Shipping method data factory.
      *
-     * @var \Magento\Quote\Api\Data\ShippingMethodDataBuilder
+     * @var \Magento\Quote\Api\Data\ShippingMethodInterfaceFactory
      */
-    protected $builder;
+    protected $shippingMethodDataFactory;
 
     /**
-     * Constructs a shipping method builder object.
+     * @var \Magento\Tax\Helper\Data
+     */
+    protected $taxHelper;
+
+    /**
+     * Constructs a shipping method converter object.
      *
-     * @param \Magento\Quote\Api\Data\ShippingMethodDataBuilder $builder Shipping method builder.
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager Store manager interface.
+     * @param \Magento\Quote\Api\Data\ShippingMethodInterfaceFactory $shippingMethodDataFactory Shipping method factory.
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager Store manager interface.
+     * @param \Magento\Tax\Helper\Data $taxHelper Tax data helper.
      */
     public function __construct(
-        \Magento\Quote\Api\Data\ShippingMethodDataBuilder $builder,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager
+        \Magento\Quote\Api\Data\ShippingMethodInterfaceFactory $shippingMethodDataFactory,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Tax\Helper\Data $taxHelper
     ) {
-        $this->builder = $builder;
+        $this->shippingMethodDataFactory = $shippingMethodDataFactory;
         $this->storeManager = $storeManager;
+        $this->taxHelper = $taxHelper;
     }
 
     /**
@@ -37,7 +45,7 @@ class ShippingMethodConverter
      *
      * @param string $quoteCurrencyCode The quote currency code.
      * @param \Magento\Quote\Model\Quote\Address\Rate $rateModel The rate model.
-     * @return mixed Shipping method data object.
+     * @return \Magento\Quote\Api\Data\ShippingMethodInterface Shipping method data object.
      */
     public function modelToDataObject($rateModel, $quoteCurrencyCode)
     {
@@ -45,16 +53,37 @@ class ShippingMethodConverter
         $currency = $this->storeManager->getStore()->getBaseCurrency();
 
         $errorMessage = $rateModel->getErrorMessage();
-        $data = [
-            ShippingMethod::CARRIER_CODE => $rateModel->getCarrier(),
-            ShippingMethod::METHOD_CODE => $rateModel->getMethod(),
-            ShippingMethod::CARRIER_TITLE => $rateModel->getCarrierTitle(),
-            ShippingMethod::METHOD_TITLE => $rateModel->getMethodTitle(),
-            ShippingMethod::SHIPPING_AMOUNT => $currency->convert($rateModel->getPrice(), $quoteCurrencyCode),
-            ShippingMethod::BASE_SHIPPING_AMOUNT => $rateModel->getPrice(),
-            ShippingMethod::AVAILABLE => empty($errorMessage),
-        ];
-        $this->builder->populateWithArray($data);
-        return $this->builder->create();
+        return $this->shippingMethodDataFactory->create()
+            ->setCarrierCode($rateModel->getCarrier())
+            ->setMethodCode($rateModel->getMethod())
+            ->setCarrierTitle($rateModel->getCarrierTitle())
+            ->setMethodTitle($rateModel->getMethodTitle())
+            ->setAmount($currency->convert($rateModel->getPrice(), $quoteCurrencyCode))
+            ->setBaseAmount($rateModel->getPrice())
+            ->setAvailable(empty($errorMessage))
+            ->setErrorMessage(empty($errorMessage) ? false : $errorMessage)
+            ->setPriceExclTax(
+                $currency->convert($this->getShippingPriceWithFlag($rateModel, false), $quoteCurrencyCode)
+            )
+            ->setPriceInclTax(
+                $currency->convert($this->getShippingPriceWithFlag($rateModel, true), $quoteCurrencyCode)
+            );
+    }
+
+    /**
+     * Get Shipping Price including or excluding tax
+     *
+     * @param \Magento\Quote\Model\Quote\Address\Rate $rateModel
+     * @param bool $flag
+     * @return float
+     */
+    private function getShippingPriceWithFlag($rateModel, $flag)
+    {
+        return $this->taxHelper->getShippingPrice(
+            $rateModel->getPrice(),
+            $flag,
+            $rateModel->getAddress(),
+            $rateModel->getAddress()->getQuote()->getCustomerTaxClassId()
+        );
     }
 }

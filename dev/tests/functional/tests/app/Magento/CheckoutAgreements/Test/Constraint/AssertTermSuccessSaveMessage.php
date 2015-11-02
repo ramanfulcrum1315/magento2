@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertTermSuccessSaveMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'high';
-    /* end tags */
-
     /**
      * Success terms and conditions save message
      */
-    const SUCCESS_SAVE_MESSAGE = 'The condition has been saved.';
+    const SUCCESS_SAVE_MESSAGE = 'You saved the condition.';
 
     /**
      * Assert that after save block successful message appears.

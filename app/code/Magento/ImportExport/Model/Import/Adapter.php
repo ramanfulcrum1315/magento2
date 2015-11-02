@@ -19,24 +19,31 @@ class Adapter
      *
      * @param string $type Adapter type ('csv', 'xml' etc.)
      * @param Write $directory
+     * @param string $source
      * @param mixed $options OPTIONAL Adapter constructor options
+     *
      * @return AbstractSource
-     * @throws \Magento\Framework\Model\Exception
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public static function factory($type, $directory, $options = null)
+    public static function factory($type, $directory, $source, $options = null)
     {
         if (!is_string($type) || !$type) {
-            throw new \Magento\Framework\Model\Exception(__('The adapter type must be a non empty string.'));
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('The adapter type must be a non-empty string.')
+            );
         }
         $adapterClass = 'Magento\ImportExport\Model\Import\Source\\' . ucfirst(strtolower($type));
 
         if (!class_exists($adapterClass)) {
-            throw new \Magento\Framework\Model\Exception("'{$type}' file extension is not supported");
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('\'%1\' file extension is not supported', $type)
+            );
         }
-        $adapter = new $adapterClass($options, $directory);
+        $adapter = new $adapterClass($source, $directory, $options);
 
         if (!$adapter instanceof AbstractSource) {
-            throw new \Magento\Framework\Model\Exception(
+            throw new \Magento\Framework\Exception\LocalizedException(
                 __('Adapter must be an instance of \Magento\ImportExport\Model\Import\AbstractSource')
             );
         }
@@ -48,10 +55,12 @@ class Adapter
      *
      * @param string $source Source file path.
      * @param Write $directory
+     * @param mixed $options OPTIONAL Adapter constructor options
+     *                       
      * @return AbstractSource
      */
-    public static function findAdapterFor($source, $directory)
+    public static function findAdapterFor($source, $directory, $options = null)
     {
-        return self::factory(pathinfo($source, PATHINFO_EXTENSION), $directory, $source);
+        return self::factory(pathinfo($source, PATHINFO_EXTENSION), $directory, $source, $options);
     }
 }

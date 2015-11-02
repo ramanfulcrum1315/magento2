@@ -115,11 +115,11 @@
                 </block>
                 <block class="Magento\Catalog\Block\Product\View\Attributes" name="product.attributes" as="additional" template="product/view/attributes.phtml" group="detailed_info">
                     <arguments>
-                        <argument translate="true" name="title" xsi:type="string">Additional Information</argument>
+                        <argument translate="true" name="title" xsi:type="string">More Information</argument>
                     </arguments>
                 </block>
             </block>
-            <block class="Magento\Core\Block\RequireCookie" name="require-cookie" template="Magento_Core::require_cookie.phtml">
+            <block class="Magento\Cookie\Block\RequireCookie" name="require-cookie" template="Magento_Cookie::require_cookie.phtml">
                 <arguments>
                     <argument name="triggers" xsi:type="array">
                         <item name="compareProductLink" xsi:type="string">.action.tocompare</item>

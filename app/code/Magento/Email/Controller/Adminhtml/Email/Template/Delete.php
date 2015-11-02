@@ -19,10 +19,10 @@ class Delete extends \Magento\Email\Controller\Adminhtml\Email\Template
         if ($template->getId()) {
             try {
                 // check if the template is currently used
-                if (count($template->getSystemConfigPathsWhereUsedCurrently()) == 0) {
+                if (count($template->getSystemConfigPathsWhereCurrentlyUsed()) == 0) {
                     $template->delete();
                     // display success message
-                    $this->messageManager->addSuccess(__('The email template has been deleted.'));
+                    $this->messageManager->addSuccess(__('You deleted the email template.'));
                     $this->_objectManager->get('Magento\Framework\App\ReinitableConfig')->reinit();
                     // go to grid
                     $this->_redirect('adminhtml/*/');
@@ -33,11 +33,11 @@ class Delete extends \Magento\Email\Controller\Adminhtml\Email\Template
                 // redirect to edit form
                 $this->_redirect('adminhtml/*/edit', ['id' => $template->getId()]);
                 return;
-            } catch (\Magento\Framework\Model\Exception $e) {
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->messageManager->addError($e->getMessage());
             } catch (\Exception $e) {
                 $this->messageManager->addError(
-                    __('An error occurred while deleting email template data. Please review log and try again.')
+                    __('We can\'t delete email template data right now. Please review log and try again.')
                 );
                 $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
                 // save data in session

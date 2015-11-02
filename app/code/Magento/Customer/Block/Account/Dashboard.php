@@ -61,7 +61,6 @@ class Dashboard extends \Magento\Framework\View\Element\Template
         $this->customerRepository = $customerRepository;
         $this->customerAccountManagement = $customerAccountManagement;
         parent::__construct($context, $data);
-        $this->_isScopePrivate = true;
     }
 
     /**
@@ -145,7 +144,7 @@ class Dashboard extends \Magento\Framework\View\Element\Template
      */
     public function getSubscriptionObject()
     {
-        if (is_null($this->subscription)) {
+        if ($this->subscription === null) {
             $this->subscription =
                 $this->_createSubscriber()->loadByCustomerId($this->customerSession->getCustomerId());
         }
@@ -166,7 +165,7 @@ class Dashboard extends \Magento\Framework\View\Element\Template
     /**
      * Retrieve subscription text, either subscribed or not.
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getSubscriptionText()
     {
@@ -174,7 +173,7 @@ class Dashboard extends \Magento\Framework\View\Element\Template
             return __('You subscribe to our newsletter.');
         }
 
-        return __('You are currently not subscribed to our newsletter.');
+        return __('You don\'t subscribe to our newsletter.');
     }
 
     /**

@@ -10,6 +10,7 @@ namespace Magento\Sales\Api\Data;
  *
  * A shipment is a delivery package that contains products. A shipment document accompanies the shipment. This
  * document lists the products and their quantities in the delivery package. A shipment document can contain comments.
+ * @api
  */
 interface ShipmentCommentInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
@@ -51,16 +52,32 @@ interface ShipmentCommentInterface extends \Magento\Framework\Api\ExtensibleData
     /**
      * Gets the created-at timestamp for the shipment comment.
      *
-     * @return string Created-at timestamp.
+     * @return string|null Created-at timestamp.
      */
     public function getCreatedAt();
 
     /**
+     * Sets the created-at timestamp for the shipment comment.
+     *
+     * @param string $createdAt timestamp
+     * @return $this
+     */
+    public function setCreatedAt($createdAt);
+
+    /**
      * Gets the ID for the shipment comment.
      *
-     * @return int Shipment comment ID.
+     * @return int|null Shipment comment ID.
      */
     public function getEntityId();
+
+    /**
+     * Sets entity ID.
+     *
+     * @param int $entityId
+     * @return $this
+     */
+    public function setEntityId($entityId);
 
     /**
      * Gets the is-customer-notified flag value for the shipment comment.
@@ -82,4 +99,53 @@ interface ShipmentCommentInterface extends \Magento\Framework\Api\ExtensibleData
      * @return int Parent ID.
      */
     public function getParentId();
+
+    /**
+     * Sets the parent ID for the shipment comment.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setParentId($id);
+
+    /**
+     * Sets the is-customer-notified flag value for the shipment comment.
+     *
+     * @param int $isCustomerNotified
+     * @return $this
+     */
+    public function setIsCustomerNotified($isCustomerNotified);
+
+    /**
+     * Sets the is-visible-on-storefront flag value for the shipment comment.
+     *
+     * @param int $isVisibleOnFront
+     * @return $this
+     */
+    public function setIsVisibleOnFront($isVisibleOnFront);
+
+    /**
+     * Sets the comment for the shipment.
+     *
+     * @param string $comment
+     * @return $this
+     */
+    public function setComment($comment);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Sales\Api\Data\ShipmentCommentExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentCommentExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\ShipmentCommentExtensionInterface $extensionAttributes
+    );
 }

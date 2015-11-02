@@ -6,12 +6,17 @@
  */
 /*jshint browser:true jquery:true*/
 /*global alert*/
+/**
+ * @deprecated
+ * @removeCandidate
+ */
 define([
     "jquery",
+    "accordion",
     "jquery/ui",
     "mage/validation/validation",
     "mage/translate"
-], function($){
+], function($, accordion){
     'use strict';
 
     // Base widget, handle ajax events and first section(Checkout Method) in one page checkout accordion
@@ -43,9 +48,13 @@ define([
 
         _create: function() {
             var self = this;
+            
+            this._initAccordion();
+
             this.sectionActiveClass = this.element.accordion("option","openedState");
             this.contentSelector = this.element.accordion("option","content");
             this.checkoutPrice = this.options.quoteBaseGrandTotal;
+            
             if (this.options.checkout.suggestRegistration) {
                 $(this.options.checkout.loginGuestSelector).prop('checked', false);
                 $(this.options.checkout.loginRegisterSelector).prop('checked', true);
@@ -94,6 +103,12 @@ define([
                     return false;
                 }
             });
+        },
+
+        _initAccordion: function(){
+            var config = this.element.data('accordion');
+
+            accordion(config, this.element[0]);
         },
 
         /**
@@ -168,7 +183,7 @@ define([
             if (json.isGuestCheckoutAllowed) {
                 
                 if( !guestChecked && !registerChecked ){
-                    alert( $.mage.__('Please choose to register or to checkout as a guest.') );
+                    alert( $.mage.__('Please create an account or check out as a guest.') );
                     
                     return false;
                 }
@@ -223,11 +238,9 @@ define([
                             if (msg) {
                                 if (Array.isArray(msg)) {
                                     msg = msg.reduce(function (str, chunk) {
-                                        str += '\n' + $.mage.__(chunk);
+                                        str += '\n' + chunk;
                                         return str;
                                     }, '');
-                                } else {
-                                    msg = $.mage.__(msg);
                                 }
 
                                 $(this.options.countrySelector).trigger('change');

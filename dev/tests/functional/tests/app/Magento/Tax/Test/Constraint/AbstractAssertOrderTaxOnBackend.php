@@ -7,7 +7,7 @@
 namespace Magento\Tax\Test\Constraint;
 
 use Magento\Mtf\Constraint\AbstractConstraint;
-use Magento\Sales\Test\Page\Adminhtml\OrderView;
+use Magento\Sales\Test\Page\Adminhtml\SalesOrderView;
 use Magento\Sales\Test\Page\Adminhtml\OrderIndex;
 use Magento\Sales\Test\Page\Adminhtml\OrderInvoiceNew;
 use Magento\Sales\Test\Page\Adminhtml\OrderCreditMemoNew;
@@ -21,9 +21,9 @@ abstract class AbstractAssertOrderTaxOnBackend extends AbstractConstraint
     /**
      * Order View Page.
      *
-     * @var OrderView
+     * @var SalesOrderView
      */
-    protected $orderView;
+    protected $salesOrderView;
 
     /**
      * Order View Page.
@@ -76,7 +76,7 @@ abstract class AbstractAssertOrderTaxOnBackend extends AbstractConstraint
      * @param array $prices
      * @param InjectableFixture $product
      * @param OrderIndex $orderIndex
-     * @param OrderView $orderView
+     * @param SalesOrderView $salesOrderView
      * @param OrderInvoiceNew $orderInvoiceNew
      * @param OrderCreditMemoNew $orderCreditMemoNew
      * @return void
@@ -85,11 +85,11 @@ abstract class AbstractAssertOrderTaxOnBackend extends AbstractConstraint
         array $prices,
         InjectableFixture $product,
         OrderIndex $orderIndex,
-        OrderView $orderView,
+        SalesOrderView $salesOrderView,
         OrderInvoiceNew $orderInvoiceNew,
         OrderCreditMemoNew $orderCreditMemoNew
     ) {
-        $this->orderView = $orderView;
+        $this->salesOrderView = $salesOrderView;
         $this->orderInvoiceNew = $orderInvoiceNew;
         $this->orderCreditMemoNew = $orderCreditMemoNew;
         $orderIndex->open();
@@ -100,36 +100,35 @@ abstract class AbstractAssertOrderTaxOnBackend extends AbstractConstraint
         $actualPrices = $this->getOrderTotals($actualPrices);
         $prices = $this->preparePrices($prices);
         $message = 'Prices on order view page should be equal to defined in dataset.';
-        \PHPUnit_Framework_Assert::assertEquals($prices, $actualPrices, $message);
-        $orderView->getPageActions()->invoice();
+        \PHPUnit_Framework_Assert::assertEquals($prices, array_filter($actualPrices), $message);
+        $salesOrderView->getPageActions()->invoice();
         //Check prices on invoice creation page
         $actualPrices = [];
         $actualPrices = $this->getInvoiceNewPrices($actualPrices, $product);
         $actualPrices = $this->getInvoiceNewTotals($actualPrices);
         $message = 'Prices on invoice new page should be equal to defined in dataset.';
-        \PHPUnit_Framework_Assert::assertEquals($prices, $actualPrices, $message);
+        \PHPUnit_Framework_Assert::assertEquals($prices, array_filter($actualPrices), $message);
         $orderInvoiceNew->getTotalsBlock()->submit();
         //Check prices after invoice on order page
         $actualPrices = [];
         $actualPrices = $this->getOrderPrices($actualPrices, $product);
         $actualPrices = $this->getOrderTotals($actualPrices);
         $message = 'Prices on invoice page should be equal to defined in dataset.';
-        \PHPUnit_Framework_Assert::assertEquals($prices, $actualPrices, $message);
-        $orderView->getPageActions()->orderCreditMemo();
+        \PHPUnit_Framework_Assert::assertEquals($prices, array_filter($actualPrices), $message);
+        $salesOrderView->getPageActions()->orderCreditMemo();
         //Check prices on credit memo creation page
-        $pricesCreditMemo = $this->preparePricesCreditMemo($prices);
         $actualPrices = [];
         $actualPrices = $this->getCreditMemoNewPrices($actualPrices, $product);
         $actualPrices = $this->getCreditMemoNewTotals($actualPrices);
         $message = 'Prices on credit memo new page should be equal to defined in dataset.';
-        \PHPUnit_Framework_Assert::assertEquals($pricesCreditMemo, $actualPrices, $message);
+        \PHPUnit_Framework_Assert::assertEquals($prices, array_filter($actualPrices), $message);
         $orderCreditMemoNew->getFormBlock()->submit();
         //Check prices after refund on order page
         $actualPrices = [];
         $actualPrices = $this->getOrderPrices($actualPrices, $product);
         $actualPrices = $this->getOrderTotals($actualPrices);
         $message = 'Prices on credit memo page should be equal to defined in dataset.';
-        \PHPUnit_Framework_Assert::assertEquals($prices, $actualPrices, $message);
+        \PHPUnit_Framework_Assert::assertEquals($prices, array_filter($actualPrices), $message);
     }
 
     /**
@@ -141,8 +140,10 @@ abstract class AbstractAssertOrderTaxOnBackend extends AbstractConstraint
     protected function preparePrices($prices)
     {
         $deletePrices = [
+            'category_special_price',
             'category_price_excl_tax',
             'category_price_incl_tax',
+            'product_view_special_price',
             'product_view_price_excl_tax',
             'product_view_price_incl_tax'
         ];
@@ -156,19 +157,6 @@ abstract class AbstractAssertOrderTaxOnBackend extends AbstractConstraint
     }
 
     /**
-     * Unset category and product page expected prices.
-     *
-     * @param array $prices
-     * @return array
-     */
-    protected function preparePricesCreditMemo($prices)
-    {
-        $prices['shipping_excl_tax'] = null;
-        $prices['shipping_incl_tax'] = null;
-        return $prices;
-    }
-
-    /**
      * Get order product prices.
      *
      * @param InjectableFixture $product
@@ -177,7 +165,7 @@ abstract class AbstractAssertOrderTaxOnBackend extends AbstractConstraint
      */
     public function getOrderPrices($actualPrices, InjectableFixture $product)
     {
-        $viewBlock = $this->orderView->getItemsOrderedBlock();
+        $viewBlock = $this->salesOrderView->getItemsOrderedBlock();
         $actualPrices['cart_item_price_excl_tax'] = $viewBlock->getItemPriceExclTax($product->getName());
         $actualPrices['cart_item_price_incl_tax'] = $viewBlock->getItemPriceInclTax($product->getName());
         $actualPrices['cart_item_subtotal_excl_tax'] = $viewBlock->getItemSubExclTax($product->getName());

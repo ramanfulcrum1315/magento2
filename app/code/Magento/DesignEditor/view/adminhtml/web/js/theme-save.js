@@ -69,7 +69,7 @@ define([
                             click: function() {
                                 $('body').trigger(saveConfirmEvent, eventData);
                             },
-                            'class': 'primary'
+                            'class': 'action-primary'
                         }
                     ]
                 );
@@ -122,7 +122,7 @@ define([
                     dialog.open();
                 }, this),
                 error: function() {
-                    alert($.mage.__('Error: unknown error.'));
+                    alert($.mage.__('Something went wrong. That\'s all we know.'));
                 }
             });
         },
@@ -155,7 +155,7 @@ define([
                             this.messages.add(response.message, messageType);
                         }, eventData.dialog);
                     },
-                    'class': 'primary'
+                    'class': 'action-primary'
                 }
             ];
             $(event.target).trigger('assign', eventData);
@@ -219,13 +219,13 @@ define([
                 success: function(data) {
                     if (data.error) {
                         /** @todo add error validator */
-                        throw Error($.mage.__('Some problem with save action'));
+                        throw Error($.mage.__('We can\'t save right now.'));
                         return;
                     }
                     postResult = data.success;
                 },
                 error: function(data) {
-                    throw Error($.mage.__('Some problem with save action'));
+                    throw Error($.mage.__('We can\'t save right now.'));
                 }
             });
             return postResult;

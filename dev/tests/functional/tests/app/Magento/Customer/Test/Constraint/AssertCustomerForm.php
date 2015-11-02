@@ -6,15 +6,14 @@
 
 namespace Magento\Customer\Test\Constraint;
 
-use Magento\Customer\Test\Fixture\AddressInjectable;
-use Magento\Customer\Test\Fixture\CustomerInjectable;
+use Magento\Customer\Test\Fixture\Address;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Customer\Test\Page\Adminhtml\CustomerIndex;
 use Magento\Customer\Test\Page\Adminhtml\CustomerIndexEdit;
 use Magento\Mtf\Constraint\AbstractConstraint;
 
 /**
- * Class AssertCustomerForm
- *
+ * Assert customer data on customer backend form.
  */
 class AssertCustomerForm extends AbstractConstraint
 {
@@ -23,7 +22,7 @@ class AssertCustomerForm extends AbstractConstraint
     /* end tags */
 
     /**
-     * Skipped fields for verify data
+     * Skipped fields for verify data.
      *
      * @var array
      */
@@ -32,24 +31,25 @@ class AssertCustomerForm extends AbstractConstraint
         'password',
         'password_confirmation',
         'is_subscribed',
+        'address'
     ];
 
     /**
-     * Assert that displayed customer data on edit page(backend) equals passed from fixture
+     * Assert that displayed customer data on edit page(backend) equals passed from fixture.
      *
-     * @param CustomerInjectable $customer
+     * @param Customer $customer
      * @param CustomerIndex $pageCustomerIndex
      * @param CustomerIndexEdit $pageCustomerIndexEdit
-     * @param AddressInjectable $address [optional]
-     * @param CustomerInjectable $initialCustomer [optional]
+     * @param Address $address[optional]
+     * @param Customer $initialCustomer [optional]
      * @return void
      */
     public function processAssert(
-        CustomerInjectable $customer,
+        Customer $customer,
         CustomerIndex $pageCustomerIndex,
         CustomerIndexEdit $pageCustomerIndexEdit,
-        AddressInjectable $address = null,
-        CustomerInjectable $initialCustomer = null
+        Address $address = null,
+        Customer $initialCustomer = null
     ) {
         $data = [];
         $filter = [];
@@ -70,6 +70,7 @@ class AssertCustomerForm extends AbstractConstraint
 
         $pageCustomerIndex->open();
         $pageCustomerIndex->getCustomerGridBlock()->searchAndOpen($filter);
+
         $dataForm = $pageCustomerIndexEdit->getCustomerForm()->getDataCustomer($customer, $address);
         $dataDiff = $this->verify($data, $dataForm);
         \PHPUnit_Framework_Assert::assertTrue(
@@ -80,7 +81,7 @@ class AssertCustomerForm extends AbstractConstraint
     }
 
     /**
-     * Verify data in form equals to passed from fixture
+     * Verify data in form equals to passed from fixture.
      *
      * @param array $dataFixture
      * @param array $dataForm
@@ -95,13 +96,21 @@ class AssertCustomerForm extends AbstractConstraint
             if (in_array($name, $this->customerSkippedFields)) {
                 continue;
             }
-            $result[] = "\ncustomer {$name}: \"{$dataForm['customer'][$name]}\" instead of \"{$value}\"";
+            if (isset($dataForm['customer'][$name])) {
+                $result[] = "\ncustomer {$name}: \"{$dataForm['customer'][$name]}\" instead of \"{$value}\"";
+            } else {
+                $result[] = "\ncustomer {$name}: Field is absent. Expected value \"{$value}\"";
+            }
         }
         foreach ($dataFixture['addresses'] as $key => $address) {
             $addressDiff = array_diff($address, $dataForm['addresses'][$key]);
             foreach ($addressDiff as $name => $value) {
-                $result[] = "\naddress #{$key} {$name}: \"{$dataForm['addresses'][$key][$name]}"
-                . "\" instead of \"{$value}\"";
+                if (isset($dataForm['addresses'][$key][$name])) {
+                    $result[] = "\naddress #{$key} {$name}: \"{$dataForm['addresses'][$key][$name]}"
+                        . "\" instead of \"{$value}\"";
+                } else {
+                    $result[] = "\naddress #{$key} {$name}: Field absent. Expected value \"{$value}\"";
+                }
             }
         }
 
@@ -109,7 +118,7 @@ class AssertCustomerForm extends AbstractConstraint
     }
 
     /**
-     * Text success verify Customer form
+     * Text success verify Customer form.
      *
      * @return string
      */

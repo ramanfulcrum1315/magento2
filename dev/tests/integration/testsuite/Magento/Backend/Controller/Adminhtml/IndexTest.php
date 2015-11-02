@@ -8,7 +8,7 @@ namespace Magento\Backend\Controller\Adminhtml;
 /**
  * @magentoAppArea adminhtml
  */
-class IndexTest extends \Magento\Backend\Utility\Controller
+class IndexTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     /**
      * Check not logged state
@@ -42,7 +42,7 @@ class IndexTest extends \Magento\Backend\Utility\Controller
     public function testGlobalSearchAction()
     {
         $this->getRequest()->setParam('isAjax', 'true');
-        $this->getRequest()->setPost('query', 'dummy');
+        $this->getRequest()->setPostValue('query', 'dummy');
         $this->dispatch('backend/admin/index/globalSearch');
 
         $actual = $this->getResponse()->getBody();

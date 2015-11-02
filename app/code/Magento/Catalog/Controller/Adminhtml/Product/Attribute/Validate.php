@@ -9,7 +9,7 @@ namespace Magento\Catalog\Controller\Adminhtml\Product\Attribute;
 class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
 {
     /**
-     * @var \Magento\Framework\Controller\Result\JSONFactory
+     * @var \Magento\Framework\Controller\Result\JsonFactory
      */
     protected $resultJsonFactory;
 
@@ -25,7 +25,7 @@ class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
      * @param \Magento\Framework\Cache\FrontendInterface $attributeLabelCache
      * @param \Magento\Framework\Registry $coreRegistry
      * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
-     * @param \Magento\Framework\Controller\Result\JSONFactory $resultJsonFactory
+     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
      * @param \Magento\Framework\View\LayoutFactory $layoutFactory
      */
     public function __construct(
@@ -33,7 +33,7 @@ class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
         \Magento\Framework\Cache\FrontendInterface $attributeLabelCache,
         \Magento\Framework\Registry $coreRegistry,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Framework\Controller\Result\JSONFactory $resultJsonFactory,
+        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
         \Magento\Framework\View\LayoutFactory $layoutFactory
     ) {
         parent::__construct($context, $attributeLabelCache, $coreRegistry, $resultPageFactory);
@@ -65,7 +65,7 @@ class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
                 $response->setAttributes(['attribute_code' => __('An attribute with this code already exists.')]);
             } else {
                 $response->setAttributes(
-                    ['attribute_label' => __('Attribute with the same code (%1) already exists.', $attributeCode)]
+                    ['attribute_label' => __('An attribute with the same code (%1) already exists.', $attributeCode)]
                 );
             }
             $response->setError(true);
@@ -77,7 +77,7 @@ class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
             $attributeSet->setEntityTypeId($this->_entityTypeId)->load($setName, 'attribute_set_name');
             if ($attributeSet->getId()) {
                 $setName = $this->_objectManager->get('Magento\Framework\Escaper')->escapeHtml($setName);
-                $this->messageManager->addError(__('Attribute Set with name \'%1\' already exists.', $setName));
+                $this->messageManager->addError(__('An attribute set named \'%1\' already exists.', $setName));
 
                 $layout = $this->layoutFactory->create();
                 $layout->initMessages();

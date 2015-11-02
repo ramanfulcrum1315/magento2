@@ -29,7 +29,12 @@ class StockItemTest extends WebapiAbstract
     /**
      * Resource path
      */
-    const RESOURCE_PATH = '/V1/stockItem';
+    const RESOURCE_GET_PATH = '/V1/stockItems';
+
+    /**
+     * Resource path
+     */
+    const RESOURCE_PUT_PATH = '/V1/products/:productSku/stockItems/:itemId';
 
     /** @var \Magento\Catalog\Model\Resource\Product\Collection */
     protected $productCollection;
@@ -73,8 +78,8 @@ class StockItemTest extends WebapiAbstract
         $productSku = 'simple1';
         $serviceInfo = [
             'rest' => [
-                'resourcePath' => self::RESOURCE_PATH . "/$productSku",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_GET,
+                'resourcePath' => self::RESOURCE_GET_PATH . "/$productSku",
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => 'catalogInventoryStockRegistryV1',
@@ -100,10 +105,14 @@ class StockItemTest extends WebapiAbstract
     {
         $stockItemOld = $this->getStockItemBySku($fixtureData);
         $productSku = 'simple1';
+        $itemId = $stockItemOld['item_id'];
+
+        $resourcePath = str_replace([':productSku', ':itemId'], [$productSku, $itemId], self::RESOURCE_PUT_PATH);
+
         $serviceInfo = [
             'rest' => [
-                'resourcePath' => self::RESOURCE_PATH . "/$productSku",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_PUT,
+                'resourcePath' => $resourcePath,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_PUT,
             ],
             'soap' => [
                 'service' => 'catalogInventoryStockRegistryV1',
@@ -113,9 +122,17 @@ class StockItemTest extends WebapiAbstract
         ];
 
         $stockItemDetailsDo = $this->objectManager->get(
-            'Magento\CatalogInventory\Api\Data\StockItemInterfaceBuilder'
-        )->populateWithArray($newData)->create();
-        $arguments = ['productSku' => $productSku, 'stockItem' => $stockItemDetailsDo->getData()];
+            'Magento\CatalogInventory\Api\Data\StockItemInterfaceFactory'
+        )->create();
+        $dataObjectHelper = $this->objectManager->get('\Magento\Framework\Api\DataObjectHelper');
+        $dataObjectHelper->populateWithArray(
+            $stockItemDetailsDo,
+            $newData,
+            '\Magento\CatalogInventory\Api\Data\StockItemInterface'
+        );
+        $data = $stockItemDetailsDo->getData();
+        $data['show_default_notification_message'] = false;
+        $arguments = ['productSku' => $productSku, 'stockItem' => $data];
         $this->assertEquals($stockItemOld['item_id'], $this->_webApiCall($serviceInfo, $arguments));
 
         $stockItemFactory = $this->objectManager->get('Magento\CatalogInventory\Api\Data\StockItemInterfaceFactory');
@@ -160,7 +177,6 @@ class StockItemTest extends WebapiAbstract
                     'use_config_enable_qty_inc' => 1,
                     'enable_qty_increments' => 0,
                     'is_decimal_divided' => 0,
-                    'show_default_notification_message' => false,
                 ],
                 [
                     'item_id' => '1',
@@ -216,7 +232,7 @@ class StockItemTest extends WebapiAbstract
                     'enable_qty_increments' => '',
                     'use_config_manage_stock' => 1,
                     'manage_stock' => 1,
-                    'low_stock_date' => 0,
+                    'low_stock_date' => '',
                     'is_decimal_divided' => '',
                     'stock_status_changed_auto' => 0
                 ],

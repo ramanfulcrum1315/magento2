@@ -7,9 +7,7 @@
  */
 namespace Magento\Customer\Model\Resource;
 
-use Magento\Framework\Exception\InputException;
-
-class Address extends \Magento\Eav\Model\Entity\AbstractEntity
+class Address extends \Magento\Eav\Model\Entity\VersionControl\AbstractEntity
 {
     /**
      * @var \Magento\Framework\Validator\Factory
@@ -17,43 +15,29 @@ class Address extends \Magento\Eav\Model\Entity\AbstractEntity
     protected $_validatorFactory;
 
     /**
-     * @var \Magento\Customer\Model\CustomerFactory
+     * @var \Magento\Customer\Api\CustomerRepositoryInterface
      */
-    protected $_customerFactory;
+    protected $customerRepository;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
-     * @param \Magento\Eav\Model\Config $eavConfig
-     * @param \Magento\Eav\Model\Entity\Attribute\Set $attrSetEntity
-     * @param \Magento\Framework\Locale\FormatInterface $localeFormat
-     * @param \Magento\Eav\Model\Resource\Helper $resourceHelper
-     * @param \Magento\Framework\Validator\UniversalFactory $universalFactory
+     * @param \Magento\Eav\Model\Entity\Context $context
+     * @param \Magento\Framework\Model\Resource\Db\VersionControl\Snapshot $entitySnapshot,
+     * @param \Magento\Framework\Model\Resource\Db\VersionControl\RelationComposite $entityRelationComposite,
      * @param \Magento\Framework\Validator\Factory $validatorFactory
-     * @param \Magento\Customer\Model\CustomerFactory $customerFactory
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
-        \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Eav\Model\Entity\Attribute\Set $attrSetEntity,
-        \Magento\Framework\Locale\FormatInterface $localeFormat,
-        \Magento\Eav\Model\Resource\Helper $resourceHelper,
-        \Magento\Framework\Validator\UniversalFactory $universalFactory,
+        \Magento\Eav\Model\Entity\Context $context,
+        \Magento\Framework\Model\Resource\Db\VersionControl\Snapshot $entitySnapshot,
+        \Magento\Framework\Model\Resource\Db\VersionControl\RelationComposite $entityRelationComposite,
         \Magento\Framework\Validator\Factory $validatorFactory,
-        \Magento\Customer\Model\CustomerFactory $customerFactory,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
         $data = []
     ) {
+        $this->customerRepository = $customerRepository;
         $this->_validatorFactory = $validatorFactory;
-        $this->_customerFactory = $customerFactory;
-        parent::__construct(
-            $resource,
-            $eavConfig,
-            $attrSetEntity,
-            $localeFormat,
-            $resourceHelper,
-            $universalFactory,
-            $data
-        );
+        parent::__construct($context, $entitySnapshot, $entityRelationComposite, $data);
     }
 
     /**
@@ -63,38 +47,22 @@ class Address extends \Magento\Eav\Model\Entity\AbstractEntity
      */
     protected function _construct()
     {
-        $resource = $this->_resource;
-        $this->setType(
-            'customer_address'
-        )->setConnection(
-            $resource->getConnection('customer_read'),
-            $resource->getConnection('customer_write')
-        );
+        $this->_read = 'customer_read';
+        $this->_write = 'customer_write';
     }
 
     /**
-     * Set default shipping to address
+     * Getter and lazy loader for _type
      *
-     * @param \Magento\Framework\Object $address
-     * @return $this
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return \Magento\Eav\Model\Entity\Type
      */
-    protected function _afterSave(\Magento\Framework\Object $address)
+    public function getEntityType()
     {
-        if ($address->getIsCustomerSaveTransaction()) {
-            return $this;
+        if (empty($this->_type)) {
+            $this->setType('customer_address');
         }
-        if ($address->getId() && ($address->getIsDefaultBilling() || $address->getIsDefaultShipping())) {
-            $customer = $this->_createCustomer()->load($address->getCustomerId());
-
-            if ($address->getIsDefaultBilling()) {
-                $customer->setDefaultBilling($address->getId());
-            }
-            if ($address->getIsDefaultShipping()) {
-                $customer->setDefaultShipping($address->getId());
-            }
-            $customer->save();
-        }
-        return $this;
+        return parent::getEntityType();
     }
 
     /**
@@ -117,28 +85,19 @@ class Address extends \Magento\Eav\Model\Entity\AbstractEntity
      *
      * @param \Magento\Framework\Object $address
      * @return void
-     * @throws \Magento\Framework\Validator\ValidatorException When validation failed
+     * @throws \Magento\Framework\Validator\Exception When validation failed
      */
     protected function _validate($address)
     {
         $validator = $this->_validatorFactory->createValidator('customer_address', 'save');
 
         if (!$validator->isValid($address)) {
-            throw new \Magento\Framework\Validator\ValidatorException(
-                InputException::DEFAULT_MESSAGE,
-                [],
+            throw new \Magento\Framework\Validator\Exception(
+                null,
                 null,
                 $validator->getMessages()
             );
         }
-    }
-
-    /**
-     * @return \Magento\Customer\Model\Customer
-     */
-    protected function _createCustomer()
-    {
-        return $this->_customerFactory->create();
     }
 
     /**
@@ -157,14 +116,14 @@ class Address extends \Magento\Eav\Model\Entity\AbstractEntity
     protected function _afterDelete(\Magento\Framework\Object $address)
     {
         if ($address->getId()) {
-            $customer = $this->_createCustomer()->load($address->getCustomerId());
+            $customer = $this->customerRepository->getById($address->getCustomerId());
             if ($customer->getDefaultBilling() == $address->getId()) {
                 $customer->setDefaultBilling(null);
             }
             if ($customer->getDefaultShipping() == $address->getId()) {
                 $customer->setDefaultShipping(null);
             }
-            $customer->save();
+            $this->customerRepository->save($customer);
         }
         return parent::_afterDelete($address);
     }

@@ -8,19 +8,14 @@ namespace Magento\GiftMessage\Test\Constraint;
 
 use Magento\GiftMessage\Test\Fixture\GiftMessage;
 use Magento\Sales\Test\Page\Adminhtml\OrderIndex;
-use Magento\Sales\Test\Page\Adminhtml\OrderView;
+use Magento\Sales\Test\Page\Adminhtml\SalesOrderView;
 use Magento\Mtf\Constraint\AbstractAssertForm;
 
 /**
- * Class AssertGiftMessageInBackendOrder
- * Assert that message from dataSet is displayed on order(s) view page on backend.
+ * Assert that message from dataset is displayed on order(s) view page on backend.
  */
 class AssertGiftMessageInBackendOrder extends AbstractAssertForm
 {
-    /* tags */
-    const SEVERITY = 'high';
-    /* end tags */
-
     /**
      * Skipped fields for verify data.
      *
@@ -34,10 +29,10 @@ class AssertGiftMessageInBackendOrder extends AbstractAssertForm
     ];
 
     /**
-     * Assert that message from dataSet is displayed on order(s) view page on backend.
+     * Assert that message from dataset is displayed on order(s) view page on backend.
      *
      * @param GiftMessage $giftMessage
-     * @param OrderView $orderView
+     * @param SalesOrderView $salesOrderView
      * @param OrderIndex $orderIndex
      * @param array $products
      * @param string $orderId
@@ -45,22 +40,25 @@ class AssertGiftMessageInBackendOrder extends AbstractAssertForm
      */
     public function processAssert(
         GiftMessage $giftMessage,
-        OrderView $orderView,
+        SalesOrderView $salesOrderView,
         OrderIndex $orderIndex,
         array $products,
         $orderId
     ) {
+        $expectedData = [];
+        $actualData = [];
         $orderIndex->open()->getSalesOrderGrid()->searchAndOpen(['id' => $orderId]);
 
         if ($giftMessage->getAllowGiftMessagesForOrder()) {
             $expectedData[] = $giftMessage->getData();
-            $actualData[] = $orderView->getGiftOptionsBlock()->getData($giftMessage);
+            $actualData[] = $salesOrderView->getGiftOptionsBlock()->getData($giftMessage);
         }
 
         if ($giftMessage->getAllowGiftOptionsForItems()) {
-            foreach ($products as $key => $product) {
-                $expectedData[] = $giftMessage->getItems()[$key]->getData();
-                $actualData[] = $orderView->getGiftItemsBlock()->getItemProduct($product)
+            foreach ($giftMessage->getItems() as $key => $giftMessageItem) {
+                $expectedData[] = $giftMessageItem->getData();
+                $product = $products[$key];
+                $actualData[] = $salesOrderView->getGiftItemsBlock()->getItemProduct($product)
                     ->getGiftMessageFormData($giftMessage);
             }
         }
@@ -76,6 +74,6 @@ class AssertGiftMessageInBackendOrder extends AbstractAssertForm
      */
     public function toString()
     {
-        return 'Backend gift message form data is equal to data passed from dataSet.';
+        return 'Backend gift message form data is equal to data passed from dataset.';
     }
 }

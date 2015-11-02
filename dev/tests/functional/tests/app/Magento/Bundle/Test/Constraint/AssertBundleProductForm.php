@@ -9,16 +9,12 @@ namespace Magento\Bundle\Test\Constraint;
 use Magento\Catalog\Test\Constraint\AssertProductForm;
 
 /**
- * Class AssertBundleProductForm
+ * Assert bundle product form.
  */
 class AssertBundleProductForm extends AssertProductForm
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
-     * Formatting options for array values
+     * Formatting options for array values.
      *
      * @var array
      */
@@ -32,7 +28,7 @@ class AssertBundleProductForm extends AssertProductForm
     ];
 
     /**
-     * Prepares fixture data for comparison
+     * Prepares fixture data for comparison.
      *
      * @param array $data
      * @param array $sortFields [optional]
@@ -48,7 +44,7 @@ class AssertBundleProductForm extends AssertProductForm
     }
 
     /**
-     * Prepare Bundle Options array from preset
+     * Prepare Bundle Options array from dataset.
      *
      * @param array $bundleSelections
      * @return array

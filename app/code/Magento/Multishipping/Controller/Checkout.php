@@ -30,7 +30,12 @@ class Checkout extends \Magento\Checkout\Controller\Action implements
         CustomerRepositoryInterface $customerRepository,
         AccountManagementInterface $accountManagement
     ) {
-        parent::__construct($context, $customerSession, $customerRepository, $accountManagement);
+        parent::__construct(
+            $context,
+            $customerSession,
+            $customerRepository,
+            $accountManagement
+        );
     }
 
     /**
@@ -122,16 +127,18 @@ class Checkout extends \Magento\Checkout\Controller\Action implements
             }
         }
 
-        if (!$this->_preDispatchValidateCustomer()) {
+        $result = $this->_preDispatchValidateCustomer();
+        if ($result instanceof \Magento\Framework\Controller\ResultInterface) {
+            return $result;
+        }
+
+        if (!$result) {
             return $this->getResponse();
         }
 
-        if ($this->_getCheckoutSession()->getCartWasUpdated(
-            true
-        ) && !in_array(
-            $action,
-            ['index', 'login', 'register', 'addresses', 'success']
-        )
+        if ($this->_getCheckoutSession()->getCartWasUpdated(true)
+            &&
+            !in_array($action, ['index', 'login', 'register', 'addresses', 'success'])
         ) {
             $this->getResponse()->setRedirect($this->_getHelper()->getCartUrl());
             $this->_actionFlag->set('', self::FLAG_NO_DISPATCH, true);

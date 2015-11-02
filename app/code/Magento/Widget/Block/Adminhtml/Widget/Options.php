@@ -95,7 +95,7 @@ class Options extends \Magento\Backend\Block\Widget\Form\Generic
         $this->setMainFieldsetHtmlId($mainFieldsetHtmlId);
         $fieldset = $this->getForm()->addFieldset(
             $mainFieldsetHtmlId,
-            ['legend' => __('Widget Options'), 'class' => 'fieldset-wide']
+            ['legend' => __('Frontend App Options'), 'class' => 'fieldset-wide']
         );
         $this->setData('main_fieldset', $fieldset);
 
@@ -109,14 +109,14 @@ class Options extends \Magento\Backend\Block\Widget\Form\Generic
     /**
      * Add fields to main fieldset based on specified widget type
      *
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return $this
      */
     public function addFields()
     {
         // get configuration node and translation helper
         if (!$this->getWidgetType()) {
-            throw new \Magento\Framework\Model\Exception(__('Please specify a Widget Type.'));
+            throw new \Magento\Framework\Exception\LocalizedException(__('Please specify a Frontend App Type.'));
         }
         $config = $this->_widget->getConfigAsObject($this->getWidgetType());
         if (!$config->getParameters()) {

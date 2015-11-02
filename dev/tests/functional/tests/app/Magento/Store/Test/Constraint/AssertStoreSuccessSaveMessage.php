@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertStoreSuccessSaveMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Success store view create message
      */
-    const SUCCESS_MESSAGE = 'The store view has been saved';
+    const SUCCESS_MESSAGE = 'You saved the store view.';
 
     /**
      * Assert that success message is displayed after Store View has been created

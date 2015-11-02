@@ -52,7 +52,6 @@ class Info extends \Magento\Framework\View\Element\Template
         $this->_subscriberFactory = $subscriberFactory;
         $this->_helperView = $helperView;
         parent::__construct($context, $data);
-        $this->_isScopePrivate = true;
     }
 
     /**
@@ -84,7 +83,7 @@ class Info extends \Magento\Framework\View\Element\Template
      */
     public function getChangePasswordUrl()
     {
-        return $this->_urlBuilder->getUrl('*/account/edit/changepass/1');
+        return $this->_urlBuilder->getUrl('customer/account/edit/changepass/1');
     }
 
     /**
@@ -132,5 +131,13 @@ class Info extends \Magento\Framework\View\Element\Template
     protected function _createSubscriber()
     {
         return $this->_subscriberFactory->create();
+    }
+
+    /**
+     * @return string
+     */
+    protected function _toHtml()
+    {
+        return $this->currentCustomer->getCustomerId() ? parent::_toHtml() : '';
     }
 }

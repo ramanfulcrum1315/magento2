@@ -6,6 +6,9 @@
  */
 namespace Magento\Catalog\Api;
 
+/**
+ * @api
+ */
 interface AttributeSetRepositoryInterface
 {
     /**
@@ -15,7 +18,7 @@ interface AttributeSetRepositoryInterface
      * @return \Magento\Eav\Api\Data\AttributeSetInterface saved attribute set
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
-     * @throws \Magento\Framework\Model\Exception If attribute set is not found
+     * @throws \Magento\Framework\Exception\LocalizedException If attribute set is not found
      */
     public function save(\Magento\Eav\Api\Data\AttributeSetInterface $attributeSet);
 

@@ -7,11 +7,12 @@ namespace Magento\Quote\Model;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
-use Magento\Framework\Store\StoreManagerInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\Search\FilterGroup;
 use Magento\Quote\Model\Resource\Quote\Collection as QuoteCollection;
 use Magento\Framework\Exception\InputException;
+use Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface;
 
 class QuoteRepository implements \Magento\Quote\Api\CartRepositoryInterface
 {
@@ -31,7 +32,7 @@ class QuoteRepository implements \Magento\Quote\Api\CartRepositoryInterface
     protected $quoteFactory;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var StoreManagerInterface
      */
     protected $storeManager;
 
@@ -41,26 +42,34 @@ class QuoteRepository implements \Magento\Quote\Api\CartRepositoryInterface
     protected $quoteCollection;
 
     /**
-     * @var \Magento\Quote\Api\Data\CartSearchResultsDataBuilder
+     * @var \Magento\Quote\Api\Data\CartSearchResultsInterfaceFactory
      */
-    protected $searchResultsBuilder;
+    protected $searchResultsDataFactory;
+
+    /**
+     * @var JoinProcessorInterface
+     */
+    private $extensionAttributesJoinProcessor;
 
     /**
      * @param QuoteFactory $quoteFactory
      * @param StoreManagerInterface $storeManager
      * @param \Magento\Quote\Model\Resource\Quote\Collection $quoteCollection
-     * @param \Magento\Quote\Api\Data\CartSearchResultsDataBuilder $searchResultsBuilder
+     * @param \Magento\Quote\Api\Data\CartSearchResultsInterfaceFactory $searchResultsDataFactory
+     * @param JoinProcessorInterface $extensionAttributesJoinProcessor
      */
     public function __construct(
         QuoteFactory $quoteFactory,
         StoreManagerInterface $storeManager,
         \Magento\Quote\Model\Resource\Quote\Collection $quoteCollection,
-        \Magento\Quote\Api\Data\CartSearchResultsDataBuilder $searchResultsBuilder
+        \Magento\Quote\Api\Data\CartSearchResultsInterfaceFactory $searchResultsDataFactory,
+        JoinProcessorInterface $extensionAttributesJoinProcessor
     ) {
         $this->quoteFactory = $quoteFactory;
         $this->storeManager = $storeManager;
-        $this->searchResultsBuilder = $searchResultsBuilder;
+        $this->searchResultsDataFactory = $searchResultsDataFactory;
         $this->quoteCollection = $quoteCollection;
+        $this->extensionAttributesJoinProcessor = $extensionAttributesJoinProcessor;
     }
 
     /**
@@ -201,13 +210,14 @@ class QuoteRepository implements \Magento\Quote\Api\CartRepositoryInterface
      */
     public function getList(\Magento\Framework\Api\SearchCriteria $searchCriteria)
     {
-        $this->searchResultsBuilder->setSearchCriteria($searchCriteria);
+        $searchData = $this->searchResultsDataFactory->create();
+        $searchData->setSearchCriteria($searchCriteria);
 
         foreach ($searchCriteria->getFilterGroups() as $group) {
             $this->addFilterGroupToCollection($group, $this->quoteCollection);
         }
 
-        $this->searchResultsBuilder->setTotalCount($this->quoteCollection->getSize());
+        $searchData->setTotalCount($this->quoteCollection->getSize());
         $sortOrders = $searchCriteria->getSortOrders();
         if ($sortOrders) {
             foreach ($sortOrders as $sortOrder) {
@@ -219,10 +229,11 @@ class QuoteRepository implements \Magento\Quote\Api\CartRepositoryInterface
         }
         $this->quoteCollection->setCurPage($searchCriteria->getCurrentPage());
         $this->quoteCollection->setPageSize($searchCriteria->getPageSize());
+        $this->extensionAttributesJoinProcessor->process($this->quoteCollection);
 
-        $this->searchResultsBuilder->setItems($this->quoteCollection->getItems());
+        $searchData->setItems($this->quoteCollection->getItems());
 
-        return $this->searchResultsBuilder->create();
+        return $searchData;
     }
 
     /**

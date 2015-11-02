@@ -21,7 +21,7 @@ class LayoutFilesTest extends \PHPUnit_Framework_TestCase
     {
         $objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
         $this->_argParser = $objectManager->get('Magento\Framework\View\Layout\Argument\Parser');
-        $this->_argInterpreter = $objectManager->get('layoutArgumentInterpreter');
+        $this->_argInterpreter = $objectManager->get('layoutArgumentGeneratorInterpreter');
     }
 
     /**
@@ -44,8 +44,6 @@ class LayoutFilesTest extends \PHPUnit_Framework_TestCase
                     continue;
                 }
                 $this->_argInterpreter->evaluate($argumentData);
-            } catch (\Magento\Framework\Data\Argument\MissingOptionalValueException $e) {
-                // Argument value is missing in the testing environment, but it's optional, so no big deal
             } catch (\Exception $e) {
                 $this->fail($e->getMessage());
             }
@@ -60,7 +58,7 @@ class LayoutFilesTest extends \PHPUnit_Framework_TestCase
         $areas = ['adminhtml', 'frontend', 'email'];
         $data = [];
         foreach ($areas as $area) {
-            $layoutFiles = \Magento\Framework\Test\Utility\Files::init()->getLayoutFiles(['area' => $area], false);
+            $layoutFiles = \Magento\Framework\App\Utility\Files::init()->getLayoutFiles(['area' => $area], false);
             foreach ($layoutFiles as $layoutFile) {
                 $data[substr($layoutFile, strlen(BP))] = [$area, $layoutFile];
             }
@@ -84,7 +82,7 @@ class LayoutFilesTest extends \PHPUnit_Framework_TestCase
         unset($argumentData['updater']);
 
         // Arguments, evaluation of which causes a run-time error, because of unsafe assumptions to the environment
-        $typeAttr = \Magento\Core\Model\Layout\Merge::TYPE_ATTRIBUTE;
+        $typeAttr = \Magento\Framework\View\Model\Layout\Merge::TYPE_ATTRIBUTE;
         $ignoredArguments = [
             [
                 $typeAttr => 'object',
@@ -100,8 +98,6 @@ class LayoutFilesTest extends \PHPUnit_Framework_TestCase
                 $typeAttr => 'object',
                 'value' => 'Magento\CustomerSegment\Model\Resource\Segment\Report\Detail\Collection'
             ],
-            [$typeAttr => 'helper', 'helper' => 'Magento\Pbridge\Helper\Data::getReviewButtonTemplate'],
-            [$typeAttr => 'helper', 'helper' => 'Magento\Pbridge\Helper\Data::getContinueButtonTemplate'],
             [$typeAttr => 'options', 'model' => 'Magento\Solr\Model\Adminhtml\Search\Grid\Options'],
             [$typeAttr => 'options', 'model' => 'Magento\Logging\Model\Resource\Grid\ActionsGroup'],
             [$typeAttr => 'options', 'model' => 'Magento\Logging\Model\Resource\Grid\Actions'],

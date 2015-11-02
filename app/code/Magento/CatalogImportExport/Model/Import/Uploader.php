@@ -6,25 +6,32 @@
 namespace Magento\CatalogImportExport\Model\Import;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Filesystem\DriverPool;
 
 /**
  * Import entity product model
  *
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Uploader extends \Magento\Core\Model\File\Uploader
+class Uploader extends \Magento\MediaStorage\Model\File\Uploader
 {
     /**
+     * Temp directory.
+     *
      * @var string
      */
     protected $_tmpDir = '';
 
     /**
+     * Destination directory.
+     *
      * @var string
      */
     protected $_destDir = '';
 
     /**
+     * All mime types.
+     *
      * @var array
      */
     protected $_allowedMimeTypes = [
@@ -37,32 +44,67 @@ class Uploader extends \Magento\Core\Model\File\Uploader
     const DEFAULT_FILE_TYPE = 'application/octet-stream';
 
     /**
+     * Image factory.
+     *
      * @var \Magento\Framework\Image\AdapterFactory
      */
     protected $_imageFactory;
 
     /**
-     * @var \Magento\Core\Model\File\Validator\NotProtectedExtension
+     * Validator.
+     *
+     * @var \Magento\MediaStorage\Model\File\Validator\NotProtectedExtension
      */
     protected $_validator;
 
     /**
-     * @param \Magento\Core\Helper\File\Storage\Database $coreFileStorageDb
-     * @param \Magento\Core\Helper\File\Storage $coreFileStorage
+     * Instance of filesystem directory write interface.
+     *
+     * @var \Magento\Framework\Filesystem\Directory\WriteInterface
+     */
+    protected $_directory;
+
+    /**
+     * Instance of filesystem read factory.
+     *
+     * @var \Magento\Framework\Filesystem\File\ReadFactory
+     */
+    protected $_readFactory;
+
+    /**
+     * Instance of media file storage database.
+     *
+     * @var \Magento\MediaStorage\Helper\File\Storage\Database
+     */
+    protected $_coreFileStorageDb;
+
+    /**
+     * Instance of media file storage.
+     *
+     * @var \Magento\MediaStorage\Helper\File\Storage
+     */
+    protected $_coreFileStorage;
+
+    /**
+     * @param \Magento\MediaStorage\Helper\File\Storage\Database $coreFileStorageDb
+     * @param \Magento\MediaStorage\Helper\File\Storage $coreFileStorage
      * @param \Magento\Framework\Image\AdapterFactory $imageFactory
-     * @param \Magento\Core\Model\File\Validator\NotProtectedExtension $validator
+     * @param \Magento\MediaStorage\Model\File\Validator\NotProtectedExtension $validator
      * @param \Magento\Framework\Filesystem $filesystem
-     * @param string $filePath
+     * @param \Magento\Framework\Filesystem\File\ReadFactory $readFactory
+     * @param null $filePath
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function __construct(
-        \Magento\Core\Helper\File\Storage\Database $coreFileStorageDb,
-        \Magento\Core\Helper\File\Storage $coreFileStorage,
+        \Magento\MediaStorage\Helper\File\Storage\Database $coreFileStorageDb,
+        \Magento\MediaStorage\Helper\File\Storage $coreFileStorage,
         \Magento\Framework\Image\AdapterFactory $imageFactory,
-        \Magento\Core\Model\File\Validator\NotProtectedExtension $validator,
+        \Magento\MediaStorage\Model\File\Validator\NotProtectedExtension $validator,
         \Magento\Framework\Filesystem $filesystem,
+        \Magento\Framework\Filesystem\File\ReadFactory $readFactory,
         $filePath = null
     ) {
-        if (!is_null($filePath)) {
+        if ($filePath !== null) {
             $this->_setUploadFile($filePath);
         }
         $this->_imageFactory = $imageFactory;
@@ -70,10 +112,11 @@ class Uploader extends \Magento\Core\Model\File\Uploader
         $this->_coreFileStorage = $coreFileStorage;
         $this->_validator = $validator;
         $this->_directory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
+        $this->_readFactory = $readFactory;
     }
 
     /**
-     * Initiate uploader defoult settings
+     * Initiate uploader default settings
      *
      * @return void
      */
@@ -92,10 +135,24 @@ class Uploader extends \Magento\Core\Model\File\Uploader
      * Proceed moving a file from TMP to destination folder
      *
      * @param string $fileName
+     * @param bool $renameFileOff
      * @return array
      */
-    public function move($fileName)
+    public function move($fileName, $renameFileOff = false)
     {
+        if ($renameFileOff) {
+            $this->setAllowRenameFiles(false);
+        }
+        if (preg_match('/\bhttps?:\/\//i', $fileName, $matches)) {
+            $url = str_replace($matches[0], '', $fileName);
+            $read = $this->_readFactory->create($url, DriverPool::HTTP);
+            $fileName = preg_replace('/[^a-z0-9\._-]+/i', '', $fileName);
+            $this->_directory->writeFile(
+                $this->_directory->getRelativePath($this->getTmpDir() . '/' . $fileName),
+                $read->readAll()
+            );
+        }
+
         $filePath = $this->_directory->getRelativePath($this->getTmpDir() . '/' . $fileName);
         $this->_setUploadFile($filePath);
         $result = $this->save($this->getDestDir());
@@ -108,12 +165,14 @@ class Uploader extends \Magento\Core\Model\File\Uploader
      *
      * @param string $filePath
      * @return void
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _setUploadFile($filePath)
     {
         if (!$this->_directory->isReadable($filePath)) {
-            throw new \Magento\Framework\Model\Exception("File '{$filePath}' was not found or has read restriction.");
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('File \'%1\' was not found or has read restriction.', $filePath)
+            );
         }
         $this->_file = $this->_readFileInfo($filePath);
 
@@ -128,7 +187,8 @@ class Uploader extends \Magento\Core\Model\File\Uploader
      */
     protected function _readFileInfo($filePath)
     {
-        $fileInfo = pathinfo($filePath);
+        $fullFilePath = $this->_directory->getAbsolutePath($filePath);
+        $fileInfo = pathinfo($fullFilePath);
         return [
             'name' => $fileInfo['basename'],
             'type' => $this->_getMimeTypeByExt($fileInfo['extension']),

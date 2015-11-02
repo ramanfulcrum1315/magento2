@@ -7,7 +7,7 @@
 namespace Magento\Customer\Test\TestStep;
 
 use Magento\Cms\Test\Page\CmsIndex;
-use Magento\Customer\Test\Fixture\CustomerInjectable;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Customer\Test\Page\CustomerAccountLogin;
 use Magento\Mtf\TestStep\TestStepInterface;
 
@@ -19,7 +19,7 @@ class LoginCustomerOnFrontendStep implements TestStepInterface
     /**
      * Customer fixture.
      *
-     * @var CustomerInjectable
+     * @var Customer
      */
     protected $customer;
 
@@ -38,19 +38,29 @@ class LoginCustomerOnFrontendStep implements TestStepInterface
     protected $customerAccountLogin;
 
     /**
+     * Logout customer on frontend step.
+     *
+     * @var LogoutCustomerOnFrontendStep
+     */
+    protected $logoutCustomerOnFrontend;
+
+    /**
      * @constructor
      * @param CmsIndex $cmsIndex
      * @param CustomerAccountLogin $customerAccountLogin
-     * @param CustomerInjectable $customer
+     * @param LogoutCustomerOnFrontendStep $logoutCustomerOnFrontend
+     * @param Customer $customer
      */
     public function __construct(
         CmsIndex $cmsIndex,
         CustomerAccountLogin $customerAccountLogin,
-        CustomerInjectable $customer
+        LogoutCustomerOnFrontendStep $logoutCustomerOnFrontend,
+        Customer $customer
     ) {
         $this->cmsIndex = $cmsIndex;
         $this->customerAccountLogin = $customerAccountLogin;
         $this->customer = $customer;
+        $this->logoutCustomerOnFrontend = $logoutCustomerOnFrontend;
     }
 
     /**
@@ -60,13 +70,20 @@ class LoginCustomerOnFrontendStep implements TestStepInterface
      */
     public function run()
     {
-        $this->cmsIndex->open();
-        $this->cmsIndex->getLinksBlock()->waitWelcomeMessage();
-        if ($this->cmsIndex->getLinksBlock()->isLinkVisible("Log Out")) {
-            $this->cmsIndex->getLinksBlock()->openLink("Log Out");
-            $this->cmsIndex->getCmsPageBlock()->waitUntilTextIsVisible('Home Page');
-        }
-        $this->cmsIndex->getLinksBlock()->openLink("Log In");
+        $this->logoutCustomerOnFrontend->run();
+        $this->cmsIndex->getLinksBlock()->openLink('Sign In');
+        $this->cmsIndex->getCmsPageBlock()->waitPageInit();
         $this->customerAccountLogin->getLoginBlock()->login($this->customer);
+        $this->cmsIndex->getCmsPageBlock()->waitPageInit();
+    }
+
+    /**
+     * Logout customer on fronted.
+     *
+     * @return void
+     */
+    public function cleanup()
+    {
+        $this->logoutCustomerOnFrontend->run();
     }
 }

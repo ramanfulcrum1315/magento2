@@ -6,6 +6,7 @@
 namespace Magento\ImportExport\Model\Import\Entity;
 
 use Magento\ImportExport\Model\Import\AbstractSource;
+use Magento\ImportExport\Model\Import as ImportExport;
 
 /**
  * Import entity abstract model
@@ -184,11 +185,11 @@ abstract class AbstractEntity
     protected $_importExportData;
 
     /**
-     * Core data
+     * Json Helper
      *
-     * @var \Magento\Core\Helper\Data
+     * @var \Magento\Framework\Json\Helper\Data
      */
-    protected $_coreData;
+    protected $jsonHelper;
 
     /**
      * Magento string lib
@@ -203,7 +204,35 @@ abstract class AbstractEntity
     protected $_resourceHelper;
 
     /**
-     * @param \Magento\Core\Helper\Data $coreData
+     * Count if created items
+     *
+     * @var int
+     */
+    protected $countItemsCreated = 0;
+
+    /**
+     * Count if updated items
+     *
+     * @var int
+     */
+    protected $countItemsUpdated = 0;
+
+    /**
+     * Count if deleted items
+     *
+     * @var int
+     */
+    protected $countItemsDeleted = 0;
+
+    /**
+     * Need to log in import history
+     *
+     * @var bool
+     */
+    protected $logInHistory = false;
+
+    /**
+     * @param \Magento\Framework\Json\Helper\Data $jsonHelper
      * @param \Magento\ImportExport\Helper\Data $importExportData
      * @param \Magento\ImportExport\Model\Resource\Import\Data $importData
      * @param \Magento\Eav\Model\Config $config
@@ -212,7 +241,7 @@ abstract class AbstractEntity
      * @param \Magento\Framework\Stdlib\String $string
      */
     public function __construct(
-        \Magento\Core\Helper\Data $coreData,
+        \Magento\Framework\Json\Helper\Data $jsonHelper,
         \Magento\ImportExport\Helper\Data $importExportData,
         \Magento\ImportExport\Model\Resource\Import\Data $importData,
         \Magento\Eav\Model\Config $config,
@@ -220,7 +249,7 @@ abstract class AbstractEntity
         \Magento\ImportExport\Model\Resource\Helper $resourceHelper,
         \Magento\Framework\Stdlib\String $string
     ) {
-        $this->_coreData = $coreData;
+        $this->jsonHelper = $jsonHelper;
         $this->_importExportData = $importExportData;
         $this->_resourceHelper = $resourceHelper;
         $this->string = $string;
@@ -236,12 +265,12 @@ abstract class AbstractEntity
      * Inner source object getter.
      *
      * @return AbstractSource
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _getSource()
     {
         if (!$this->_source) {
-            throw new \Magento\Framework\Model\Exception(__('Please specify a source.'));
+            throw new \Magento\Framework\Exception\LocalizedException(__('Please specify a source.'));
         }
         return $this->_source;
     }
@@ -327,7 +356,7 @@ abstract class AbstractEntity
                 if ($this->validateRow($rowData, $source->key())) {
                     // add row to bunch for save
                     $rowData = $this->_prepareRowForDb($rowData);
-                    $rowSize = strlen($this->_coreData->jsonEncode($rowData));
+                    $rowSize = strlen($this->jsonHelper->jsonEncode($rowData));
 
                     $isBunchSizeExceeded = $bunchSize > 0 && count($bunchRows) >= $bunchSize;
 
@@ -465,7 +494,7 @@ abstract class AbstractEntity
         $messages = [];
         foreach ($this->_errors as $errorCode => $errorRows) {
             if (isset($this->_messageTemplates[$errorCode])) {
-                $errorCode = __($this->_messageTemplates[$errorCode]);
+                $errorCode = (string)__($this->_messageTemplates[$errorCode]);
             }
             foreach ($errorRows as $errorRowData) {
                 $key = $errorRowData[1] ? sprintf($errorCode, $errorRowData[1]) : $errorCode;
@@ -539,12 +568,12 @@ abstract class AbstractEntity
      * Source object getter.
      *
      * @return AbstractSource
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getSource()
     {
         if (!$this->_source) {
-            throw new \Magento\Framework\Model\Exception(__('Source is not set'));
+            throw new \Magento\Framework\Exception\LocalizedException(__('The source is not set.'));
         }
         return $this->_source;
     }
@@ -658,6 +687,16 @@ abstract class AbstractEntity
     }
 
     /**
+     * Is import need to log in history.
+     *
+     * @return bool
+     */
+    public function isNeedToLogInHistory()
+    {
+        return $this->logInHistory;
+    }
+
+    /**
      * Validate data row.
      *
      * @param array $rowData
@@ -696,42 +735,45 @@ abstract class AbstractEntity
      * Validate data.
      *
      * @return $this
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     public function validateData()
     {
         if (!$this->_dataValidated) {
             // do all permanent columns exist?
             if ($absentColumns = array_diff($this->_permanentAttributes, $this->getSource()->getColNames())) {
-                throw new \Magento\Framework\Model\Exception(
-                    __('Cannot find required columns: %1', implode(', ', $absentColumns))
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('We can\'t find required columns: %1.', implode(', ', $absentColumns))
                 );
             }
 
-            // check attribute columns names validity
-            $columnNumber = 0;
-            $emptyHeaderColumns = [];
-            $invalidColumns = [];
-            foreach ($this->getSource()->getColNames() as $columnName) {
-                $columnNumber++;
-                if (!$this->isAttributeParticular($columnName)) {
-                    if (trim($columnName) == '') {
-                        $emptyHeaderColumns[] = $columnNumber;
-                    } elseif (!preg_match('/^[a-z][a-z0-9_]*$/', $columnName)) {
-                        $invalidColumns[] = $columnName;
+            if (ImportExport::BEHAVIOR_DELETE != $this->getBehavior()) {
+                // check attribute columns names validity
+                $columnNumber = 0;
+                $emptyHeaderColumns = [];
+                $invalidColumns = [];
+                foreach ($this->getSource()->getColNames() as $columnName) {
+                    $columnNumber++;
+                    if (!$this->isAttributeParticular($columnName)) {
+                        if (trim($columnName) == '') {
+                            $emptyHeaderColumns[] = $columnNumber;
+                        } elseif (!preg_match('/^[a-z][a-z0-9_]*$/', $columnName)) {
+                            $invalidColumns[] = $columnName;
+                        }
                     }
                 }
-            }
 
-            if ($emptyHeaderColumns) {
-                throw new \Magento\Framework\Model\Exception(
-                    __('Columns number: "%1" have empty headers', implode('", "', $emptyHeaderColumns))
-                );
-            }
-            if ($invalidColumns) {
-                throw new \Magento\Framework\Model\Exception(
-                    __('Column names: "%1" are invalid', implode('", "', $invalidColumns))
-                );
+                if ($emptyHeaderColumns) {
+                    throw new \Magento\Framework\Exception\LocalizedException(
+                        __('Columns number: "%1" have empty headers', implode('", "', $emptyHeaderColumns))
+                    );
+                }
+                if ($invalidColumns) {
+                    throw new \Magento\Framework\Exception\LocalizedException(
+                        __('Column names: "%1" are invalid', implode('", "', $invalidColumns))
+                    );
+                }
             }
 
             // initialize validation related attributes
@@ -741,5 +783,35 @@ abstract class AbstractEntity
             $this->_dataValidated = true;
         }
         return $this;
+    }
+
+    /**
+     * Get count of created items
+     *
+     * @return int
+     */
+    public function getCreatedItemsCount()
+    {
+        return $this->countItemsCreated;
+    }
+
+    /**
+     * Get count of updated items
+     *
+     * @return int
+     */
+    public function getUpdatedItemsCount()
+    {
+        return $this->countItemsUpdated;
+    }
+
+    /**
+     * Get count of deleted items
+     *
+     * @return int
+     */
+    public function getDeletedItemsCount()
+    {
+        return $this->countItemsDeleted;
     }
 }

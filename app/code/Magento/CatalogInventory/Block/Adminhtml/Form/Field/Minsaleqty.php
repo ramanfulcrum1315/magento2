@@ -11,7 +11,7 @@
  */
 namespace Magento\CatalogInventory\Block\Adminhtml\Form\Field;
 
-class Minsaleqty extends \Magento\Backend\Block\System\Config\Form\Field\FieldArray\AbstractFieldArray
+class Minsaleqty extends \Magento\Config\Block\System\Config\Form\Field\FieldArray\AbstractFieldArray
 {
     /**
      * @var Customergroup
@@ -60,9 +60,12 @@ class Minsaleqty extends \Magento\Backend\Block\System\Config\Form\Field\FieldAr
      */
     protected function _prepareArrayRow(\Magento\Framework\Object $row)
     {
+        $optionExtraAttr = [];
+        $optionExtraAttr['option_' . $this->_getGroupRenderer()->calcOptionHash($row->getData('customer_group_id'))] =
+            'selected="selected"';
         $row->setData(
-            'option_extra_attr_' . $this->_getGroupRenderer()->calcOptionHash($row->getData('customer_group_id')),
-            'selected="selected"'
+            'option_extra_attrs',
+            $optionExtraAttr
         );
     }
 }

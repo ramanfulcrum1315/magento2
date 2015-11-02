@@ -18,7 +18,7 @@ use Magento\Store\Model\WebsiteFactory as WebsiteFactory;
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Db implements \Magento\Framework\Store\StoreManagerInterface
+class Db implements \Magento\Store\Model\StoreManagerInterface
 {
     /**
      * Flag that shows that system has only one store view
@@ -288,7 +288,7 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
      *
      * @param null|string|bool|int|Store $storeId
      * @return Store
-     * @throws \Magento\Framework\App\InitException
+     * @throws \Magento\Framework\Exception\State\InitException
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
@@ -318,8 +318,8 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
             }
 
             if (!$store->getCode()) {
-                throw new \Magento\Framework\App\InitException(
-                    'Store Manager has been initialized not properly'
+                throw new \Magento\Framework\Exception\State\InitException(
+                    __('Store Manager has been initialized not properly')
                 );
             }
             $this->_stores[$store->getStoreId()] = $store;
@@ -357,7 +357,7 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
      *
      * @param null|bool|int|string|Website $websiteId
      * @return Website
-     * @throws \Magento\Framework\App\InitException
+     * @throws \Magento\Framework\Exception\State\InitException
      */
     public function getWebsite($websiteId = null)
     {
@@ -374,7 +374,7 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
             // load method will load website by code if given ID is not a numeric value
             $website->load($websiteId);
             if (!$website->hasWebsiteId()) {
-                throw new \Magento\Framework\App\InitException('Invalid website id/code requested.');
+                throw new \Magento\Framework\Exception\State\InitException(__('Invalid website id/code requested.'));
             }
             $this->_websites[$website->getWebsiteId()] = $website;
             $this->_websites[$website->getCode()] = $website;
@@ -412,11 +412,11 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
      *
      * @param null|Group|string $groupId
      * @return Group
-     * @throws \Magento\Framework\App\InitException
+     * @throws \Magento\Framework\Exception\State\InitException
      */
     public function getGroup($groupId = null)
     {
-        if (is_null($groupId)) {
+        if ($groupId === null) {
             $groupId = $this->getStore()->getGroupId();
         } elseif ($groupId instanceof Group) {
             return $groupId;
@@ -426,7 +426,7 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
             if (is_numeric($groupId)) {
                 $group->load($groupId);
                 if (!$group->hasGroupId()) {
-                    throw new \Magento\Framework\App\InitException('Invalid store group id requested.');
+                    throw new \Magento\Framework\Exception\State\InitException(__('Invalid store group id requested.'));
                 }
             }
             $this->_groups[$group->getGroupId()] = $group;
@@ -495,7 +495,7 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
      */
     public function clearWebsiteCache($websiteId = null)
     {
-        if (is_null($websiteId)) {
+        if ($websiteId === null) {
             $websiteId = $this->getStore()->getWebsiteId();
         } elseif ($websiteId instanceof Website) {
             $websiteId = $websiteId->getId();
@@ -534,7 +534,7 @@ class Db implements \Magento\Framework\Store\StoreManagerInterface
     {
         return (bool)$this->_scopeConfig->getValue(
             \Magento\Store\Model\StoreManager::XML_PATH_SINGLE_STORE_MODE_ENABLED,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }
 }

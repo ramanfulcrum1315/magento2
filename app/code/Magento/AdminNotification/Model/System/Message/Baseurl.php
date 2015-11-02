@@ -4,9 +4,9 @@
  * See COPYING.txt for license details.
  */
 
-// @codingStandardsIgnoreFile
-
 namespace Magento\AdminNotification\Model\System\Message;
+
+use Magento\Store\Model\Store;
 
 class Baseurl implements \Magento\Framework\Notification\MessageInterface
 {
@@ -21,7 +21,7 @@ class Baseurl implements \Magento\Framework\Notification\MessageInterface
     protected $_config;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -32,13 +32,13 @@ class Baseurl implements \Magento\Framework\Notification\MessageInterface
 
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $config
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\UrlInterface $urlBuilder
      * @param \Magento\Framework\App\Config\ValueFactory $configValueFactory
      */
     public function __construct(
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\UrlInterface $urlBuilder,
         \Magento\Framework\App\Config\ValueFactory $configValueFactory
     ) {
@@ -56,16 +56,16 @@ class Baseurl implements \Magento\Framework\Notification\MessageInterface
     protected function _getConfigUrl()
     {
         $output = '';
-        $defaultUnsecure = $this->_config->getValue(\Magento\Store\Model\Store::XML_PATH_UNSECURE_BASE_URL, 'default');
+        $defaultUnsecure = $this->_config->getValue(Store::XML_PATH_UNSECURE_BASE_URL, 'default');
 
-        $defaultSecure = $this->_config->getValue(\Magento\Store\Model\Store::XML_PATH_SECURE_BASE_URL, 'default');
+        $defaultSecure = $this->_config->getValue(Store::XML_PATH_SECURE_BASE_URL, 'default');
 
         if ($defaultSecure == \Magento\Store\Model\Store::BASE_URL_PLACEHOLDER ||
             $defaultUnsecure == \Magento\Store\Model\Store::BASE_URL_PLACEHOLDER
         ) {
             $output = $this->_urlBuilder->getUrl('adminhtml/system_config/edit', ['section' => 'web']);
         } else {
-            /** @var $dataCollection \Magento\Core\Model\Resource\Config\Data\Collection */
+            /** @var $dataCollection \Magento\Config\Model\Resource\Config\Data\Collection */
             $dataCollection = $this->_configValueFactory->create()->getCollection();
             $dataCollection->addValueFilter(\Magento\Store\Model\Store::BASE_URL_PLACEHOLDER);
 
@@ -114,12 +114,14 @@ class Baseurl implements \Magento\Framework\Notification\MessageInterface
     /**
      * Retrieve message text
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getText()
     {
         return __(
-            '{{base_url}} is not recommended to use in a production environment to declare the Base Unsecure URL / Base Secure URL. It is highly recommended to change this value in your Magento <a href="%1">configuration</a>.',
+            '{{base_url}} is not recommended to use in a production environment to declare the Base Unsecure '
+            . 'URL / Base Secure URL. We highly recommend changing this value in your Magento '
+            . '<a href="%1">configuration</a>.',
             $this->_getConfigUrl()
         );
     }

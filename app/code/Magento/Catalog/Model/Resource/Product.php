@@ -57,13 +57,8 @@ class Product extends AbstractResource
     protected $typeFactory;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
-     * @param \Magento\Eav\Model\Config $eavConfig
-     * @param \Magento\Eav\Model\Entity\Attribute\Set $attrSetEntity
-     * @param \Magento\Framework\Locale\FormatInterface $localeFormat
-     * @param \Magento\Eav\Model\Resource\Helper $resourceHelper
-     * @param \Magento\Framework\Validator\UniversalFactory $universalFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Eav\Model\Entity\Context $context
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Catalog\Model\Factory $modelFactory
      * @param Category\CollectionFactory $categoryCollectionFactory
      * @param Category $catalogCategory
@@ -75,13 +70,8 @@ class Product extends AbstractResource
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
-        \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Eav\Model\Entity\Attribute\Set $attrSetEntity,
-        \Magento\Framework\Locale\FormatInterface $localeFormat,
-        \Magento\Eav\Model\Resource\Helper $resourceHelper,
-        \Magento\Framework\Validator\UniversalFactory $universalFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Eav\Model\Entity\Context $context,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Catalog\Model\Factory $modelFactory,
         \Magento\Catalog\Model\Resource\Category\CollectionFactory $categoryCollectionFactory,
         Category $catalogCategory,
@@ -96,19 +86,53 @@ class Product extends AbstractResource
         $this->setFactory = $setFactory;
         $this->typeFactory = $typeFactory;
         parent::__construct(
-            $resource,
-            $eavConfig,
-            $attrSetEntity,
-            $localeFormat,
-            $resourceHelper,
-            $universalFactory,
+            $context,
             $storeManager,
             $modelFactory,
             $data
         );
-        $this->setType(\Magento\Catalog\Model\Product::ENTITY)->setConnection('catalog_read', 'catalog_write');
-        $this->_productWebsiteTable = $this->getTable('catalog_product_website');
-        $this->_productCategoryTable = $this->getTable('catalog_category_product');
+        $this->_read  = 'catalog_read';
+        $this->_write = 'catalog_write';
+    }
+
+    /**
+     * Entity type getter and lazy loader
+     *
+     * @return \Magento\Eav\Model\Entity\Type
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function getEntityType()
+    {
+        if (empty($this->_type)) {
+            $this->setType(\Magento\Catalog\Model\Product::ENTITY);
+        }
+        return parent::getEntityType();
+    }
+
+    /**
+     * Product Website table name getter
+     *
+     * @return string
+     */
+    public function getProductWebsiteTable()
+    {
+        if (!$this->_productWebsiteTable) {
+            $this->_productWebsiteTable = $this->getTable('catalog_product_website');
+        }
+        return $this->_productWebsiteTable;
+    }
+
+    /**
+     * Product Category table name getter
+     *
+     * @return string
+     */
+    public function getProductCategoryTable()
+    {
+        if (!$this->_productCategoryTable) {
+            $this->_productCategoryTable = $this->getTable('catalog_category_product');
+        }
+        return $this->_productCategoryTable;
     }
 
     /**
@@ -138,7 +162,7 @@ class Product extends AbstractResource
         }
 
         $select = $adapter->select()->from(
-            $this->_productWebsiteTable,
+            $this->getProductWebsiteTable(),
             'website_id'
         )->where(
             'product_id = ?',
@@ -157,7 +181,7 @@ class Product extends AbstractResource
     public function getWebsiteIdsByProductIds($productIds)
     {
         $select = $this->_getWriteAdapter()->select()->from(
-            $this->_productWebsiteTable,
+            $this->getProductWebsiteTable(),
             ['product_id', 'website_id']
         )->where(
             'product_id IN (?)',
@@ -186,7 +210,7 @@ class Product extends AbstractResource
         $adapter = $this->_getReadAdapter();
 
         $select = $adapter->select()->from(
-            $this->_productCategoryTable,
+            $this->getProductCategoryTable(),
             'category_id'
         )->where(
             'product_id = ?',
@@ -289,14 +313,14 @@ class Product extends AbstractResource
             foreach ($insert as $websiteId) {
                 $data[] = ['product_id' => (int)$product->getId(), 'website_id' => (int)$websiteId];
             }
-            $adapter->insertMultiple($this->_productWebsiteTable, $data);
+            $adapter->insertMultiple($this->getProductWebsiteTable(), $data);
         }
 
         if (!empty($delete)) {
             foreach ($delete as $websiteId) {
                 $condition = ['product_id = ?' => (int)$product->getId(), 'website_id = ?' => (int)$websiteId];
 
-                $adapter->delete($this->_productWebsiteTable, $condition);
+                $adapter->delete($this->getProductWebsiteTable(), $condition);
             }
         }
 
@@ -344,7 +368,7 @@ class Product extends AbstractResource
                 ];
             }
             if ($data) {
-                $write->insertMultiple($this->_productCategoryTable, $data);
+                $write->insertMultiple($this->getProductCategoryTable(), $data);
             }
         }
 
@@ -352,7 +376,7 @@ class Product extends AbstractResource
             foreach ($delete as $categoryId) {
                 $where = ['product_id = ?' => (int)$object->getId(), 'category_id = ?' => (int)$categoryId];
 
-                $write->delete($this->_productCategoryTable, $where);
+                $write->delete($this->getProductCategoryTable(), $where);
             }
         }
 
@@ -625,7 +649,7 @@ class Product extends AbstractResource
         $entityType = $this->typeFactory->create()->loadByCode(\Magento\Catalog\Model\Product::ENTITY);
         $attributeSet = $this->setFactory->create()->load($object->getAttributeSetId());
         if ($attributeSet->getEntityTypeId() != $entityType->getId()) {
-            return ['attribute_set' => 'Invalid attribute set entity type'];
+            return ['attribute_set' => 'Invalid product template entity type'];
         }
 
         return parent::validate($object);

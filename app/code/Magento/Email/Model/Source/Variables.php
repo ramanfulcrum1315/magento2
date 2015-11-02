@@ -5,6 +5,8 @@
  */
 namespace Magento\Email\Model\Source;
 
+use Magento\Store\Model\Store;
+
 /**
  * Store Contact Information source model
  *
@@ -26,10 +28,10 @@ class Variables implements \Magento\Framework\Option\ArrayInterface
     {
         $this->_configVariables = [
             [
-                'value' => \Magento\Store\Model\Store::XML_PATH_UNSECURE_BASE_URL,
+                'value' => Store::XML_PATH_UNSECURE_BASE_URL,
                 'label' => __('Base Unsecure URL'),
             ],
-            ['value' => \Magento\Store\Model\Store::XML_PATH_SECURE_BASE_URL, 'label' => __('Base Secure URL')],
+            ['value' => Store::XML_PATH_SECURE_BASE_URL, 'label' => __('Base Secure URL')],
             ['value' => 'trans_email/ident_general/name', 'label' => __('General Contact Name')],
             ['value' => 'trans_email/ident_general/email', 'label' => __('General Contact Email')],
             ['value' => 'trans_email/ident_sales/name', 'label' => __('Sales Representative Contact Name')],
@@ -40,6 +42,7 @@ class Variables implements \Magento\Framework\Option\ArrayInterface
             ['value' => 'trans_email/ident_custom2/email', 'label' => __('Custom2 Contact Email')],
             ['value' => 'general/store_information/name', 'label' => __('Store Name')],
             ['value' => 'general/store_information/phone', 'label' => __('Store Phone Number')],
+            ['value' => 'general/store_information/hours', 'label' => __('Store Hours')],
             ['value' => 'general/store_information/country_id', 'label' => __('Country')],
             ['value' => 'general/store_information/region_id', 'label' => __('Region/State')],
             ['value' => 'general/store_information/postcode', 'label' => __('Zip/Postal Code')],

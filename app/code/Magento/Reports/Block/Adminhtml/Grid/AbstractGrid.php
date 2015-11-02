@@ -71,6 +71,8 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
+     * Pseudo constructor
+     *
      * @return void
      */
     protected function _construct()
@@ -82,10 +84,14 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
         if (isset($this->_columnGroupBy)) {
             $this->isColumnGrouped($this->_columnGroupBy, true);
         }
-        $this->setEmptyCellLabel(__('We couldn\'t find records for this period.'));
+        $this->setEmptyCellLabel(__('We can\'t find records for this period.'));
     }
 
     /**
+     * Get resource collection name
+     *
+     * @codeCoverageIgnore
+     *
      * @return string
      */
     public function getResourceCollectionName()
@@ -98,7 +104,7 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
      */
     public function getCollection()
     {
-        if (is_null($this->_collection)) {
+        if ($this->_collection === null) {
             $this->setCollection($this->_collectionFactory->create());
         }
         return $this->_collection;
@@ -109,7 +115,7 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
      */
     protected function _getAggregatedColumns()
     {
-        if (is_null($this->_aggregatedColumns)) {
+        if ($this->_aggregatedColumns === null) {
             foreach ($this->getColumns() as $column) {
                 if (!is_array($this->_aggregatedColumns)) {
                     $this->_aggregatedColumns = [];
@@ -297,7 +303,7 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
 
             $this->_addOrderStatusFilter($totalsCollection, $filterData);
 
-            if (count($totalsCollection->getItems()) < 1 || !$filterData->getData('from')) {
+            if ($totalsCollection->load()->getSize() < 1 || !$filterData->getData('from')) {
                 $this->setTotals(new \Magento\Framework\Object());
                 $this->setCountTotals(false);
             } else {
@@ -339,9 +345,11 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
     }
 
     /**
-     * @param array $storeIds
+     * StoreIds setter
      *
+     * @param array $storeIds
      * @return $this
+     * @codeCoverageIgnore
      */
     public function setStoreIds($storeIds)
     {
@@ -354,7 +362,7 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
      */
     public function getCurrentCurrencyCode()
     {
-        if (is_null($this->_currentCurrencyCode)) {
+        if ($this->_currentCurrencyCode === null) {
             $this->_currentCurrencyCode = count(
                 $this->_storeIds
             ) > 0 ? $this->_storeManager->getStore(
@@ -396,6 +404,7 @@ class AbstractGrid extends \Magento\Backend\Block\Widget\Grid\Extended
      * @param \Magento\Framework\Object $filterData
      * @return $this
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @codeCoverageIgnore
      */
     protected function _addCustomFilter($collection, $filterData)
     {

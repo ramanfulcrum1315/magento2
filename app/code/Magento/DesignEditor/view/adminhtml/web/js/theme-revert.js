@@ -68,7 +68,7 @@ define([
             var buttons = {
                 text: $.mage.__('OK'),
                 click: callback,
-                'class': 'primary'
+                'class': 'action-primary'
             };
 
             dialog.title.set(this.options.eventData.confirm.title);
@@ -89,13 +89,13 @@ define([
                 async: false,
                 success: $.proxy(function(data) {
                     if (data.error) {
-                        throw Error($.mage.__('Some problem with revert action'));
+                        throw Error($.mage.__('We can\'t revert right now.'));
                         return;
                     }
                     document.location.reload();
                 }, this),
                 error: function() {
-                    throw Error($.mage.__('Some problem with revert action'));
+                    throw Error($.mage.__('We can\'t revert right now.'));
                 }
             });
         },
@@ -119,8 +119,14 @@ define([
                 this.options.dialog = $(this.options.dialogSelector).dialog({
                     autoOpen:    false,
                     modal:       true,
-                    width:       570,
-                    dialogClass: 'vde-dialog'
+                    width:       '75%',
+                    dialogClass: 'vde-dialog',
+                    open: function () {
+                        $(this).closest('.ui-dialog').addClass('ui-dialog-active');
+                    },
+                    close: function () {
+                        $(this).closest('.ui-dialog').removeClass('ui-dialog-active');
+                    }
                 });
             }
             return this.options.dialog;

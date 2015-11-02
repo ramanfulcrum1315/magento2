@@ -6,7 +6,7 @@
 
 namespace Magento\Customer\Test\TestCase;
 
-use Magento\Customer\Test\Fixture\CustomerInjectable;
+use Magento\Customer\Test\Fixture\Customer;
 use Magento\Customer\Test\Page\CustomerAccountCreate;
 use Magento\Cms\Test\Page\CmsIndex;
 use Magento\Customer\Test\Page\CustomerAccountLogout;
@@ -29,6 +29,7 @@ class RegisterCustomerFrontendEntityTest extends Injectable
     const MVP = 'yes';
     const DOMAIN = 'CS';
     const TEST_TYPE = 'acceptance_test';
+    const TO_MAINTAIN = 'yes';
     /* end tags */
 
     /**
@@ -59,18 +60,19 @@ class RegisterCustomerFrontendEntityTest extends Injectable
         $this->customerAccountLogout = $customerAccountLogout;
         $this->customerAccountCreate = $customerAccountCreate;
         $this->cmsIndex = $cmsIndex;
+        $this->customerAccountLogout->open();
     }
 
     /**
      * Create Customer account on frontend
      *
-     * @param CustomerInjectable $customer
+     * @param Customer $customer
      */
-    public function test(CustomerInjectable $customer)
+    public function test(Customer $customer)
     {
         //Steps
         $this->cmsIndex->open();
-        $this->cmsIndex->getLinksBlock()->openLink('Register');
+        $this->cmsIndex->getLinksBlock()->openLink('Create an Account');
         $this->customerAccountCreate->getRegisterForm()->registerCustomer($customer);
     }
 

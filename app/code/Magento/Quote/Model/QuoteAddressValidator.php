@@ -11,29 +11,37 @@ class QuoteAddressValidator
     /**
      * Address factory.
      *
-     * @var \Magento\Quote\Model\Quote\AddressFactory
+     * @var \Magento\Customer\Api\AddressRepositoryInterface
      */
-    protected $quoteAddressFactory;
+    protected $addressRepository;
 
     /**
-     * Customer factory.
+     * Customer repository.
      *
-     * @var \Magento\Customer\Model\CustomerFactory
+     * @var \Magento\Customer\Api\CustomerRepositoryInterface
      */
-    protected $customerFactory;
+    protected $customerRepository;
+
+    /**
+     * @var \Magento\Customer\Model\Session
+     */
+    protected $customerSession;
 
     /**
      * Constructs a quote shipping address validator service object.
      *
-     * @param \Magento\Quote\Model\Quote\AddressFactory $quoteAddressFactory Address factory.
-     * @param \Magento\Customer\Model\CustomerFactory $customerFactory Customer factory.
+     * @param \Magento\Customer\Api\AddressRepositoryInterface $addressRepository
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository Customer repository.
+     * @param \Magento\Customer\Model\Session $customerSession
      */
     public function __construct(
-        \Magento\Quote\Model\Quote\AddressFactory $quoteAddressFactory,
-        \Magento\Customer\Model\CustomerFactory $customerFactory
+        \Magento\Customer\Api\AddressRepositoryInterface $addressRepository,
+        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
+        \Magento\Customer\Model\Session $customerSession
     ) {
-        $this->quoteAddressFactory = $quoteAddressFactory;
-        $this->customerFactory = $customerFactory;
+        $this->addressRepository = $addressRepository;
+        $this->customerRepository = $customerRepository;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -48,32 +56,43 @@ class QuoteAddressValidator
     {
         //validate customer id
         if ($addressData->getCustomerId()) {
-            $customer = $this->customerFactory->create();
-            $customer->load($addressData->getCustomerId());
+            $customer = $this->customerRepository->getById($addressData->getCustomerId());
             if (!$customer->getId()) {
                 throw new \Magento\Framework\Exception\NoSuchEntityException(
-                    'Invalid customer id ' . $addressData->getCustomerId()
+                    __('Invalid customer id %1', $addressData->getCustomerId())
                 );
             }
         }
 
         // validate address id
         if ($addressData->getId()) {
-            $address = $this->quoteAddressFactory->create();
-            $address->load($addressData->getId());
-            if (!$address->getId()) {
+            try {
+                $address = $this->addressRepository->getById($addressData->getId());
+            } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
                 throw new \Magento\Framework\Exception\NoSuchEntityException(
-                    'Invalid address id ' . $addressData->getId()
+                    __('Invalid address id %1', $addressData->getId())
                 );
             }
 
             // check correspondence between customer id and address id
             if ($addressData->getCustomerId()) {
                 if ($address->getCustomerId() != $addressData->getCustomerId()) {
-                    throw new \Magento\Framework\Exception\InputException(
-                        'Address with id ' . $addressData->getId() . ' belongs to another customer'
+                    throw new \Magento\Framework\Exception\NoSuchEntityException(
+                        __('Invalid address id %1', $addressData->getId())
                     );
                 }
+            }
+        }
+
+        if ($addressData->getCustomerAddressId()) {
+            $applicableAddressIds = array_map(function ($address) {
+                /** @var \Magento\Customer\Api\Data\AddressInterface $address */
+                return $address->getId();
+            }, $this->customerSession->getCustomerDataObject()->getAddresses());
+            if (!in_array($addressData->getCustomerAddressId(), $applicableAddressIds)) {
+                throw new \Magento\Framework\Exception\NoSuchEntityException(
+                    __('Invalid address id %1', $addressData->getCustomerAddressId())
+                );
             }
         }
         return true;

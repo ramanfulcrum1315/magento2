@@ -77,7 +77,7 @@ class AddressRepositoryTest extends \Magento\TestFramework\TestCase\WebapiAbstra
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => "/V1/customers/addresses/{$fixtureAddressId}",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_GET,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => self::SOAP_SERVICE_NAME,
@@ -104,7 +104,7 @@ class AddressRepositoryTest extends \Magento\TestFramework\TestCase\WebapiAbstra
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => "/V1/addresses/{$fixtureAddressId}",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_DELETE,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_DELETE,
             ],
             'soap' => [
                 'service' => self::SOAP_SERVICE_NAME,
@@ -141,6 +141,7 @@ class AddressRepositoryTest extends \Magento\TestFramework\TestCase\WebapiAbstra
             'default_shipping' => true,
             'customer_id' => '1',
             'region' => ['region' => 'Alabama', 'region_id' => 1, 'region_code' => 'AL'],
+            'region_id' => 1,
         ];
     }
 
@@ -164,6 +165,7 @@ class AddressRepositoryTest extends \Magento\TestFramework\TestCase\WebapiAbstra
             'default_shipping' => false,
             'customer_id' => '1',
             'region' => ['region' => 'Alabama', 'region_id' => 1, 'region_code' => 'AL'],
+            'region_id' => 1,
         ];
     }
 }

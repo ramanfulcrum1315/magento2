@@ -23,6 +23,11 @@ abstract class AbstractAction extends \Magento\Framework\App\Action\Action
     const SESSION_NAMESPACE = 'adminhtml';
 
     /**
+     * Authorization level of a basic admin session
+     */
+    const ADMIN_RESOURCE = 'Magento_Backend::admin';
+
+    /**
      * Array of actions which can be processed without secret key validation
      *
      * @var array
@@ -72,7 +77,7 @@ abstract class AbstractAction extends \Magento\Framework\App\Action\Action
     protected $_canUseBaseUrl;
 
     /**
-     * @var \Magento\Core\App\Action\FormKeyValidator
+     * @var \Magento\Framework\Data\Form\FormKey\Validator
      */
     protected $_formKeyValidator;
 
@@ -97,7 +102,7 @@ abstract class AbstractAction extends \Magento\Framework\App\Action\Action
      */
     protected function _isAllowed()
     {
-        return true;
+        return $this->_authorization->isAllowed(self::ADMIN_RESOURCE);
     }
 
     /**
@@ -202,8 +207,7 @@ abstract class AbstractAction extends \Magento\Framework\App\Action\Action
         }
 
         if ($request->isDispatched() && $request->getActionName() !== 'denied' && !$this->_isAllowed()) {
-            $this->_response->setHeader('HTTP/1.1', '403 Forbidden');
-            $this->_response->setHttpResponseCode(403);
+            $this->_response->setStatusHeader(403, '1.1', 'Forbidden');
             if (!$this->_auth->isLoggedIn()) {
                 return $this->_redirect('*/auth/login');
             }
@@ -229,14 +233,10 @@ abstract class AbstractAction extends \Magento\Framework\App\Action\Action
      */
     protected function _isUrlChecked()
     {
-        return !$this->_actionFlag->get(
-            '',
-            self::FLAG_IS_URLS_CHECKED
-        ) && !$this->getRequest()->getParam(
-            'forwarded'
-        ) && !$this->_getSession()->getIsUrlNotice(
-            true
-        ) && !$this->_canUseBaseUrl;
+        return !$this->_actionFlag->get('', self::FLAG_IS_URLS_CHECKED)
+        && !$this->getRequest()->isForwarded()
+        && !$this->_getSession()->getIsUrlNotice(true)
+        && !$this->_canUseBaseUrl;
     }
 
     /**
@@ -264,7 +264,7 @@ abstract class AbstractAction extends \Magento\Framework\App\Action\Action
             if ($this->getRequest()->getQuery('isAjax', false) || $this->getRequest()->getQuery('ajax', false)) {
                 $this->getResponse()->representJson(
                     $this->_objectManager->get(
-                        'Magento\Core\Helper\Data'
+                        'Magento\Framework\Json\Helper\Data'
                     )->jsonEncode(
                         ['error' => true, 'message' => $_keyErrorMsg]
                     )
@@ -286,12 +286,12 @@ abstract class AbstractAction extends \Magento\Framework\App\Action\Action
     protected function _processLocaleSettings()
     {
         $forceLocale = $this->getRequest()->getParam('locale', null);
-        if ($this->_objectManager->get('Magento\Framework\Locale\Validator')->isValid($forceLocale)) {
+        if ($this->_objectManager->get('Magento\Framework\Validator\Locale')->isValid($forceLocale)) {
             $this->_getSession()->setSessionLocale($forceLocale);
         }
 
-        if (is_null($this->_getSession()->getLocale())) {
-            $this->_getSession()->setLocale($this->_localeResolver->getLocaleCode());
+        if ($this->_getSession()->getLocale() === null) {
+            $this->_getSession()->setLocale($this->_localeResolver->getLocale());
         }
 
         return $this;

@@ -10,15 +10,18 @@ use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SortOrderBuilder;
-use Magento\Tax\Api\Data\TaxRateInterface as TaxRate;
+use Magento\Tax\Model\Calculation\Rate;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\TestCase\WebapiAbstract;
 
+/**
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ */
 class TaxRateRepositoryTest extends WebapiAbstract
 {
     const SERVICE_NAME = "taxTaxRateRepositoryV1";
     const SERVICE_VERSION = "V1";
-    const RESOURCE_PATH = "/V1/taxRate";
+    const RESOURCE_PATH = "/V1/taxRates";
 
     /** @var \Magento\Tax\Model\Calculation\Rate[] */
     private $fixtureTaxRates;
@@ -97,6 +100,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
 
     public function testCreateTaxRateExistingCode()
     {
+        $expectedMessage = '%1 already exists.';
         $data = [
             'tax_rate' => [
                 'tax_country_id' => 'US',
@@ -110,7 +114,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH,
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_POST,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_POST,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -121,14 +125,16 @@ class TaxRateRepositoryTest extends WebapiAbstract
         try {
             $this->_webApiCall($serviceInfo, $data);
             $this->fail('Expected exception was not raised');
-        } catch (\Exception $e) {
-            $expectedMessage = 'Code already exists.';
-
+        } catch (\SoapFault $e) {
             $this->assertContains(
                 $expectedMessage,
                 $e->getMessage(),
-                "Exception does not contain expected message."
+                'SoapFault does not contain expected message.'
             );
+        } catch (\Exception $e) {
+            $errorObj = $this->processRestExceptionResult($e);
+            $this->assertEquals($expectedMessage, $errorObj['message']);
+            $this->assertEquals(['Code'], $errorObj['parameters']);
         }
     }
 
@@ -147,7 +153,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH,
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_POST,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_POST,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -182,7 +188,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH,
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_POST,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_POST,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -222,7 +228,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH,
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_PUT,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_PUT,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -276,7 +282,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH,
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_PUT,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_PUT,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -304,7 +310,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . "/$taxRateId",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_GET,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -333,7 +339,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . "/$taxRateId",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_GET,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -371,7 +377,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . "/$taxRateId",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_DELETE,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_DELETE,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -400,7 +406,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . "/$taxRateId",
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_DELETE,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_DELETE,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -427,18 +433,18 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $rates = $this->setupTaxRatesForSearch();
 
         // Find rates whose code is 'codeUs12'
-        $filter = $this->filterBuilder->setField(TaxRate::KEY_CODE)
+        $filter = $this->filterBuilder->setField(Rate::KEY_CODE)
             ->setValue('codeUs12')
             ->create();
 
-        $this->searchCriteriaBuilder->addFilter([$filter]);
+        $this->searchCriteriaBuilder->addFilters([$filter]);
 
         $searchData = $this->searchCriteriaBuilder->create()->__toArray();
         $requestData = ['searchCriteria' => $searchData];
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . '/search' . '?' . http_build_query($requestData),
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_GET,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -474,22 +480,22 @@ class TaxRateRepositoryTest extends WebapiAbstract
         $rates = $this->setupTaxRatesForSearch();
 
         // Find rates which country id 'CZ'
-        $filter = $this->filterBuilder->setField(TaxRate::KEY_COUNTRY_ID)
+        $filter = $this->filterBuilder->setField(Rate::KEY_COUNTRY_ID)
             ->setValue('CZ')
             ->create();
         $sortOrder = $this->sortOrderBuilder
-            ->setField(TaxRate::KEY_POSTCODE)
+            ->setField(Rate::KEY_POSTCODE)
             ->setDirection(SearchCriteria::SORT_DESC)
             ->create();
         // Order them by descending postcode (not the default order)
-        $this->searchCriteriaBuilder->addFilter([$filter])
+        $this->searchCriteriaBuilder->addFilters([$filter])
             ->addSortOrder($sortOrder);
         $searchData = $this->searchCriteriaBuilder->create()->__toArray();
         $requestData = ['searchCriteria' => $searchData];
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . '/search' . '?' . http_build_query($requestData),
-                'httpMethod' => \Magento\Webapi\Model\Rest\Config::HTTP_METHOD_GET,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -533,7 +539,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
      */
     private function getFixtureTaxRates()
     {
-        if (is_null($this->fixtureTaxRates)) {
+        if ($this->fixtureTaxRates === null) {
             $this->fixtureTaxRates = [];
             if ($this->getFixtureTaxRules()) {
                 $taxRateIds = (array)$this->getFixtureTaxRules()[0]->getRates();
@@ -554,7 +560,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
      */
     private function getFixtureTaxClasses()
     {
-        if (is_null($this->fixtureTaxClasses)) {
+        if ($this->fixtureTaxClasses === null) {
             $this->fixtureTaxClasses = [];
             if ($this->getFixtureTaxRules()) {
                 $taxClassIds = array_merge(
@@ -578,7 +584,7 @@ class TaxRateRepositoryTest extends WebapiAbstract
      */
     private function getFixtureTaxRules()
     {
-        if (is_null($this->fixtureTaxRules)) {
+        if ($this->fixtureTaxRules === null) {
             $this->fixtureTaxRules = [];
             $taxRuleCodes = ['Test Rule Duplicate', 'Test Rule'];
             foreach ($taxRuleCodes as $taxRuleCode) {

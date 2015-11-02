@@ -6,14 +6,13 @@
 namespace Magento\Sales\Service\V1;
 
 use Magento\TestFramework\TestCase\WebapiAbstract;
-use Magento\Webapi\Model\Rest\Config;
 
 /**
  * Class InvoiceCreateTest
  */
 class InvoiceCreateTest extends WebapiAbstract
 {
-    const RESOURCE_PATH = '/V1/invoice';
+    const RESOURCE_PATH = '/V1/invoices';
 
     const SERVICE_READ_NAME = 'salesInvoiceRepositoryV1';
 
@@ -39,7 +38,7 @@ class InvoiceCreateTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH,
-                'httpMethod' => Config::HTTP_METHOD_POST,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_POST,
             ],
             'soap' => [
                 'service' => self::SERVICE_READ_NAME,
@@ -53,9 +52,9 @@ class InvoiceCreateTest extends WebapiAbstract
             'base_currency_code' => null,
             'base_discount_amount' => null,
             'base_grand_total' => null,
-            'base_hidden_tax_amount' => null,
+            'base_discount_tax_compensation_amount' => null,
             'base_shipping_amount' => null,
-            'base_shipping_hidden_tax_amnt' => null,
+            'base_shipping_discount_tax_compensation_amnt' => null,
             'base_shipping_incl_tax' => null,
             'base_shipping_tax_amount' => null,
             'base_subtotal' => null,
@@ -73,13 +72,13 @@ class InvoiceCreateTest extends WebapiAbstract
             'entity_id' => null,
             'global_currency_code' => null,
             'grand_total' => null,
-            'hidden_tax_amount' => null,
+            'discount_tax_compensation_amount' => null,
             'increment_id' => null,
             'is_used_for_refund' => null,
             'order_currency_code' => null,
             'shipping_address_id' => null,
             'shipping_amount' => null,
-            'shipping_hidden_tax_amount' => null,
+            'shipping_discount_tax_compensation_amount' => null,
             'shipping_incl_tax' => null,
             'shipping_tax_amount' => null,
             'state' => null,
@@ -100,7 +99,7 @@ class InvoiceCreateTest extends WebapiAbstract
                     'additionalData' => null,
                     'baseCost' => null,
                     'baseDiscountAmount' => null,
-                    'baseHiddenTaxAmount' => null,
+                    'baseDiscountTaxCompensationAmount' => null,
                     'basePrice' => null,
                     'basePriceInclTax' => null,
                     'baseRowTotal' => null,
@@ -108,7 +107,7 @@ class InvoiceCreateTest extends WebapiAbstract
                     'baseTaxAmount' => null,
                     'description' => null,
                     'discountAmount' => null,
-                    'hiddenTaxAmount' => null,
+                    'discountTaxCompensationAmount' => null,
                     'name' => null,
                     'entity_id' => null,
                     'parentId' => null,

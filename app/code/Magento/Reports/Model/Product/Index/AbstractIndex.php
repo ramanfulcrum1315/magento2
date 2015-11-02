@@ -18,7 +18,7 @@ abstract class AbstractIndex extends \Magento\Framework\Model\AbstractModel
     protected $_countCacheKey;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -50,28 +50,28 @@ abstract class AbstractIndex extends \Magento\Framework\Model\AbstractModel
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Customer\Model\Visitor $customerVisitor
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Framework\Session\Generic $reportSession
      * @param \Magento\Catalog\Model\Product\Visibility $productVisibility
      * @param \Magento\Framework\Stdlib\DateTime $dateTime
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Customer\Model\Visitor $customerVisitor,
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Framework\Session\Generic $reportSession,
         \Magento\Catalog\Model\Product\Visibility $productVisibility,
         \Magento\Framework\Stdlib\DateTime $dateTime,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
@@ -102,7 +102,7 @@ abstract class AbstractIndex extends \Magento\Framework\Model\AbstractModel
             $this->setStoreId($this->getStoreId());
         }
         if (!$this->hasAddedAt()) {
-            $this->setAddedAt($this->dateTime->now());
+            $this->setAddedAt((new \DateTime())->format(\Magento\Framework\Stdlib\DateTime::DATETIME_PHP_FORMAT));
         }
 
         return $this;

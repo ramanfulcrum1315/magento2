@@ -142,7 +142,7 @@ class Image extends \Magento\Framework\Model\AbstractModel
     /**
      * Core file storage database
      *
-     * @var \Magento\Core\Helper\File\Storage\Database
+     * @var \Magento\MediaStorage\Helper\File\Storage\Database
      */
     protected $_coreFileStorageDatabase = null;
 
@@ -163,23 +163,23 @@ class Image extends \Magento\Framework\Model\AbstractModel
     /**
      * Store manager
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Catalog\Model\Product\Media\Config $catalogProductMediaConfig
-     * @param \Magento\Core\Helper\File\Storage\Database $coreFileStorageDatabase
+     * @param \Magento\MediaStorage\Helper\File\Storage\Database $coreFileStorageDatabase
      * @param \Magento\Framework\Filesystem $filesystem
      * @param \Magento\Framework\Image\Factory $imageFactory
      * @param \Magento\Framework\View\Asset\Repository $assetRepo
      * @param \Magento\Framework\View\FileSystem $viewFileSystem
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      * @SuppressWarnings(PHPMD.UnusedLocalVariable)
@@ -187,16 +187,16 @@ class Image extends \Magento\Framework\Model\AbstractModel
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Catalog\Model\Product\Media\Config $catalogProductMediaConfig,
-        \Magento\Core\Helper\File\Storage\Database $coreFileStorageDatabase,
+        \Magento\MediaStorage\Helper\File\Storage\Database $coreFileStorageDatabase,
         \Magento\Framework\Filesystem $filesystem,
         \Magento\Framework\Image\Factory $imageFactory,
         \Magento\Framework\View\Asset\Repository $assetRepo,
         \Magento\Framework\View\FileSystem $viewFileSystem,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         $this->_storeManager = $storeManager;
@@ -394,7 +394,7 @@ class Image extends \Magento\Framework\Model\AbstractModel
      */
     protected function _getNeedMemoryForFile($file = null)
     {
-        $file = is_null($file) ? $this->getBaseFile() : $file;
+        $file = $file === null ? $this->getBaseFile() : $file;
         if (!$file) {
             return 0;
         }
@@ -471,7 +471,7 @@ class Image extends \Magento\Framework\Model\AbstractModel
             // check if placeholder defined in config
             $isConfigPlaceholder = $this->_scopeConfig->getValue(
                 "catalog/placeholder/{$this->getDestinationSubdir()}_placeholder",
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
             $configPlaceholder = '/placeholder/' . $isConfigPlaceholder;
             if (!empty($isConfigPlaceholder) && $this->_fileExists($baseDir . $configPlaceholder)) {
@@ -580,7 +580,7 @@ class Image extends \Magento\Framework\Model\AbstractModel
      */
     public function resize()
     {
-        if (is_null($this->getWidth()) && is_null($this->getHeight())) {
+        if ($this->getWidth() === null && $this->getHeight() === null) {
             return $this;
         }
         $this->getImageProcessor()->resize($this->_width, $this->_height);
@@ -917,5 +917,24 @@ class Image extends \Magento\Framework\Model\AbstractModel
                 $this->_mediaDirectory->getAbsolutePath($filename)
             );
         }
+    }
+
+    /**
+     * Return resized product image information
+     *
+     * @return array
+     */
+    public function getResizedImageInfo()
+    {
+        if ($this->_newFile === true) {
+            $fileInfo = getimagesize(
+                $this->_assetRepo->createAsset(
+                    "Magento_Catalog::images/product/placeholder/{$this->getDestinationSubdir()}.jpg"
+                )->getSourceFile()
+            );
+        } else {
+            $fileInfo = getimagesize($this->_mediaDirectory->getAbsolutePath($this->_newFile));
+        }
+        return $fileInfo;
     }
 }

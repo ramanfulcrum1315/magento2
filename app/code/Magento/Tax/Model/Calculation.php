@@ -8,13 +8,15 @@ namespace Magento\Tax\Model;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Store\Model\Store;
 use Magento\Customer\Api\Data\CustomerInterface as CustomerDataObject;
-use Magento\Customer\Api\Data\CustomerDataBuilder;
 use Magento\Customer\Api\Data\RegionInterface as AddressRegion;
 use Magento\Customer\Api\AccountManagementInterface as CustomerAccountManagement;
 use Magento\Customer\Api\GroupManagementInterface as CustomerGroupManagement;
 use Magento\Customer\Api\GroupRepositoryInterface as CustomerGroupRepository;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\AddressInterface as CustomerAddress;
+use Magento\Framework\Api\FilterBuilder;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Tax\Api\TaxClassRepositoryInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Tax\Model\Config;
 
@@ -115,7 +117,7 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
     protected $_scopeConfig;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -162,21 +164,37 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
     protected $customerRepository;
 
     /**
-     * @var CustomerDataBuilder
-     */
-    protected $customerBuilder;
-
-    /**
      * @var PriceCurrencyInterface
      */
     protected $priceCurrency;
+
+    /**
+     * Filter Builder
+     *
+     * @var FilterBuilder
+     */
+    protected $filterBuilder;
+
+    /**
+     * Search Criteria Builder
+     *
+     * @var SearchCriteriaBuilder
+     */
+    protected $searchCriteriaBuilder;
+
+    /**
+     * Tax Class Repository
+     *
+     * @var TaxClassRepositoryInterface
+     */
+    protected $taxClassRepository;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param Config $taxConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Customer\Model\CustomerFactory $customerFactory
      * @param Resource\TaxClass\CollectionFactory $classesFactory
@@ -185,9 +203,11 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
      * @param CustomerGroupManagement $customerGroupManagement
      * @param CustomerGroupRepository $customerGroupRepository
      * @param CustomerRepository $customerRepository
-     * @param CustomerDataBuilder $customerBuilder
      * @param PriceCurrencyInterface $priceCurrency
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param FilterBuilder $filterBuilder
+     * @param TaxClassRepositoryInterface $taxClassRepository
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
@@ -196,7 +216,7 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
         \Magento\Framework\Registry $registry,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         Config $taxConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Customer\Model\CustomerFactory $customerFactory,
         \Magento\Tax\Model\Resource\TaxClass\CollectionFactory $classesFactory,
@@ -205,9 +225,11 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
         CustomerGroupManagement $customerGroupManagement,
         CustomerGroupRepository $customerGroupRepository,
         CustomerRepository $customerRepository,
-        CustomerDataBuilder $customerBuilder,
         PriceCurrencyInterface $priceCurrency,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        FilterBuilder $filterBuilder,
+        TaxClassRepositoryInterface $taxClassRepository,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         $this->_scopeConfig = $scopeConfig;
@@ -220,8 +242,10 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
         $this->customerGroupManagement = $customerGroupManagement;
         $this->customerGroupRepository = $customerGroupRepository;
         $this->customerRepository = $customerRepository;
-        $this->customerBuilder = $customerBuilder;
         $this->priceCurrency = $priceCurrency;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->filterBuilder = $filterBuilder;
+        $this->taxClassRepository = $taxClassRepository;
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
@@ -370,7 +394,6 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
         } elseif (is_numeric($store)) {
             $key = $store . '|';
         }
-
         $key .= $request->getProductClassId() . '|'
             . $request->getCustomerClassId() . '|'
             . $request->getCountryId() . '|'
@@ -406,19 +429,19 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
         $request->setCountryId(
             $this->_scopeConfig->getValue(
                 \Magento\Shipping\Model\Config::XML_PATH_ORIGIN_COUNTRY_ID,
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $store
             )
         )->setRegionId(
             $this->_scopeConfig->getValue(
                 \Magento\Shipping\Model\Config::XML_PATH_ORIGIN_REGION_ID,
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $store
             )
         )->setPostcode(
             $this->_scopeConfig->getValue(
                 \Magento\Shipping\Model\Config::XML_PATH_ORIGIN_POSTCODE,
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $store
             )
         )->setCustomerClassId(
@@ -490,7 +513,7 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
         $address = new \Magento\Framework\Object();
         $basedOn = $this->_scopeConfig->getValue(
             \Magento\Tax\Model\Config::CONFIG_XML_PATH_BASED_ON,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
         );
 
@@ -499,9 +522,9 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
             $basedOn = 'default';
         } else {
 
-            if ((is_null($billingAddress) || !$billingAddress->getCountryId())
+            if (($billingAddress === null || !$billingAddress->getCountryId())
                 && $basedOn == 'billing'
-                || (is_null($shippingAddress) || !$shippingAddress->getCountryId())
+                || ($shippingAddress === null || !$shippingAddress->getCountryId())
                 && $basedOn == 'shipping'
             ) {
                 if ($customerId) {
@@ -542,19 +565,19 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
                 $address->setCountryId(
                     $this->_scopeConfig->getValue(
                         \Magento\Tax\Model\Config::CONFIG_XML_PATH_DEFAULT_COUNTRY,
-                        \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                         $store
                     )
                 )->setRegionId(
                     $this->_scopeConfig->getValue(
                         \Magento\Tax\Model\Config::CONFIG_XML_PATH_DEFAULT_REGION,
-                        \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                         $store
                     )
                 )->setPostcode(
                     $this->_scopeConfig->getValue(
                         \Magento\Tax\Model\Config::CONFIG_XML_PATH_DEFAULT_POSTCODE,
-                        \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                         $store
                     )
                 );
@@ -563,7 +586,7 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
                 break;
         }
 
-        if (is_null($customerTaxClass) || $customerTaxClass === false) {
+        if ($customerTaxClass === null || $customerTaxClass === false) {
             if ($customerId) {
                 $customerData = $this->customerRepository->getById($customerId);
                 $customerTaxClass = $this->customerGroupRepository
@@ -655,5 +678,40 @@ class Calculation extends \Magento\Framework\Model\AbstractModel
     public function round($price)
     {
         return $this->priceCurrency->round($price);
+    }
+
+    /**
+     * @param array $billingAddress
+     * @param array $shippingAddress
+     * @param int $customerTaxClassId
+     * @return array
+     */
+    public function getTaxRates($billingAddress, $shippingAddress, $customerTaxClassId)
+    {
+        $billingAddressObj = null;
+        $shippingAddressObj = null;
+        if (!empty($billingAddress)) {
+            $billingAddressObj = new \Magento\Framework\Object($billingAddress);
+        }
+        if (!empty($shippingAddress)) {
+            $shippingAddressObj = new \Magento\Framework\Object($shippingAddress);
+        }
+        $rateRequest = $this->getRateRequest($shippingAddressObj, $billingAddressObj, $customerTaxClassId);
+
+        $searchCriteria = $this->searchCriteriaBuilder->addFilters(
+            [$this->filterBuilder->setField(ClassModel::KEY_TYPE)
+                 ->setValue(\Magento\Tax\Api\TaxClassManagementInterface::TYPE_PRODUCT)
+                 ->create()]
+        )->create();
+        $ids = $this->taxClassRepository->getList($searchCriteria)->getItems();
+
+        $productRates = [];
+        $idKeys = array_keys($ids);
+        foreach ($idKeys as $idKey) {
+            $rateRequest->setProductClassId($idKey);
+            $rate = $this->getRate($rateRequest);
+            $productRates[$idKey] = $rate;
+        }
+        return $productRates;
     }
 }

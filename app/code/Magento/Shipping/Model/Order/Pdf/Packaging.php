@@ -20,7 +20,7 @@ class Packaging extends \Magento\Sales\Model\Order\Pdf\AbstractPdf
     protected $_carrierHelper;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -44,8 +44,9 @@ class Packaging extends \Magento\Sales\Model\Order\Pdf\AbstractPdf
      * @param \Magento\Sales\Model\Order\Pdf\ItemsFactory $pdfItemsFactory
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Framework\Translate\Inline\StateInterface $inlineTranslation
-     * @param \Magento\Shipping\Helper\Carrier $carrierHelper
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Sales\Model\Order\Address\Renderer $addressRenderer
+     * @param Carrier $carrierHelper
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\View\LayoutInterface $layout
      * @param \Magento\Framework\Locale\ResolverInterface $localeResolver
      * @param array $data
@@ -62,8 +63,9 @@ class Packaging extends \Magento\Sales\Model\Order\Pdf\AbstractPdf
         \Magento\Sales\Model\Order\Pdf\ItemsFactory $pdfItemsFactory,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Framework\Translate\Inline\StateInterface $inlineTranslation,
+        \Magento\Sales\Model\Order\Address\Renderer $addressRenderer,
         Carrier $carrierHelper,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\View\LayoutInterface $layout,
         \Magento\Framework\Locale\ResolverInterface $localeResolver,
         array $data = []
@@ -83,6 +85,7 @@ class Packaging extends \Magento\Sales\Model\Order\Pdf\AbstractPdf
             $pdfItemsFactory,
             $localeDate,
             $inlineTranslation,
+            $addressRenderer,
             $data
         );
     }

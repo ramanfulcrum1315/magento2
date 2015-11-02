@@ -10,6 +10,7 @@ namespace Magento\Sales\Api\Data;
  *
  * A shipment is a delivery package that contains products. A shipment document accompanies the shipment. This
  * document lists the products and their quantities in the delivery package.
+ * @api
  */
 interface ShipmentInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
@@ -92,42 +93,58 @@ interface ShipmentInterface extends \Magento\Framework\Api\ExtensibleDataInterfa
     /**
      * Gets the billing address ID for the shipment.
      *
-     * @return int Billing address ID.
+     * @return int|null Billing address ID.
      */
     public function getBillingAddressId();
 
     /**
      * Gets the created-at timestamp for the shipment.
      *
-     * @return string Created-at timestamp.
+     * @return string|null Created-at timestamp.
      */
     public function getCreatedAt();
 
     /**
+     * Sets the created-at timestamp for the shipment.
+     *
+     * @param string $createdAt timestamp
+     * @return $this
+     */
+    public function setCreatedAt($createdAt);
+
+    /**
      * Gets the customer ID for the shipment.
      *
-     * @return int Customer ID.
+     * @return int|null Customer ID.
      */
     public function getCustomerId();
 
     /**
      * Gets the email-sent flag value for the shipment.
      *
-     * @return int Email-sent flag value.
+     * @return int|null Email-sent flag value.
      */
     public function getEmailSent();
 
     /**
      * Gets the ID for the shipment.
      *
-     * @return int Shipment ID.
+     * @return int|null Shipment ID.
      */
     public function getEntityId();
 
     /**
+     * Sets entity ID.
+     *
+     * @param int $entityId
+     * @return $this
+     */
+    public function setEntityId($entityId);
+
+    /**
      * Gets the increment ID for the shipment.
      *
-     * @return string Increment ID.
+     * @return string|null Increment ID.
      */
     public function getIncrementId();
 
@@ -146,51 +163,59 @@ interface ShipmentInterface extends \Magento\Framework\Api\ExtensibleDataInterfa
     public function getPackages();
 
     /**
+     * Sets any packages for the shipment.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentPackageInterface[] $packages
+     * @return $this
+     */
+    public function setPackages(array $packages = null);
+
+    /**
      * Gets the shipment status.
      *
-     * @return int Shipment status.
+     * @return int|null Shipment status.
      */
     public function getShipmentStatus();
 
     /**
      * Gets the shipping address ID for the shipment.
      *
-     * @return int Shipping address ID.
+     * @return int|null Shipping address ID.
      */
     public function getShippingAddressId();
 
     /**
      * Gets the shipping label for the shipment.
      *
-     * @return string Shipping label.
+     * @return string|null Shipping label.
      */
     public function getShippingLabel();
 
     /**
      * Gets the store ID for the shipment.
      *
-     * @return int Store ID.
+     * @return int|null Store ID.
      */
     public function getStoreId();
 
     /**
      * Gets the total quantity for the shipment.
      *
-     * @return float Total quantity.
+     * @return float|null Total quantity.
      */
     public function getTotalQty();
 
     /**
      * Gets the total weight for the shipment.
      *
-     * @return float Total weight.
+     * @return float|null Total weight.
      */
     public function getTotalWeight();
 
     /**
      * Gets the updated-at timestamp for the shipment.
      *
-     * @return string Updated-at timestamp.
+     * @return string|null Updated-at timestamp.
      */
     public function getUpdatedAt();
 
@@ -202,6 +227,14 @@ interface ShipmentInterface extends \Magento\Framework\Api\ExtensibleDataInterfa
     public function getItems();
 
     /**
+     * Sets the items for the shipment.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentItemInterface[] $items
+     * @return $this
+     */
+    public function setItems($items);
+
+    /**
      * Gets the tracks for the shipment.
      *
      * @return \Magento\Sales\Api\Data\ShipmentTrackInterface[] Array of tracks.
@@ -209,9 +242,136 @@ interface ShipmentInterface extends \Magento\Framework\Api\ExtensibleDataInterfa
     public function getTracks();
 
     /**
+     * Sets the tracks for the shipment.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentTrackInterface[] $tracks
+     * @return $this
+     */
+    public function setTracks($tracks);
+
+    /**
      * Gets the comments for the shipment.
      *
      * @return \Magento\Sales\Api\Data\ShipmentCommentInterface[] Array of comments.
      */
     public function getComments();
+
+    /**
+     * Sets the comments for the shipment.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentCommentInterface[] $comments
+     * @return $this
+     */
+    public function setComments($comments = null);
+
+    /**
+     * Sets the store ID for the shipment.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setStoreId($id);
+
+    /**
+     * Sets the total weight for the shipment.
+     *
+     * @param float $totalWeight
+     * @return $this
+     */
+    public function setTotalWeight($totalWeight);
+
+    /**
+     * Sets the total quantity for the shipment.
+     *
+     * @param float $qty
+     * @return $this
+     */
+    public function setTotalQty($qty);
+
+    /**
+     * Sets the email-sent flag value for the shipment.
+     *
+     * @param int $emailSent
+     * @return $this
+     */
+    public function setEmailSent($emailSent);
+
+    /**
+     * Sets the order ID for the shipment.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setOrderId($id);
+
+    /**
+     * Sets the customer ID for the shipment.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setCustomerId($id);
+
+    /**
+     * Sets the shipping address ID for the shipment.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setShippingAddressId($id);
+
+    /**
+     * Sets the billing address ID for the shipment.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setBillingAddressId($id);
+
+    /**
+     * Sets the shipment status.
+     *
+     * @param int $shipmentStatus
+     * @return $this
+     */
+    public function setShipmentStatus($shipmentStatus);
+
+    /**
+     * Sets the increment ID for the shipment.
+     *
+     * @param string $id
+     * @return $this
+     */
+    public function setIncrementId($id);
+
+    /**
+     * Sets the shipping label for the shipment.
+     *
+     * @param string $shippingLabel
+     * @return $this
+     */
+    public function setShippingLabel($shippingLabel);
+
+    /**
+     * Sets the updated-at timestamp for the shipment.
+     *
+     * @param string $timestamp
+     * @return $this
+     */
+    public function setUpdatedAt($timestamp);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Sales\Api\Data\ShipmentExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(\Magento\Sales\Api\Data\ShipmentExtensionInterface $extensionAttributes);
 }

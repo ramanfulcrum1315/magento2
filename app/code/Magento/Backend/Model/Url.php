@@ -83,7 +83,7 @@ class Url extends \Magento\Framework\Url implements \Magento\Backend\Model\UrlIn
      * @param \Magento\Framework\Url\ScopeResolverInterface $scopeResolver
      * @param \Magento\Framework\Session\Generic $session
      * @param \Magento\Framework\Session\SidResolverInterface $sidResolver
-     * @param \Magento\Framework\Url\RouteParamsResolverFactory $routeParamsResolver
+     * @param \Magento\Framework\Url\RouteParamsResolverFactory $routeParamsResolverFactory
      * @param \Magento\Framework\Url\QueryParamsResolverInterface $queryParamsResolver
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param string $scopeType
@@ -105,7 +105,7 @@ class Url extends \Magento\Framework\Url implements \Magento\Backend\Model\UrlIn
         \Magento\Framework\Url\ScopeResolverInterface $scopeResolver,
         \Magento\Framework\Session\Generic $session,
         \Magento\Framework\Session\SidResolverInterface $sidResolver,
-        \Magento\Framework\Url\RouteParamsResolverFactory $routeParamsResolver,
+        \Magento\Framework\Url\RouteParamsResolverFactory $routeParamsResolverFactory,
         \Magento\Framework\Url\QueryParamsResolverInterface $queryParamsResolver,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         $scopeType,
@@ -126,7 +126,7 @@ class Url extends \Magento\Framework\Url implements \Magento\Backend\Model\UrlIn
             $scopeResolver,
             $session,
             $sidResolver,
-            $routeParamsResolver,
+            $routeParamsResolverFactory,
             $queryParamsResolver,
             $scopeConfig,
             $scopeType,
@@ -300,7 +300,7 @@ class Url extends \Magento\Framework\Url implements \Magento\Backend\Model\UrlIn
         $menuItem = $this->_getMenu()->get(
             $this->_scopeConfig->getValue(self::XML_PATH_STARTUP_MENU_ITEM, $this->_scopeType)
         );
-        if (!is_null($menuItem)) {
+        if ($menuItem !== null) {
             if ($menuItem->isAllowed() && $menuItem->getAction()) {
                 return $menuItem->getAction();
             }
@@ -336,7 +336,7 @@ class Url extends \Magento\Framework\Url implements \Magento\Backend\Model\UrlIn
      */
     protected function _getMenu()
     {
-        if (is_null($this->_menu)) {
+        if ($this->_menu === null) {
             $this->_menu = $this->_menuConfig->getMenu();
         }
         return $this->_menu;

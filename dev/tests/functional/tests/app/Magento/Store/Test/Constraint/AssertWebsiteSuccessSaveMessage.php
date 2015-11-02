@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertWebsiteSuccessSaveMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Success website create message
      */
-    const SUCCESS_MESSAGE = 'The website has been saved.';
+    const SUCCESS_MESSAGE = 'You saved the website.';
 
     /**
      * Assert that success message is displayed after Website has been created

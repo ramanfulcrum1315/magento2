@@ -4,8 +4,6 @@
  * See COPYING.txt for license details.
  */
 
-// @codingStandardsIgnoreFile
-
 namespace Magento\Reports\Block\Adminhtml;
 
 /**
@@ -81,7 +79,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
     {
         $filter = $this->getParam($this->getVarNameFilter(), null);
 
-        if (is_null($filter)) {
+        if (null === $filter) {
             $filter = $this->_defaultFilter;
         }
 
@@ -92,14 +90,22 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
             if (!isset($data['report_from'])) {
                 // getting all reports from 2001 year
-                $date = new \Magento\Framework\Stdlib\DateTime\Date(mktime(0, 0, 0, 1, 1, 2001));
-                $data['report_from'] = $date->toString($this->_localeDate->getDateFormat('short'));
+                $date = (new \DateTime())->setTimestamp(mktime(0, 0, 0, 1, 1, 2001));
+                $data['report_from'] = $this->_localeDate->formatDateTime(
+                    $date,
+                    \IntlDateFormatter::SHORT,
+                    \IntlDateFormatter::NONE
+                );
             }
 
             if (!isset($data['report_to'])) {
                 // getting all reports from 2001 year
-                $date = new \Magento\Framework\Stdlib\DateTime\Date();
-                $data['report_to'] = $date->toString($this->_localeDate->getDateFormat('short'));
+                $date = new \DateTime();
+                $data['report_to'] = $this->_localeDate->formatDateTime(
+                    $date,
+                    \IntlDateFormatter::SHORT,
+                    \IntlDateFormatter::NONE
+                );
             }
 
             $this->_setFilterValues($data);
@@ -119,13 +125,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
                  * Validate from and to date
                  */
                 try {
-                    $from = $this->_localeDate->date(
-                        $this->getFilter('report_from'),
-                        \Zend_Date::DATE_SHORT,
-                        null,
-                        false
-                    );
-                    $to = $this->_localeDate->date($this->getFilter('report_to'), \Zend_Date::DATE_SHORT, null, false);
+                    $from = $this->_localeDate->scopeDate(null, $this->getFilter('report_from'), false);
+                    $to = $this->_localeDate->scopeDate(null, $this->getFilter('report_to'), false);
 
                     $collection->setInterval($from, $to);
                 } catch (\Exception $e) {
@@ -151,7 +152,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
     /**
      * Get allowed stores
      *
-     * @return array
+     * @return array|\int[]
      */
     protected function _getAllowedStoreIds()
     {
@@ -202,7 +203,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
      * Set visibility of store switcher
      *
      * @param bool $visible
-     *
+     * @codeCoverageIgnore
      * @return void
      */
     public function setStoreSwitcherVisibility($visible = true)
@@ -212,6 +213,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return visibility of store switcher
+     * @codeCoverageIgnore
      *
      * @return bool
      * @SuppressWarnings(PHPMD.BooleanGetMethodName)
@@ -223,6 +225,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return store switcher html
+     * @codeCoverageIgnore
      *
      * @return string
      */
@@ -235,8 +238,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
      * Set visibility of date filter
      *
      * @param bool $visible
-     *
      * @return void
+     * @codeCoverageIgnore
      */
     public function setDateFilterVisibility($visible = true)
     {
@@ -245,6 +248,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return visibility of date filter
+     * @codeCoverageIgnore
      *
      * @return bool
      * @SuppressWarnings(PHPMD.BooleanGetMethodName)
@@ -256,6 +260,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return date filter html
+     * @codeCoverageIgnore
      *
      * @return string
      */
@@ -281,11 +286,12 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
      */
     public function getDateFormat()
     {
-        return $this->_localeDate->getDateFormat(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_SHORT);
+        return $this->_localeDate->getDateFormat(\IntlDateFormatter::SHORT);
     }
 
     /**
      * Return refresh button html
+     * @codeCoverageIgnore
      *
      * @return string
      */
@@ -299,8 +305,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
      *
      * @param string $name
      * @param string $value
-     *
      * @return void
+     * @codeCoverageIgnore
      */
     public function setFilter($name, $value)
     {
@@ -328,8 +334,8 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
      * Set sub-report rows count
      *
      * @param int $size
-     *
      * @return void
+     * @codeCoverageIgnore
      */
     public function setSubReportSize($size)
     {
@@ -338,6 +344,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
 
     /**
      * Return sub-report rows count
+     * @codeCoverageIgnore
      *
      * @return int
      */
@@ -350,6 +357,7 @@ class Grid extends \Magento\Backend\Block\Widget\Grid
      * Retrieve errors
      *
      * @return array
+     * @codeCoverageIgnore
      */
     public function getErrors()
     {

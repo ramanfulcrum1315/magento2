@@ -17,7 +17,7 @@ class Save extends \Magento\Backend\Controller\Adminhtml\System\Store
     {
         /** @var \Magento\Backend\Model\View\Result\Redirect $redirectResult */
         $redirectResult = $this->resultRedirectFactory->create();
-        if ($this->getRequest()->isPost() && ($postData = $this->getRequest()->getPost())) {
+        if ($this->getRequest()->isPost() && ($postData = $this->getRequest()->getPostValue())) {
             if (empty($postData['store_type']) || empty($postData['store_action'])) {
                 $redirectResult->setPath('adminhtml/*/');
                 return $redirectResult;
@@ -37,7 +37,7 @@ class Save extends \Magento\Backend\Controller\Adminhtml\System\Store
                         }
 
                         $websiteModel->save();
-                        $this->messageManager->addSuccess(__('The website has been saved.'));
+                        $this->messageManager->addSuccess(__('You saved the website.'));
                         break;
 
                     case 'group':
@@ -55,7 +55,7 @@ class Save extends \Magento\Backend\Controller\Adminhtml\System\Store
 
                         $this->_eventManager->dispatch('store_group_save', ['group' => $groupModel]);
 
-                        $this->messageManager->addSuccess(__('The store has been saved.'));
+                        $this->messageManager->addSuccess(__('You saved the store.'));
                         break;
 
                     case 'store':
@@ -82,7 +82,7 @@ class Save extends \Magento\Backend\Controller\Adminhtml\System\Store
 
                         $this->_eventManager->dispatch($eventName, ['store' => $storeModel]);
 
-                        $this->messageManager->addSuccess(__('The store view has been saved'));
+                        $this->messageManager->addSuccess(__('You saved the store view.'));
                         break;
                     default:
                         $redirectResult->setPath('adminhtml/*/');
@@ -90,13 +90,13 @@ class Save extends \Magento\Backend\Controller\Adminhtml\System\Store
                 }
                 $redirectResult->setPath('adminhtml/*/');
                 return $redirectResult;
-            } catch (\Magento\Framework\Model\Exception $e) {
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->messageManager->addError($e->getMessage());
                 $this->_getSession()->setPostData($postData);
             } catch (\Exception $e) {
                 $this->messageManager->addException(
                     $e,
-                    __('An error occurred while saving. Please review the error log.')
+                    __('Something went wrong while saving. Please review the error log.')
                 );
                 $this->_getSession()->setPostData($postData);
             }

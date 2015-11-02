@@ -132,14 +132,14 @@ class Category extends \Magento\Framework\Data\Form\Element\Multiselect
                     'id' => 'add_category_button',
                     'label' => $newCategoryCaption,
                     'title' => $newCategoryCaption,
-                    'onclick' => 'jQuery("#new-category").dialog("open")',
+                    'onclick' => 'jQuery("#new-category").modal("openModal")',
                     'disabled' => $this->getDisabled(),
                 ]
             );
         $return = <<<HTML
     <input id="{$htmlId}-suggest" placeholder="$suggestPlaceholder" />
     <script>
-        require(["jquery", "mage/mage", "mage/backend/tree-suggest"], function($){
+        require(["jquery", "mage/mage"], function($){
             $('#{$htmlId}-suggest').mage('treeSuggest', {$selectorOptions});
         });
     </script>

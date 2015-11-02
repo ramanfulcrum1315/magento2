@@ -29,21 +29,21 @@ class Properties extends \Magento\Widget\Block\Adminhtml\Widget\Options implemen
     /**
      * Prepare label for tab
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getTabLabel()
     {
-        return __('Widget Options');
+        return __('Frontend App Options');
     }
 
     /**
      * Prepare title for tab
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getTabTitle()
     {
-        return __('Widget Options');
+        return __('Frontend App Options');
     }
 
     /**

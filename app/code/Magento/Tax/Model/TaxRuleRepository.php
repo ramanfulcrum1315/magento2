@@ -9,13 +9,13 @@ namespace Magento\Tax\Model;
 use Magento\Framework\Api\Search\FilterGroup;
 use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\SortOrder;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\CouldNotSaveException;
-use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Model\Exception as ModelException;
+use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Tax\Api\Data\TaxRuleInterface;
-use Magento\Tax\Api\Data\TaxRuleSearchResultsDataBuilder;
 use Magento\Tax\Api\TaxRuleRepositoryInterface;
+use Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory;
 use Magento\Tax\Model\Calculation\RuleFactory;
 use Magento\Tax\Model\Calculation\TaxRuleRegistry;
 use Magento\Tax\Model\Resource\Calculation\Rule as Resource;
@@ -33,9 +33,9 @@ class TaxRuleRepository implements TaxRuleRepositoryInterface
     protected $taxRuleRegistry;
 
     /**
-     * @var TaxRuleSearchResultsDataBuilder
+     * @var TaxRuleSearchResultsInterfaceFactory
      */
-    protected $taxRuleSearchResultsBuilder;
+    protected $taxRuleSearchResultsFactory;
 
     /**
      * @var RuleFactory
@@ -53,24 +53,32 @@ class TaxRuleRepository implements TaxRuleRepositoryInterface
     protected $resource;
 
     /**
+     * @var \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface
+     */
+    protected $joinProcessor;
+
+    /**
      * @param TaxRuleRegistry $taxRuleRegistry
-     * @param TaxRuleSearchResultsDataBuilder $searchResultsBuilder
+     * @param TaxRuleSearchResultsInterfaceFactory $searchResultsFactory
      * @param RuleFactory $ruleFactory
      * @param CollectionFactory $collectionFactory
      * @param Resource $resource
+     * @param \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
      */
     public function __construct(
         TaxRuleRegistry $taxRuleRegistry,
-        TaxRuleSearchResultsDataBuilder $searchResultsBuilder,
+        TaxRuleSearchResultsInterfaceFactory $searchResultsFactory,
         RuleFactory $ruleFactory,
         CollectionFactory $collectionFactory,
-        Resource $resource
+        Resource $resource,
+        \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
     ) {
         $this->taxRuleRegistry = $taxRuleRegistry;
-        $this->taxRuleSearchResultsBuilder = $searchResultsBuilder;
+        $this->taxRuleSearchResultsFactory = $searchResultsFactory;
         $this->taxRuleModelFactory = $ruleFactory;
         $this->collectionFactory = $collectionFactory;
         $this->resource = $resource;
+        $this->joinProcessor = $joinProcessor;
     }
 
     /**
@@ -92,14 +100,12 @@ class TaxRuleRepository implements TaxRuleRepositoryInterface
                 $this->taxRuleRegistry->retrieveTaxRule($ruleId);
             }
             $this->resource->save($rule);
-        } catch (ModelException $e) {
-            if ($e->getCode() == ModelException::ERROR_CODE_ENTITY_ALREADY_EXISTS) {
-                throw new InputException($e->getMessage());
-            } else {
-                throw new CouldNotSaveException($e->getMessage());
-            }
-        } catch (NoSuchEntityException $exception) {
-            throw $exception;
+        } catch (AlreadyExistsException $e) {
+            throw $e;
+        } catch (NoSuchEntityException $e) {
+            throw $e;
+        } catch (LocalizedException $e) {
+            throw new CouldNotSaveException(__($e->getMessage()));
         }
         $this->taxRuleRegistry->registerTaxRule($rule);
         return $rule;
@@ -130,10 +136,12 @@ class TaxRuleRepository implements TaxRuleRepositoryInterface
      */
     public function getList(\Magento\Framework\Api\SearchCriteria $searchCriteria)
     {
-        $this->taxRuleSearchResultsBuilder->setSearchCriteria($searchCriteria);
+        $searchResults = $this->taxRuleSearchResultsFactory->create();
+        $searchResults->setSearchCriteria($searchCriteria);
 
         $fields = [];
         $collection = $this->collectionFactory->create();
+        $this->joinProcessor->process($collection);
 
         //Add filters from root filter group to the collection
         foreach ($searchCriteria->getFilterGroups() as $group) {
@@ -148,7 +156,7 @@ class TaxRuleRepository implements TaxRuleRepositoryInterface
             }
         }
 
-        $this->taxRuleSearchResultsBuilder->setTotalCount($collection->getSize());
+        $searchResults->setTotalCount($collection->getSize());
         $sortOrders = $searchCriteria->getSortOrders();
         /** @var SortOrder $sortOrder */
         if ($sortOrders) {
@@ -162,8 +170,8 @@ class TaxRuleRepository implements TaxRuleRepositoryInterface
         $collection->setCurPage($searchCriteria->getCurrentPage());
         $collection->setPageSize($searchCriteria->getPageSize());
 
-        $this->taxRuleSearchResultsBuilder->setItems($collection->getItems());
-        return $this->taxRuleSearchResultsBuilder->create();
+        $searchResults->setItems($collection->getItems());
+        return $searchResults;
     }
 
     /**

@@ -7,6 +7,9 @@
 
 namespace Magento\Catalog\Api;
 
+/**
+ * @api
+ */
 interface ProductRepositoryInterface
 {
     /**
@@ -24,13 +27,14 @@ interface ProductRepositoryInterface
     /**
      * Get info about product by product SKU
      *
-     * @param string $productSku
+     * @param string $sku
      * @param bool $editMode
-     * @param null|int $storeId
+     * @param int|null $storeId
+     * @param bool $forceReload
      * @return \Magento\Catalog\Api\Data\ProductInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function get($productSku, $editMode = false, $storeId = null);
+    public function get($sku, $editMode = false, $storeId = null, $forceReload = false);
 
     /**
      * Get info about product by product id
@@ -38,10 +42,11 @@ interface ProductRepositoryInterface
      * @param int $productId
      * @param bool $editMode
      * @param null|int $storeId
+     * @param bool $forceReload
      * @return \Magento\Catalog\Api\Data\ProductInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getById($productId, $editMode = false, $storeId = null);
+    public function getById($productId, $editMode = false, $storeId = null, $forceReload = false);
 
     /**
      * Delete product
@@ -53,12 +58,12 @@ interface ProductRepositoryInterface
     public function delete(\Magento\Catalog\Api\Data\ProductInterface $product);
 
     /**
-     * @param string $productSku
+     * @param string $sku
      * @return bool Will returned True if deleted
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Exception\StateException
      */
-    public function deleteById($productSku);
+    public function deleteById($sku);
 
     /**
      * Get product list

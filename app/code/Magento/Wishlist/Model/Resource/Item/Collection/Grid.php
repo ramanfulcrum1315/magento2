@@ -28,7 +28,7 @@ class Grid extends \Magento\Wishlist\Model\Resource\Item\Collection
      * @param \Magento\Framework\Event\ManagerInterface $eventManager
      * @param \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration
      * @param \Magento\Sales\Helper\Admin $adminhtmlSales
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Stdlib\DateTime\DateTime $date
      * @param \Magento\Wishlist\Model\Config $wishlistConfig
      * @param \Magento\Catalog\Model\Product\Visibility $productVisibility
@@ -51,7 +51,7 @@ class Grid extends \Magento\Wishlist\Model\Resource\Item\Collection
         \Magento\Framework\Event\ManagerInterface $eventManager,
         \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
         \Magento\Sales\Helper\Admin $adminhtmlSales,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Stdlib\DateTime\DateTime $date,
         \Magento\Wishlist\Model\Config $wishlistConfig,
         \Magento\Catalog\Model\Product\Visibility $productVisibility,
@@ -107,7 +107,7 @@ class Grid extends \Magento\Wishlist\Model\Resource\Item\Collection
      *
      * @param   string $field
      * @param   string $direction
-     * @return  \Magento\Framework\Data\Collection\Db
+     * @return  \Magento\Framework\Data\Collection\AbstractDb
      */
     public function setOrder($field, $direction = self::SORT_ORDER_DESC)
     {
@@ -128,7 +128,7 @@ class Grid extends \Magento\Wishlist\Model\Resource\Item\Collection
      * @param string|array $field
      * @param null|string|array $condition
      * @see self::_getConditionSql for $condition
-     * @return \Magento\Framework\Data\Collection\Db
+     * @return \Magento\Framework\Data\Collection\AbstractDb
      */
     public function addFieldToFilter($field, $condition = null)
     {

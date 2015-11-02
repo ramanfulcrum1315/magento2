@@ -5,10 +5,12 @@
  */
 namespace Magento\Store\Model\System;
 
+use Magento\Framework\Data\OptionSourceInterface;
+
 /**
  * Core System Store Model
  */
-class Store extends \Magento\Framework\Object
+class Store extends \Magento\Framework\Object implements OptionSourceInterface
 {
     /**
      * Website collection
@@ -40,7 +42,7 @@ class Store extends \Magento\Framework\Object
     private $_isAdminScopeAllowed = true;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -48,9 +50,9 @@ class Store extends \Magento\Framework\Object
      * Init model
      * Load Website, Group and Store collections
      *
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      */
-    public function __construct(\Magento\Framework\Store\StoreManagerInterface $storeManager)
+    public function __construct(\Magento\Store\Model\StoreManagerInterface $storeManager)
     {
         $this->_storeManager = $storeManager;
         return $this->reload();
@@ -400,19 +402,19 @@ class Store extends \Magento\Framework\Object
      */
     public function reload($type = null)
     {
-        if (is_null($type)) {
+        if ($type === null) {
             $this->_loadWebsiteCollection();
             $this->_loadGroupCollection();
             $this->_loadStoreCollection();
         } else {
             switch ($type) {
-                case \Magento\Framework\Store\ScopeInterface::SCOPE_WEBSITE:
+                case \Magento\Store\Model\ScopeInterface::SCOPE_WEBSITE:
                     $this->_loadWebsiteCollection();
                     break;
-                case \Magento\Framework\Store\ScopeInterface::SCOPE_GROUP:
+                case \Magento\Store\Model\ScopeInterface::SCOPE_GROUP:
                     $this->_loadGroupCollection();
                     break;
-                case \Magento\Framework\Store\ScopeInterface::SCOPE_STORE:
+                case \Magento\Store\Model\ScopeInterface::SCOPE_STORE:
                     $this->_loadStoreCollection();
                     break;
                 default:
@@ -457,5 +459,15 @@ class Store extends \Magento\Framework\Object
     {
         $this->_isAdminScopeAllowed = (bool)$value;
         return $this;
+    }
+
+    /**
+     * Return array of options as value-label pairs
+     *
+     * @return array Format: array(array('value' => '<value>', 'label' => '<label>'), ...)
+     */
+    public function toOptionArray()
+    {
+        return $this->getStoreValuesForForm();
     }
 }

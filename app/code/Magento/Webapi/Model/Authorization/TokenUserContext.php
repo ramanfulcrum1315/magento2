@@ -9,8 +9,8 @@ namespace Magento\Webapi\Model\Authorization;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Integration\Model\Oauth\Token;
 use Magento\Integration\Model\Oauth\TokenFactory;
-use Magento\Integration\Service\V1\Integration as IntegrationService;
-use Magento\Webapi\Controller\Request;
+use Magento\Integration\Api\IntegrationServiceInterface;
+use Magento\Framework\Webapi\Request;
 
 /**
  * A user context determined by tokens in a HTTP request Authorization header.
@@ -43,7 +43,7 @@ class TokenUserContext implements UserContextInterface
     protected $isRequestProcessed;
 
     /**
-     * @var IntegrationService
+     * @var IntegrationServiceInterface
      */
     protected $integrationService;
 
@@ -52,12 +52,12 @@ class TokenUserContext implements UserContextInterface
      *
      * @param Request $request
      * @param TokenFactory $tokenFactory
-     * @param IntegrationService $integrationService
+     * @param IntegrationServiceInterface $integrationService
      */
     public function __construct(
         Request $request,
         TokenFactory $tokenFactory,
-        IntegrationService $integrationService
+        IntegrationServiceInterface $integrationService
     ) {
         $this->request = $request;
         $this->tokenFactory = $tokenFactory;

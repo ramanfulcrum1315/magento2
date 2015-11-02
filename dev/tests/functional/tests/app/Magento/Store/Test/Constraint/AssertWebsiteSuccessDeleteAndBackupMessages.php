@@ -15,10 +15,6 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertWebsiteSuccessDeleteAndBackupMessages extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Success backup message
      */
@@ -27,7 +23,7 @@ class AssertWebsiteSuccessDeleteAndBackupMessages extends AbstractConstraint
     /**
      * Success website delete message
      */
-    const SUCCESS_DELETE_MESSAGE = 'The website has been deleted.';
+    const SUCCESS_DELETE_MESSAGE = 'You deleted the website.';
 
     /**
      * Assert that success messages is displayed after deleting website

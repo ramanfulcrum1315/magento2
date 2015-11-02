@@ -6,7 +6,7 @@
  */
 namespace Magento\DesignEditor\Controller\Adminhtml\System\Design\Editor\Tools;
 
-use Magento\Framework\Model\Exception as CoreException;
+use Magento\Framework\Exception\LocalizedException as CoreException;
 
 class ReorderJs extends \Magento\DesignEditor\Controller\Adminhtml\System\Design\Editor\Tools
 {
@@ -30,11 +30,11 @@ class ReorderJs extends \Magento\DesignEditor\Controller\Adminhtml\System\Design
             $result = ['error' => true, 'message' => $e->getMessage()];
             $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
         } catch (\Exception $e) {
-            $result = ['error' => true, 'message' => __('We cannot upload the CSS file.')];
+            $result = ['error' => true, 'message' => __('We can\'t upload the CSS file right now.')];
             $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
         }
         $this->getResponse()->representJson(
-            $this->_objectManager->get('Magento\Core\Helper\Data')->jsonEncode($result)
+            $this->_objectManager->get('Magento\Framework\Json\Helper\Data')->jsonEncode($result)
         );
     }
 }

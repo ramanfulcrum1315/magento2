@@ -14,11 +14,7 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertSitemapSuccessDeleteMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
-    const SUCCESS_DELETE_MESSAGE = 'The sitemap has been deleted.';
+    const SUCCESS_DELETE_MESSAGE = 'You deleted the sitemap.';
 
     /**
      * Assert that success message is displayed after sitemap delete

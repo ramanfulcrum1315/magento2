@@ -21,8 +21,8 @@ class RefreshLifetime extends \Magento\Reports\Controller\Adminhtml\Report\Stati
             foreach ($collectionsNames as $collectionName) {
                 $this->_objectManager->create($collectionName)->aggregate();
             }
-            $this->messageManager->addSuccess(__('We updated lifetime statistics.'));
-        } catch (\Magento\Framework\Model\Exception $e) {
+            $this->messageManager->addSuccess(__('You refreshed lifetime statistics.'));
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->messageManager->addError($e->getMessage());
         } catch (\Exception $e) {
             $this->messageManager->addError(__('We can\'t refresh lifetime statistics.'));

@@ -6,9 +6,10 @@
  */
 namespace Magento\Catalog\Api\Data;
 
+/**
+ * @api
+ */
 interface ProductAttributeInterface extends \Magento\Catalog\Api\Data\EavAttributeInterface
 {
     const ENTITY_TYPE_CODE = 'catalog_product';
-
-    const DEFAULT_ATTRIBUTE_SET_ID = 4;
 }

@@ -5,18 +5,13 @@
  */
 namespace Magento\Sales\Model\Order\Shipment;
 
-use Magento\Framework\Api\AttributeDataBuilder;
+use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Sales\Api\Data\ShipmentCommentInterface;
 use Magento\Sales\Model\AbstractModel;
 
 /**
  * @method \Magento\Sales\Model\Resource\Order\Shipment\Comment _getResource()
  * @method \Magento\Sales\Model\Resource\Order\Shipment\Comment getResource()
- * @method \Magento\Sales\Model\Order\Shipment\Comment setParentId(int $value)
- * @method \Magento\Sales\Model\Order\Shipment\Comment setIsCustomerNotified(int $value)
- * @method \Magento\Sales\Model\Order\Shipment\Comment setIsVisibleOnFront(int $value)
- * @method \Magento\Sales\Model\Order\Shipment\Comment setComment(string $value)
- * @method \Magento\Sales\Model\Order\Shipment\Comment setCreatedAt(string $value)
  */
 class Comment extends AbstractModel implements ShipmentCommentInterface
 {
@@ -28,42 +23,36 @@ class Comment extends AbstractModel implements ShipmentCommentInterface
     protected $_shipment;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Api\MetadataServiceInterface $metadataService
-     * @param AttributeDataBuilder $customAttributeBuilder
-     * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
-     * @param \Magento\Framework\Stdlib\DateTime $dateTime
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
+     * @param AttributeValueFactory $customAttributeFactory
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\MetadataServiceInterface $metadataService,
-        AttributeDataBuilder $customAttributeBuilder,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
-        \Magento\Framework\Stdlib\DateTime $dateTime,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
+        AttributeValueFactory $customAttributeFactory,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
             $context,
             $registry,
-            $metadataService,
-            $customAttributeBuilder,
-            $localeDate,
-            $dateTime,
+            $extensionFactory,
+            $customAttributeFactory,
             $resource,
             $resourceCollection,
             $data
@@ -84,6 +73,8 @@ class Comment extends AbstractModel implements ShipmentCommentInterface
     /**
      * Declare Shipment instance
      *
+     * @codeCoverageIgnore
+     *
      * @param \Magento\Sales\Model\Order\Shipment $shipment
      * @return $this
      */
@@ -95,6 +86,8 @@ class Comment extends AbstractModel implements ShipmentCommentInterface
 
     /**
      * Retrieve Shipment instance
+     *
+     * @codeCoverageIgnore
      *
      * @return \Magento\Sales\Model\Order\Shipment
      */
@@ -116,6 +109,7 @@ class Comment extends AbstractModel implements ShipmentCommentInterface
         return $this->_storeManager->getStore();
     }
 
+    //@codeCoverageIgnoreStart
     /**
      * Returns comment
      *
@@ -134,6 +128,14 @@ class Comment extends AbstractModel implements ShipmentCommentInterface
     public function getCreatedAt()
     {
         return $this->getData(ShipmentCommentInterface::CREATED_AT);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setCreatedAt($createdAt)
+    {
+        return $this->setData(ShipmentCommentInterface::CREATED_AT, $createdAt);
     }
 
     /**
@@ -165,4 +167,59 @@ class Comment extends AbstractModel implements ShipmentCommentInterface
     {
         return $this->getData(ShipmentCommentInterface::PARENT_ID);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setParentId($id)
+    {
+        return $this->setData(ShipmentCommentInterface::PARENT_ID, $id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsCustomerNotified($isCustomerNotified)
+    {
+        return $this->setData(ShipmentCommentInterface::IS_CUSTOMER_NOTIFIED, $isCustomerNotified);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsVisibleOnFront($isVisibleOnFront)
+    {
+        return $this->setData(ShipmentCommentInterface::IS_VISIBLE_ON_FRONT, $isVisibleOnFront);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setComment($comment)
+    {
+        return $this->setData(ShipmentCommentInterface::COMMENT, $comment);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Magento\Sales\Api\Data\ShipmentCommentExtensionInterface|null
+     */
+    public function getExtensionAttributes()
+    {
+        return $this->_getExtensionAttributes();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentCommentExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\ShipmentCommentExtensionInterface $extensionAttributes
+    ) {
+        return $this->_setExtensionAttributes($extensionAttributes);
+    }
+    //@codeCoverageIgnoreEnd
 }

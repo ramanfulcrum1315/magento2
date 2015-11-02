@@ -10,11 +10,11 @@ use Magento\Search\Model\Resource\Query\CollectionFactory as QueryCollectionFact
 use Magento\Search\Model\SearchCollectionInterface as Collection;
 use Magento\Search\Model\SearchCollectionFactory as CollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\Data\Collection\Db;
+use Magento\Framework\Data\Collection\AbstractDb as DbCollection;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Resource\AbstractResource;
 use Magento\Framework\Registry;
-use Magento\Framework\Store\StoreManagerInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Search query model
@@ -74,7 +74,7 @@ class Query extends AbstractModel implements QueryInterface
     /**
      * Store manager
      *
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -99,10 +99,10 @@ class Query extends AbstractModel implements QueryInterface
      * @param Registry $registry
      * @param QueryCollectionFactory $queryCollectionFactory
      * @param CollectionFactory $searchCollectionFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
-     * @param Config $scopeConfig
+     * @param StoreManagerInterface $storeManager
+     * @param ScopeConfigInterface $scopeConfig
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param Db $resourceCollection
+     * @param DbCollection $resourceCollection
      * @param array $data
      */
     public function __construct(
@@ -110,10 +110,10 @@ class Query extends AbstractModel implements QueryInterface
         Registry $registry,
         QueryCollectionFactory $queryCollectionFactory,
         CollectionFactory $searchCollectionFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        StoreManagerInterface $storeManager,
         ScopeConfigInterface $scopeConfig,
         AbstractResource $resource = null,
-        Db $resourceCollection = null,
+        DbCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->_queryCollectionFactory = $queryCollectionFactory;
@@ -151,7 +151,7 @@ class Query extends AbstractModel implements QueryInterface
     public function getSuggestCollection()
     {
         $collection = $this->getData('suggest_collection');
-        if (is_null($collection)) {
+        if ($collection === null) {
             $collection = $this->_queryCollectionFactory->create()->setStoreId(
                 $this->getStoreId()
             )->setQueryFilter(
@@ -240,7 +240,7 @@ class Query extends AbstractModel implements QueryInterface
     {
         return $this->_scopeConfig->getValue(
             self::XML_PATH_MIN_QUERY_LENGTH,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $this->getStoreId()
         );
     }
@@ -254,13 +254,14 @@ class Query extends AbstractModel implements QueryInterface
     {
         return $this->_scopeConfig->getValue(
             self::XML_PATH_MAX_QUERY_LENGTH,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $this->getStoreId()
         );
     }
 
     /**
      * @return string
+     * @codeCoverageIgnore
      */
     public function getQueryText()
     {
@@ -269,6 +270,7 @@ class Query extends AbstractModel implements QueryInterface
 
     /**
      * @return bool
+     * @codeCoverageIgnore
      */
     public function isQueryTextExceeded()
     {

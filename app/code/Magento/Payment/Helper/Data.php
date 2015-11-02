@@ -9,7 +9,7 @@ use Magento\Payment\Model\Method\Substitution;
 use Magento\Quote\Model\Quote;
 use Magento\Store\Model\Store;
 use Magento\Payment\Block\Form;
-use Magento\Payment\Model\Info;
+use Magento\Payment\Model\InfoInterface;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\LayoutInterface;
 use Magento\Framework\View\LayoutFactory;
@@ -23,13 +23,6 @@ use Magento\Payment\Model\MethodInterface;
 class Data extends \Magento\Framework\App\Helper\AbstractHelper
 {
     const XML_PATH_PAYMENT_METHODS = 'payment';
-
-    /**
-     * Core store config
-     *
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
-    protected $_scopeConfig;
 
     /**
      * @var \Magento\Payment\Model\Config
@@ -66,7 +59,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      * Construct
      *
      * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param LayoutFactory $layoutFactory
      * @param \Magento\Payment\Model\Method\Factory $paymentMethodFactory
      * @param \Magento\Store\Model\App\Emulation $appEmulation
@@ -75,7 +67,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         LayoutFactory $layoutFactory,
         \Magento\Payment\Model\Method\Factory $paymentMethodFactory,
         \Magento\Store\Model\App\Emulation $appEmulation,
@@ -83,7 +74,6 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         \Magento\Framework\App\Config\Initial $initialConfig
     ) {
         parent::__construct($context);
-        $this->_scopeConfig = $scopeConfig;
         $this->_layout = $layoutFactory->create();
         $this->_methodFactory = $paymentMethodFactory;
         $this->_appEmulation = $appEmulation;
@@ -105,14 +95,14 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param string $code
      *
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return MethodInterface
      */
     public function getMethodInstance($code)
     {
-        $class = $this->_scopeConfig->getValue(
+        $class = $this->scopeConfig->getValue(
             $this->getMethodModelConfigName($code),
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
 
         if (!$class) {
@@ -125,9 +115,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Get and sort available payment methods for specified or current store
      *
-     * @param null|string|bool|int|Store $store
+     * @param null|string|bool|int $store
      * @param Quote|null $quote
-     * @return array
+     * @return AbstractMethod[]
      */
     public function getStoreMethods($store = null, $quote = null)
     {
@@ -135,9 +125,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $methods = $this->getPaymentMethods();
 
         foreach (array_keys($methods) as $code) {
-            $model = $this->_scopeConfig->getValue(
+            $model = $this->scopeConfig->getValue(
                 $this->getMethodModelConfigName($code),
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 $store
             );
             if (!$model) {
@@ -151,28 +141,25 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 /* if the payment method cannot be used at this time */
                 continue;
             }
-            $sortOrder = (int)$methodInstance->getConfigData('sort_order', $store);
-            $methodInstance->setSortOrder($sortOrder);
             $res[] = $methodInstance;
         }
 
-        uasort($res, [$this, '_sortMethods']);
+        @uasort(
+            $res,
+            function (MethodInterface $a, MethodInterface $b) {
+                if ((int)$a->getConfigData('sort_order') < (int)$b->getConfigData('sort_order')) {
+                    return -1;
+                }
+
+                if ((int)$a->getConfigData('sort_order') > (int)$b->getConfigData('sort_order')) {
+                    return 1;
+                }
+
+                return 0;
+            }
+        );
 
         return $res;
-    }
-
-    /**
-     * Sort payments methods
-     *
-     * @param MethodInterface $a
-     * @param MethodInterface $b
-     * @return int
-     */
-    protected function _sortMethods($a, $b)
-    {
-        return (int)$a->getSortOrder() <
-            (int)$b->getSortOrder() ? -1 : ((int)$a->getSortOrder() >
-            (int)$b->getSortOrder() ? 1 : 0);
     }
 
     /**
@@ -192,11 +179,11 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Retrieve payment information block
      *
-     * @param Info $info
+     * @param InfoInterface $info
      * @param \Magento\Framework\View\LayoutInterface $layout
      * @return Template
      */
-    public function getInfoBlock(Info $info, LayoutInterface $layout = null)
+    public function getInfoBlock(InfoInterface $info, LayoutInterface $layout = null)
     {
         $layout = $layout ?: $this->_layout;
         $blockType = $info->getMethodInstance()->getInfoBlockType();
@@ -208,12 +195,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * Render payment information block
      *
-     * @param Info $info
+     * @param InfoInterface $info
      * @param int $storeId
      * @return string
      * @throws \Exception
      */
-    public function getInfoBlockHtml(Info $info, $storeId)
+    public function getInfoBlockHtml(InfoInterface $info, $storeId)
     {
         $this->_appEmulation->startEnvironmentEmulation($storeId);
 
@@ -323,9 +310,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function isZeroSubTotal($store = null)
     {
-        return $this->_scopeConfig->getValue(
+        return $this->scopeConfig->getValue(
             \Magento\Payment\Model\Method\Free::XML_PATH_PAYMENT_FREE_ACTIVE,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
         );
     }
@@ -338,9 +325,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getZeroSubTotalOrderStatus($store = null)
     {
-        return $this->_scopeConfig->getValue(
+        return $this->scopeConfig->getValue(
             \Magento\Payment\Model\Method\Free::XML_PATH_PAYMENT_FREE_ORDER_STATUS,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
         );
     }
@@ -353,9 +340,9 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getZeroSubTotalPaymentAutomaticInvoice($store = null)
     {
-        return $this->_scopeConfig->getValue(
+        return $this->scopeConfig->getValue(
             \Magento\Payment\Model\Method\Free::XML_PATH_PAYMENT_FREE_PAYMENT_ACTION,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
         );
     }

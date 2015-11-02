@@ -326,7 +326,7 @@ define([
                     }
                     return false;
                 }, this),
-                'class': 'primary'
+                'class': 'action-primary'
             };
             this._dialog.setButtons(buttons);
             this._dialog.open();
@@ -408,7 +408,7 @@ define([
                     this.assignThemeSuccess(response, stores, themeId);
                 }, this),
                 error: $.proxy(function() {
-                    var message = $.mage.__('Sorry, there was an unknown error.');
+                    var message = $.mage.__('Sorry, something went wrong. That\'s all we know.');
                     this._dialog.messages.set(message, 'error');
                 }, this)
             });

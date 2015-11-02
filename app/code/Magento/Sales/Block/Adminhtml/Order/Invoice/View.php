@@ -98,7 +98,7 @@ class View extends \Magento\Backend\Block\Widget\Form\Container
                     'label' => __('Send Email'),
                     'class' => 'send-email',
                     'onclick' => 'confirmSetLocation(\'' . __(
-                        'Are you sure you want to send an Invoice email to customer?'
+                        'Are you sure you want to send an invoice email to customer?'
                     ) . '\', \'' . $this->getEmailUrl() . '\')'
                 ]
             );
@@ -184,21 +184,25 @@ class View extends \Magento\Backend\Block\Widget\Form\Container
     /**
      * Get header text
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getHeaderText()
     {
         if ($this->getInvoice()->getEmailSent()) {
-            $emailSent = __('the invoice email was sent');
+            $emailSent = __('The invoice email was sent.');
         } else {
-            $emailSent = __('the invoice email is not sent');
+            $emailSent = __('The invoice email wasn\'t sent.');
         }
         return __(
             'Invoice #%1 | %2 | %4 (%3)',
             $this->getInvoice()->getIncrementId(),
             $this->getInvoice()->getStateName(),
             $emailSent,
-            $this->formatDate($this->getInvoice()->getCreatedAtDate(), 'medium', true)
+            $this->formatDate(
+                $this->_localeDate->date(new \DateTime($this->getInvoice()->getCreatedAt())),
+                \IntlDateFormatter::MEDIUM,
+                true
+            )
         );
     }
 

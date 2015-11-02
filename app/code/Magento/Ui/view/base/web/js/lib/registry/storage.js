@@ -2,10 +2,10 @@
  * Copyright © 2015 Magento. All rights reserved.
  * See COPYING.txt for license details.
  */
-define([], function(){
+define([], function () {
     'use strict';
-    
-    function Storage(){
+
+    function Storage() {
         this.data = {};
     }
 
@@ -16,21 +16,17 @@ define([], function(){
          * Retrieves values of the specified elements.
          *
          * @param {Array} elems - An array of elements.
-         * @returns {Array} Array of values. 
+         * @returns {Array} Array of values.
          */
-        get: function(elems) {
-            var data = this.data,
-                record;
+        get: function (elems) {
+            var data = this.data;
 
             elems = elems || [];
 
-            return elems.map(function(elem) {
-                record = data[elem];
-
-                return record ? record.value : undefined;
+            return elems.map(function (elem) {
+                return data[elem];
             });
         },
-
 
         /**
          * Sets key -> value pair.
@@ -39,15 +35,13 @@ define([], function(){
          * @param {*} value - Value of the element.
          * returns {storage} Chainable.
          */
-        set: function(elem, value) {
-            var data    = this.data,
-                record  = data[elem] = data[elem] || {};
+        set: function (elem, value) {
+            var data  = this.data;
 
-            record.value = value;
+            data[elem] = value;
 
             return this;
         },
-
 
         /**
          * Removes specified elements from storage.
@@ -55,16 +49,15 @@ define([], function(){
          * @param {Array} elems - An array of elements to be removed.
          * returns {storage} Chainable.
          */
-        remove: function(elems) {
+        remove: function (elems) {
             var data = this.data;
 
-            elems.forEach(function(elem) {
+            elems.forEach(function (elem) {
                 delete data[elem];
             });
 
             return this;
         },
-
 
         /**
          * Checks whether all of the specified elements has been registered.
@@ -72,10 +65,10 @@ define([], function(){
          * @param {Array} elems - An array of elements.
          * @returns {Boolean}
          */
-        has: function(elems) {
+        has: function (elems) {
             var data = this.data;
 
-            return elems.every(function(elem) {
+            return elems.every(function (elem) {
                 return typeof data[elem] !== 'undefined';
             });
         }
@@ -83,4 +76,3 @@ define([], function(){
 
     return Storage;
 });
-

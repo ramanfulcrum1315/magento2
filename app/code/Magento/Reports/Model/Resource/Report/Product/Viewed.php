@@ -4,8 +4,6 @@
  * See COPYING.txt for license details.
  */
 
-// @codingStandardsIgnoreFile
-
 /**
  * Most viewed product report aggregate resource model
  *
@@ -31,17 +29,23 @@ class Viewed extends \Magento\Sales\Model\Resource\Report\AbstractReport
     const AGGREGATION_YEARLY = 'report_viewed_product_aggregated_yearly';
 
     /**
+     * Product resource instance
+     *
      * @var \Magento\Catalog\Model\Resource\Product
      */
     protected $_productResource;
 
     /**
+     * Resource helper instance
+     *
      * @var \Magento\Reports\Model\Resource\Helper
      */
     protected $_resourceHelper;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
+     * Constructor
+     *
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
      * @param \Magento\Reports\Model\FlagFactory $reportsFlagFactory
@@ -49,18 +53,28 @@ class Viewed extends \Magento\Sales\Model\Resource\Report\AbstractReport
      * @param \Magento\Framework\Stdlib\DateTime\Timezone\Validator $timezoneValidator
      * @param \Magento\Catalog\Model\Resource\Product $productResource
      * @param \Magento\Reports\Model\Resource\Helper $resourceHelper
+     * @param string|null $resourcePrefix
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
+        \Magento\Framework\Model\Resource\Db\Context $context,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
         \Magento\Reports\Model\FlagFactory $reportsFlagFactory,
         \Magento\Framework\Stdlib\DateTime $dateTime,
         \Magento\Framework\Stdlib\DateTime\Timezone\Validator $timezoneValidator,
         \Magento\Catalog\Model\Resource\Product $productResource,
-        \Magento\Reports\Model\Resource\Helper $resourceHelper
+        \Magento\Reports\Model\Resource\Helper $resourceHelper,
+        $resourcePrefix = null
     ) {
-        parent::__construct($resource, $logger, $localeDate, $reportsFlagFactory, $dateTime, $timezoneValidator);
+        parent::__construct(
+            $context,
+            $logger,
+            $localeDate,
+            $reportsFlagFactory,
+            $dateTime,
+            $timezoneValidator,
+            $resourcePrefix
+        );
         $this->_productResource = $productResource;
         $this->_resourceHelper = $resourceHelper;
     }
@@ -88,12 +102,6 @@ class Viewed extends \Magento\Sales\Model\Resource\Report\AbstractReport
         $mainTable = $this->getMainTable();
         $adapter = $this->_getWriteAdapter();
 
-        // convert input dates to UTC to be comparable with DATETIME fields in DB
-        $from = $this->_dateToUtc($from);
-        $to = $this->_dateToUtc($to);
-
-        $this->_checkDates($from, $to);
-
         if ($from !== null || $to !== null) {
             $subSelect = $this->_getTableDateRangeSelect(
                 $this->getTable('report_event'),
@@ -106,7 +114,7 @@ class Viewed extends \Magento\Sales\Model\Resource\Report\AbstractReport
             $subSelect = null;
         }
         $this->_clearTableByDateRange($mainTable, $from, $to, $subSelect);
-        // convert dates from UTC to current admin timezone
+        // convert dates to current admin timezone
         $periodExpr = $adapter->getDatePartSql(
             $this->getStoreTZOffsetQuery(
                 ['source_table' => $this->getTable('report_event')],
@@ -214,12 +222,28 @@ class Viewed extends \Magento\Sales\Model\Resource\Report\AbstractReport
         $insertQuery = $select->insertFromSelect($this->getMainTable(), array_keys($columns));
         $adapter->query($insertQuery);
 
-        $this->_resourceHelper->updateReportRatingPos('day', 'views_num', $mainTable, $this->getTable(self::AGGREGATION_DAILY));
-        $this->_resourceHelper->updateReportRatingPos('month', 'views_num', $mainTable, $this->getTable(self::AGGREGATION_MONTHLY));
-        $this->_resourceHelper->updateReportRatingPos('year', 'views_num', $mainTable, $this->getTable(self::AGGREGATION_YEARLY));
-
+        $this->_resourceHelper->updateReportRatingPos(
+            $adapter,
+            'day',
+            'views_num',
+            $mainTable,
+            $this->getTable(self::AGGREGATION_DAILY)
+        );
+        $this->_resourceHelper->updateReportRatingPos(
+            $adapter,
+            'month',
+            'views_num',
+            $mainTable,
+            $this->getTable(self::AGGREGATION_MONTHLY)
+        );
+        $this->_resourceHelper->updateReportRatingPos(
+            $adapter,
+            'year',
+            'views_num',
+            $mainTable,
+            $this->getTable(self::AGGREGATION_YEARLY)
+        );
         $this->_setFlagData(\Magento\Reports\Model\Flag::REPORT_PRODUCT_VIEWED_FLAG_CODE);
-
         return $this;
     }
 }

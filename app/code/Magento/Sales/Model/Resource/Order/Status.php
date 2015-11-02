@@ -7,14 +7,17 @@ namespace Magento\Sales\Model\Resource\Order;
 
 use Magento\Framework\App\Resource;
 use Psr\Log\LoggerInterface as LogWriter;
-use Magento\Framework\Model\Exception;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\SalesSequence\Model\Manager;
+use \Magento\Sales\Model\Resource\EntityAbstract;
+use \Magento\Framework\Model\Resource\Db\VersionControl\Snapshot;
 
 /**
  * Order status resource model
  *
  * @author      Magento Core Team <core@magentocommerce.com>
  */
-class Status extends \Magento\Framework\Model\Resource\Db\AbstractDb
+class Status extends \Magento\Framework\Model\Resource\Db\VersionControl\AbstractDb
 {
     /**
      * Status labels table
@@ -29,25 +32,6 @@ class Status extends \Magento\Framework\Model\Resource\Db\AbstractDb
      * @var string
      */
     protected $stateTable;
-
-    /**
-     * @var \Psr\Log\LoggerInterface
-     */
-    protected $logger;
-
-    /**
-     * Class constructor
-     *
-     * @param \Magento\Framework\App\Resource $resource
-     * @param LogWriter $logger
-     */
-    public function __construct(
-        Resource $resource,
-        LogWriter $logger
-    ) {
-        $this->logger = $logger;
-        parent::__construct($resource);
-    }
 
     /**
      * Internal constructor
@@ -173,7 +157,7 @@ class Status extends \Magento\Framework\Model\Resource\Db\AbstractDb
      * @param string $status
      * @param string $state
      * @return $this
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function unassignState($status, $state)
     {
@@ -203,7 +187,7 @@ class Status extends \Magento\Framework\Model\Resource\Db\AbstractDb
             $this->_getWriteAdapter()->commit();
         } catch (\Exception $e) {
             $this->_getWriteAdapter()->rollBack();
-            throw new Exception('Cannot unassing status from state');
+            throw new LocalizedException(__('Cannot unassign status from state'));
         }
 
         return $this;

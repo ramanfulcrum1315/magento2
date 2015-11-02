@@ -7,7 +7,6 @@
 
 namespace Magento\Backend\Test\Handler;
 
-use Magento\Mtf\System\Config;
 use Magento\Mtf\Util\Protocol\CurlInterface;
 use Magento\Mtf\Util\Protocol\CurlTransport;
 use Magento\Mtf\Util\Protocol\CurlTransport\BackendDecorator;
@@ -62,8 +61,10 @@ class Extractor
      */
     public function getData()
     {
+        /** @var \Magento\Mtf\Config\DataInterface $config */
+        $config = \Magento\Mtf\ObjectManagerFactory::getObjectManager()->get('Magento\Mtf\Config\DataInterface');
         $url = $_ENV['app_backend_url'] . $this->url;
-        $curl = new BackendDecorator(new CurlTransport(), new Config());
+        $curl = new BackendDecorator(new CurlTransport(), $config);
         $curl->addOption(CURLOPT_HEADER, 1);
         $curl->write(CurlInterface::POST, $url, '1.0');
         $response = $curl->read();

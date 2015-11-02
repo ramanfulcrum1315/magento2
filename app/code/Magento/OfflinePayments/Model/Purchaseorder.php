@@ -5,12 +5,21 @@
  */
 namespace Magento\OfflinePayments\Model;
 
+/**
+ * Class Purchaseorder
+ *
+ * @method \Magento\Quote\Api\Data\PaymentMethodExtensionInterface getExtensionAttributes()
+ */
 class Purchaseorder extends \Magento\Payment\Model\Method\AbstractMethod
 {
+    const PAYMENT_METHOD_PURCHASEORDER_CODE = 'purchaseorder';
+
     /**
+     * Payment method code
+     *
      * @var string
      */
-    protected $_code = 'purchaseorder';
+    protected $_code = self::PAYMENT_METHOD_PURCHASEORDER_CODE;
 
     /**
      * @var string

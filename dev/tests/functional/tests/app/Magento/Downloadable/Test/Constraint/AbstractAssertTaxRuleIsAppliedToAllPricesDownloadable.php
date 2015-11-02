@@ -55,20 +55,21 @@ abstract class AbstractAssertTaxRuleIsAppliedToAllPricesDownloadable extends Abs
         $this->catalogCategoryView = $catalogCategoryView;
         $this->catalogProductView = $catalogProductView;
         $this->checkoutCart = $checkoutCart;
-        $actualPrices = [];
+
         //Assertion steps
-        $productName = $product->getName();
+        $actualPrices = [];
         $productCategory = $product->getCategoryIds()[0];
         $this->openCategory($productCategory);
-        $actualPrices = $this->getCategoryPrices($productName, $actualPrices);
-        $catalogCategoryView->getListProductBlock()->openProductViewPage($productName);
+        $actualPrices = $this->getCategoryPrices($product, $actualPrices);
+        $catalogCategoryView->getListProductBlock()->getProductItem($product)->open();
         $catalogProductView->getViewBlock()->fillOptions($product);
         $actualPrices = $this->getProductPagePrices($actualPrices);
         $catalogProductView->getViewBlock()->clickAddToCart();
+        $catalogProductView->getMessagesBlock()->waitSuccessMessage();
         $actualPrices = $this->getCartPrices($product, $actualPrices);
         $actualPrices = $this->getTotals($actualPrices);
         //Prices verification
         $message = 'Prices from dataset should be equal to prices on frontend';
-        \PHPUnit_Framework_Assert::assertEquals($prices, $actualPrices, $message);
+        \PHPUnit_Framework_Assert::assertEquals($prices, array_filter($actualPrices), $message);
     }
 }

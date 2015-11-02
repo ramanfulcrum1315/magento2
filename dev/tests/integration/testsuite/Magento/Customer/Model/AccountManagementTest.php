@@ -41,17 +41,20 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
     /** @var AddressInterface[] */
     private $_expectedAddresses;
 
-    /** @var \Magento\Customer\Api\Data\AddressDataBuilder */
-    private $addressBuilder;
+    /** @var \Magento\Customer\Api\Data\AddressInterfaceFactory */
+    private $addressFactory;
 
-    /** @var \Magento\Customer\Api\Data\CustomerDataBuilder */
-    private $customerBuilder;
+    /** @var \Magento\Customer\Api\Data\CustomerInterfaceFactory */
+    private $customerFactory;
 
     /** @var DataObjectProcessor */
     private $dataProcessor;
 
     /** @var \Magento\Framework\Api\ExtensibleDataObjectConverter */
     private $extensibleDataObjectConverter;
+
+    /** @var  \Magento\Framework\Api\DataObjectHelper */
+    protected $dataObjectHelper;
 
     protected function setUp()
     {
@@ -63,41 +66,44 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
         $this->addressRepository =
             $this->objectManager->create('Magento\Customer\Api\AddressRepositoryInterface');
 
-        $this->addressBuilder = $this->objectManager->create('Magento\Customer\Api\Data\AddressDataBuilder');
-        $this->customerBuilder = $this->objectManager->create('Magento\Customer\Api\Data\CustomerDataBuilder');
+        $this->addressFactory = $this->objectManager->create('Magento\Customer\Api\Data\AddressInterfaceFactory');
+        $this->customerFactory = $this->objectManager->create('Magento\Customer\Api\Data\CustomerInterfaceFactory');
+        $this->dataObjectHelper = $this->objectManager->create('Magento\Framework\Api\DataObjectHelper');
 
-        $regionBuilder = $this->objectManager->create('Magento\Customer\Api\Data\RegionDataBuilder');
-        $this->addressBuilder->setId('1')
+        $regionFactory = $this->objectManager->create('Magento\Customer\Api\Data\RegionInterfaceFactory');
+        $address = $this->addressFactory->create();
+        $address->setId('1')
             ->setCountryId('US')
             ->setCustomerId('1')
             ->setPostcode('75477')
             ->setRegion(
-                $regionBuilder->setRegionCode('AL')->setRegion('Alabama')->setRegionId(1)->create()
+                $regionFactory->create()->setRegionCode('AL')->setRegion('Alabama')->setRegionId(1)
             )
+            ->setRegionId(1)
             ->setCompany('CompanyName')
             ->setStreet(['Green str, 67'])
             ->setTelephone('3468676')
             ->setCity('CityM')
             ->setFirstname('John')
             ->setLastname('Smith')
-            ->setDefaultShipping(true)
-            ->setDefaultBilling(true);
-        $address = $this->addressBuilder->create();
+            ->setIsDefaultShipping(true)
+            ->setIsDefaultBilling(true);
 
-        $this->addressBuilder->setId('2')
+        $address2 = $this->addressFactory->create();
+        $address2->setId('2')
             ->setCountryId('US')
             ->setCustomerId('1')
             ->setPostcode('47676')
             ->setRegion(
-                $regionBuilder->setRegionCode('AL')->setRegion('Alabama')->setRegionId(1)->create()
+                $regionFactory->create()->setRegionCode('AL')->setRegion('Alabama')->setRegionId(1)
             )
+            ->setRegionId(1)
             ->setCompany('Company')
             ->setStreet(['Black str, 48'])
             ->setCity('CityX')
             ->setTelephone('3234676')
             ->setFirstname('John')
             ->setLastname('Smith');
-        $address2 = $this->addressBuilder->create();
 
         $this->_expectedAddresses = [$address, $address2];
 
@@ -129,7 +135,7 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
      */
     public function testLogin()
     {
-        // Customer e-mail and password are pulled from the fixture customer.php
+        // Customer email and password are pulled from the fixture customer.php
         $customer = $this->accountManagement->authenticate('customer@example.com', 'password', true);
 
         $this->assertSame('customer@example.com', $customer->getEmail());
@@ -143,7 +149,7 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
      */
     public function testLoginWrongPassword()
     {
-        // Customer e-mail and password are pulled from the fixture customer.php
+        // Customer email and password are pulled from the fixture customer.php
         $this->accountManagement->authenticate('customer@example.com', 'wrongPassword', true);
     }
 
@@ -153,7 +159,7 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
      */
     public function testLoginWrongUsername()
     {
-        // Customer e-mail and password are pulled from the fixture customer.php
+        // Customer email and password are pulled from the fixture customer.php
         $this->accountManagement->authenticate('non_existing_user', 'password', true);
     }
 
@@ -172,7 +178,7 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
      * @magentoDataFixture Magento/Customer/_files/customer.php
      *
      * @expectedException \Magento\Framework\Exception\InvalidEmailOrPasswordException
-     * @expectedExceptionMessage Password doesn't match for this account
+     * @expectedExceptionMessage The password doesn't match this account.
      */
     public function testChangePasswordWrongPassword()
     {
@@ -547,7 +553,7 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
      */
     public function testCreateCustomerException()
     {
-        $customerEntity = $this->customerBuilder->create();
+        $customerEntity = $this->customerFactory->create();
 
         try {
             $this->accountManagement->createAccount($customerEntity);
@@ -585,8 +591,12 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
                 'id' => null
             ]
         );
-        $this->customerBuilder->populateWithArray($customerData);
-        $customerEntity = $this->customerBuilder->create();
+        $customerEntity = $this->customerFactory->create();
+        $this->dataObjectHelper->populateWithArray(
+            $customerEntity,
+            $customerData,
+            '\Magento\Customer\Api\Data\CustomerInterface'
+        );
 
         $customerAfter = $this->accountManagement->createAccount($customerEntity, 'aPassword');
         $this->assertGreaterThan(0, $customerAfter->getId());
@@ -664,12 +674,11 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
             ->load($customerModel->getId());
         $dataInModel = $savedModel->getData();
 
-        $this->customerBuilder
+        $newCustomerEntity = $this->customerFactory->create()
             ->setEmail($email2)
             ->setFirstname($firstname)
             ->setLastname($lastname)
             ->setGroupId($groupId);
-        $newCustomerEntity = $this->customerBuilder->create();
         $customerData = $this->accountManagement->createAccount($newCustomerEntity, $password);
         $this->assertNotNull($customerData->getId());
         $savedCustomer = $this->customerRepository->getById($customerData->getId());
@@ -698,7 +707,7 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
         ];
         foreach ($dataInModel as $key => $value) {
             if (!in_array($key, $expectedDifferences)) {
-                if (is_null($value)) {
+                if ($value === null) {
                     $this->assertArrayNotHasKey($key, $dataInService);
                 } else {
                     $this->assertEquals($value, $dataInService[$key], 'Failed asserting value for ' . $key);
@@ -722,13 +731,12 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
         $lastname = 'McTest';
         $groupId = 1;
 
-        $this->customerBuilder
+        $newCustomerEntity = $this->customerFactory->create()
             ->setStoreId($storeId)
             ->setEmail($email)
             ->setFirstname($firstname)
             ->setLastname($lastname)
             ->setGroupId($groupId);
-        $newCustomerEntity = $this->customerBuilder->create();
         $savedCustomer = $this->accountManagement->createAccount($newCustomerEntity, 'aPassword');
         $this->assertNotNull($savedCustomer->getId());
         $this->assertEquals($email, $savedCustomer->getEmail());
@@ -750,12 +758,12 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
         $lastname = 'McTest';
         $groupId = 1;
 
-        $this->customerBuilder->setStoreId($storeId)
+        $newCustomerEntity = $this->customerFactory->create()
+            ->setStoreId($storeId)
             ->setEmail($email)
             ->setFirstname($firstname)
             ->setLastname($lastname)
             ->setGroupId($groupId);
-        $newCustomerEntity = $this->customerBuilder->create();
         /** @var \Magento\Framework\Math\Random $mathRandom */
         $password = $this->objectManager->get('Magento\Framework\Math\Random')->getRandomString(
             AccountManagement::MIN_PASSWORD_LENGTH
@@ -792,14 +800,17 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
 
         $existingCustId = 1;
         $existingCustomer = $this->customerRepository->getById($existingCustId);
-        $this->customerBuilder
-            ->populate($existingCustomer)
-            ->setEmail($email)
+        $customerEntity = $this->customerFactory->create();
+        $this->dataObjectHelper->mergeDataObjects(
+            '\Magento\Customer\Api\Data\CustomerInterface',
+            $customerEntity,
+            $existingCustomer
+        );
+        $customerEntity->setEmail($email)
             ->setFirstname($firstName)
             ->setLastname($lastname)
             ->setCreatedIn('Admin')
             ->setId(null);
-        $customerEntity = $this->customerBuilder->create();
 
         $customer = $this->accountManagement->createAccount($customerEntity, 'aPassword');
         $this->assertNotEmpty($customer->getId());
@@ -874,19 +885,17 @@ class AccountManagementTest extends \PHPUnit_Framework_TestCase
     {
         $customerId = 1;
 
-        /** @var $addressShippingBuilder \Magento\Customer\Api\Data\AddressDataBuilder */
-        $addressShippingBuilder = $this->addressBuilder->populate($this->_expectedAddresses[0])->setId(null);
-        $addressShippingBuilder->setDefaultShipping(true)->setDefaultBilling(false)->setCustomerId($customerId);
+        /** @var $addressShipping \Magento\Customer\Api\Data\AddressInterface */
+        $addressShipping = $this->_expectedAddresses[0]->setId(null);
+        $addressShipping->setIsDefaultShipping(true)->setIsDefaultBilling(false)->setCustomerId($customerId);
         //TODO : Will be fixed as part of fixing populate. For now Region is set as Data Object instead of array
-        $addressShippingBuilder->setRegion($this->_expectedAddresses[0]->getRegion());
-        $addressShipping = $addressShippingBuilder->create();
+        $addressShipping->setRegion($this->_expectedAddresses[0]->getRegion());
 
-        /** @var $addressBillingBuilder \Magento\Customer\Api\Data\AddressDataBuilder */
-        $addressBillingBuilder = $this->addressBuilder->populate($this->_expectedAddresses[1])->setId(null);
-        $addressBillingBuilder->setDefaultBilling(true)->setDefaultShipping(false)->setCustomerId($customerId);
+        /** @var $addressBilling \Magento\Customer\Api\Data\AddressInterface */
+        $addressBilling = $this->_expectedAddresses[1]->setId(null);
+        $addressBilling->setIsDefaultBilling(true)->setIsDefaultShipping(false)->setCustomerId($customerId);
         //TODO : Will be fixed as part of fixing populate
-        $addressBillingBuilder->setRegion($this->_expectedAddresses[1]->getRegion());
-        $addressBilling = $addressBillingBuilder->create();
+        $addressBilling->setRegion($this->_expectedAddresses[1]->getRegion());
 
         $addressShippingExpected = $this->addressRepository->save($addressShipping);
         $addressBillingExpected = $this->addressRepository->save($addressBilling);

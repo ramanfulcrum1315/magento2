@@ -93,7 +93,7 @@ interface ProcessorInterface
      * Load layout updates by handles
      *
      * @param array|string $handles
-     * @throws \Magento\Framework\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return ProcessorInterface
      */
     public function load($handles = []);
@@ -124,4 +124,11 @@ interface ProcessorInterface
      * @return array
      */
     public function getContainers();
+
+    /**
+     * Return cache ID based current area/package/theme/store and handles
+     *
+     * @return string
+     */
+    public function getCacheId();
 }

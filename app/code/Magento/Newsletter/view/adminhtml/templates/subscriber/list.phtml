@@ -15,13 +15,11 @@
         <option value="<?php echo $_queue['value'] ?>"><?php echo $_queue['label'] ?> #<?php echo $_queue['value'] ?></option>
     <?php endforeach; ?>
     </select>
-    <button class="scalable" onclick="subscriberController.addToQueue();"><span><span><span><?php echo __('Add to Queue'); ?></span></span></span></button>
+    <button type="button" class="scalable" onclick="subscriberController.addToQueue();"><span><span><span><?php echo __('Add to Queue'); ?></span></span></span></button>
 </div>
 <?php endif ?>
 <script>
 require(["prototype", "mage/adminhtml/events"], function(){
-
-<!--
     subscriberController = {
         checkCheckboxes: function(controlCheckbox) {
             var elements = $('subscriberGrid').getElementsByClassName('subscriberCheckbox');
@@ -51,10 +49,8 @@ require(["prototype", "mage/adminhtml/events"], function(){
                               evalScripts: true,
                               onComplete:subscriberGridJsObject.initGrid.bind(subscriberGridJsObject)});
         }
-    }
+    };
 
     varienGlobalEvents.attachEventHandler('gridRowClick', subscriberController.rowClick.bind(subscriberController));
-//-->
-
 });
 </script>

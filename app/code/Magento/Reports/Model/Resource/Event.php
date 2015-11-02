@@ -18,21 +18,23 @@ class Event extends \Magento\Framework\Model\Resource\Db\AbstractDb
     protected $_scopeConfig;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param string|null $resourcePrefix
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
+        \Magento\Framework\Model\Resource\Db\Context $context,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        $resourcePrefix = null
     ) {
-        parent::__construct($resource);
+        parent::__construct($context, $resourcePrefix);
         $this->_scopeConfig = $scopeConfig;
         $this->_storeManager = $storeManager;
     }
@@ -74,7 +76,7 @@ class Event extends \Magento\Framework\Model\Resource\Db\AbstractDb
      * The collection id field is used without corellation, so it must be unique.
      * DESC ordering by event will be added to the collection
      *
-     * @param \Magento\Framework\Data\Collection\Db $collection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $collection
      * @param int $eventTypeId
      * @param int $eventSubjectId
      * @param int $subtype
@@ -82,7 +84,7 @@ class Event extends \Magento\Framework\Model\Resource\Db\AbstractDb
      * @return $this
      */
     public function applyLogToCollection(
-        \Magento\Framework\Data\Collection\Db $collection,
+        \Magento\Framework\Data\Collection\AbstractDb $collection,
         $eventTypeId,
         $eventSubjectId,
         $subtype,
@@ -140,7 +142,7 @@ class Event extends \Magento\Framework\Model\Resource\Db\AbstractDb
             // get all stores, required by configuration in current store scope
             $productsScope = $this->_scopeConfig->getValue(
                 'catalog/recently_products/scope',
-                \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             );
             switch ($productsScope) {
                 case 'website':

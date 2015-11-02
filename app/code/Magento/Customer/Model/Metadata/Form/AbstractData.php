@@ -114,12 +114,12 @@ abstract class AbstractData
      * Return Attribute instance
      *
      * @return \Magento\Customer\Api\Data\AttributeMetadataInterface
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getAttribute()
     {
         if (!$this->_attribute) {
-            throw new \Magento\Framework\Model\Exception(__('Attribute object is undefined'));
+            throw new \Magento\Framework\Exception\LocalizedException(__('Attribute object is undefined'));
         }
         return $this->_attribute;
     }
@@ -209,7 +209,7 @@ abstract class AbstractData
         if ($filterCode) {
             $filterClass = 'Magento\Framework\Data\Form\Filter\\' . ucfirst($filterCode);
             if ($filterCode == 'date') {
-                $filter = new $filterClass($this->_dateFilterFormat(), $this->_localeResolver->getLocale());
+                $filter = new $filterClass($this->_dateFilterFormat(), $this->_localeResolver);
             } else {
                 $filter = new $filterClass();
             }
@@ -229,7 +229,7 @@ abstract class AbstractData
         if (is_null($format)) {
             // get format
             if (is_null($this->_dateFilterFormat)) {
-                $this->_dateFilterFormat = \Magento\Framework\Stdlib\DateTime\TimezoneInterface::FORMAT_TYPE_SHORT;
+                $this->_dateFilterFormat = \IntlDateFormatter::SHORT;
             }
             return $this->_localeDate->getDateFormat($this->_dateFilterFormat);
         } elseif ($format === false) {
@@ -370,42 +370,42 @@ abstract class AbstractData
                         \Zend_Validate_EmailAddress::INVALID_LOCAL_PART
                     );
                     $validator->setMessage(
-                        __('"%1" exceeds the allowed length.', $label),
+                        __('"%1" uses too many characters.', $label),
                         \Zend_Validate_EmailAddress::LENGTH_EXCEEDED
                     );
                     $validator->setMessage(
-                        __("'%value%' appears to be an IP address, but IP addresses are not allowed."),
+                        __("'%value%' looks like an IP address, which is not an acceptable format."),
                         \Zend_Validate_Hostname::IP_ADDRESS_NOT_ALLOWED
                     );
                     $validator->setMessage(
-                        __("'%value%' appears to be a DNS hostname but cannot match TLD against known list."),
+                        __("'%value%' looks like a DNS hostname but we cannot match the TLD against known list."),
                         \Zend_Validate_Hostname::UNKNOWN_TLD
                     );
                     $validator->setMessage(
-                        __("'%value%' appears to be a DNS hostname but contains a dash in an invalid position."),
+                        __("'%value%' looks like a DNS hostname but contains a dash in an invalid position."),
                         \Zend_Validate_Hostname::INVALID_DASH
                     );
                     $validator->setMessage(
                         __(
-                            "'%value%' appears to be a DNS hostname but cannot match against hostname schema for TLD '%tld%'."
+                            "'%value%' looks like a DNS hostname but we cannot match it against the hostname schema for TLD '%tld%'."
                         ),
                         \Zend_Validate_Hostname::INVALID_HOSTNAME_SCHEMA
                     );
                     $validator->setMessage(
-                        __("'%value%' appears to be a DNS hostname but cannot extract TLD part."),
+                        __("'%value%' looks like a DNS hostname but cannot extract TLD part."),
                         \Zend_Validate_Hostname::UNDECIPHERABLE_TLD
                     );
                     $validator->setMessage(
-                        __("'%value%' does not appear to be a valid local network name."),
+                        __("'%value%' does not look like a valid local network name."),
                         \Zend_Validate_Hostname::INVALID_LOCAL_NAME
                     );
                     $validator->setMessage(
-                        __("'%value%' appears to be a local network name but local network names are not allowed."),
+                        __("'%value%' looks like a local network name, which is not an acceptable format."),
                         \Zend_Validate_Hostname::LOCAL_NAME_NOT_ALLOWED
                     );
                     $validator->setMessage(
                         __(
-                            "'%value%' appears to be a DNS hostname but the given punycode notation cannot be decoded."
+                            "'%value%' appears to be a DNS hostname, but the given punycode notation cannot be decoded."
                         ),
                         \Zend_Validate_Hostname::CANNOT_DECODE_PUNYCODE
                     );
@@ -504,7 +504,7 @@ abstract class AbstractData
      *
      * @param array|string|null $value
      * @return array|bool
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     abstract public function validateValue($value);
 

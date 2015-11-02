@@ -6,7 +6,7 @@
 
 namespace Magento\GroupedProduct\Test\Constraint;
 
-use Magento\GroupedProduct\Test\Fixture\GroupedProductInjectable;
+use Magento\GroupedProduct\Test\Fixture\GroupedProduct;
 use Magento\Wishlist\Test\Constraint\AssertProductInCustomerWishlistOnBackendGrid;
 use Magento\Mtf\Fixture\FixtureInterface;
 
@@ -26,7 +26,7 @@ class AssertGroupedProductInCustomerWishlistOnBackendGrid extends AssertProductI
     {
         $options = $this->prepareOptions($product);
 
-        return ['product_name' => $product->getName(), 'qty_from' => 1, 'qty_to' => 1, 'options' => $options];
+        return ['product_name' => $product->getName(), 'options' => $options];
     }
 
     /**
@@ -37,7 +37,7 @@ class AssertGroupedProductInCustomerWishlistOnBackendGrid extends AssertProductI
      */
     protected function prepareOptions(FixtureInterface $product)
     {
-        /** @var GroupedProductInjectable $product */
+        /** @var GroupedProduct $product */
         $productOptions = [];
         $checkoutData = $product->getCheckoutData()['options'];
         if (count($checkoutData)) {

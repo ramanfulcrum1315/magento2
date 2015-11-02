@@ -217,13 +217,15 @@ class Grid extends \Magento\Backend\Block\Widget
     /**
      * Retrieve export block
      *
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      * @return \Magento\Framework\View\Element\AbstractBlock|bool
      */
     public function getExportBlock()
     {
         if (!$this->getChildBlock('grid.export')) {
-            throw new \Magento\Framework\Model\Exception('Export block for grid ' . $this->getNameInLayout() . ' is not defined');
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('Export block for grid %1 is not defined', $this->getNameInLayout())
+            );
         }
         return $this->getChildBlock('grid.export');
     }
@@ -389,6 +391,10 @@ class Grid extends \Magento\Backend\Block\Widget
      */
     protected function _prepareGrid()
     {
+        $this->_eventManager->dispatch(
+            'backend_block_widget_grid_prepare_grid_before',
+            ['grid' => $this, 'collection' => $this->getCollection()]
+        );
         if ($this->getChildBlock('grid.massaction') && $this->getChildBlock('grid.massaction')->isAvailable()) {
             $this->getChildBlock('grid.massaction')->prepareMassactionColumn();
         }
@@ -430,8 +436,12 @@ class Grid extends \Magento\Backend\Block\Widget
             $this->getLayout()->createBlock(
                 'Magento\Backend\Block\Widget\Button'
             )->setData(
-                ['label' => __('Reset Filter'), 'onclick' => $this->getJsObjectName() . '.resetFilter()', 'class' => 'action-reset']
-            )
+                [
+                    'label' => __('Reset Filter'),
+                    'onclick' => $this->getJsObjectName() . '.resetFilter()',
+                    'class' => 'action-reset action-tertiary'
+                ]
+            )->setDataAttribute(['action' => 'grid-filter-reset'])
         );
         $this->setChild(
             'search_button',
@@ -441,9 +451,9 @@ class Grid extends \Magento\Backend\Block\Widget
                 [
                     'label' => __('Search'),
                     'onclick' => $this->getJsObjectName() . '.doFilter()',
-                    'class' => 'task',
+                    'class' => 'action-secondary',
                 ]
-            )
+            )->setDataAttribute(['action' => 'grid-filter-apply'])
         );
     }
 
@@ -806,8 +816,8 @@ class Grid extends \Magento\Backend\Block\Widget
     {
         $html = '';
         if ($this->getColumnSet()->isFilterVisible()) {
-            $html .= $this->getResetFilterButtonHtml();
             $html .= $this->getSearchButtonHtml();
+            $html .= $this->getResetFilterButtonHtml();
         }
         return $html;
     }

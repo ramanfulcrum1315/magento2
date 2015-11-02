@@ -19,11 +19,11 @@ class Validate extends \Magento\Customer\Controller\Adminhtml\Index
     protected function _validateCustomer($response)
     {
         $customer = null;
-        $errors = null;
+        $errors = [];
 
         try {
             /** @var CustomerInterface $customer */
-            $customer = $this->customerDataBuilder->create();
+            $customer = $this->customerDataFactory->create();
 
             $customerForm = $this->_formFactory->create(
                 'customer',
@@ -37,25 +37,31 @@ class Validate extends \Magento\Customer\Controller\Adminhtml\Index
             );
             $customerForm->setInvisibleIgnored(true);
 
-            $data = $customerForm->extractData($this->getRequest(), 'account');
+            $data = $customerForm->extractData($this->getRequest(), 'customer');
 
             if ($customer->getWebsiteId()) {
                 unset($data['website_id']);
             }
 
-            $customer = $this->customerDataBuilder->populateWithArray($data)->create();
-            $errors = $this->customerAccountManagement->validate($customer);
-        } catch (\Magento\Framework\Model\Exception $exception) {
+            $this->dataObjectHelper->populateWithArray(
+                $customer,
+                $data,
+                '\Magento\Customer\Api\Data\CustomerInterface'
+            );
+            $errors = $this->customerAccountManagement->validate($customer)->getMessages();
+        } catch (\Magento\Framework\Validator\Exception $exception) {
             /* @var $error Error */
             foreach ($exception->getMessages(\Magento\Framework\Message\MessageInterface::TYPE_ERROR) as $error) {
                 $errors[] = $error->getText();
             }
         }
 
-        if (!$errors->isValid()) {
-            foreach ($errors->getMessages() as $error) {
-                $this->messageManager->addError($error);
+        if ($errors) {
+            $messages = $response->hasMessages() ? $response->getMessages() : [];
+            foreach ($errors as $error) {
+                $messages[] = $error;
             }
+            $response->setMessages($messages);
             $response->setError(1);
         }
 
@@ -70,8 +76,7 @@ class Validate extends \Magento\Customer\Controller\Adminhtml\Index
      */
     protected function _validateCustomerAddress($response)
     {
-        $customerData =  $this->getRequest()->getParam('account');
-        $addresses = isset($customerData['customer_address']) ? $customerData['customer_address'] : [];
+        $addresses = $this->getRequest()->getPost('address');
         if (!is_array($addresses)) {
             return;
         }
@@ -82,14 +87,16 @@ class Validate extends \Magento\Customer\Controller\Adminhtml\Index
 
             $addressForm = $this->_formFactory->create('customer_address', 'adminhtml_customer_address');
 
-            $requestScope = sprintf('account/customer_address/%s', $index);
+            $requestScope = sprintf('address/%s', $index);
             $formData = $addressForm->extractData($this->getRequest(), $requestScope);
 
             $errors = $addressForm->validateData($formData);
             if ($errors !== true) {
+                $messages = $response->hasMessages() ? $response->getMessages() : [];
                 foreach ($errors as $error) {
-                    $this->messageManager->addError($error);
+                    $messages[] = $error;
                 }
+                $response->setMessages($messages);
                 $response->setError(1);
             }
         }
@@ -98,7 +105,7 @@ class Validate extends \Magento\Customer\Controller\Adminhtml\Index
     /**
      * AJAX customer validation action
      *
-     * @return \Magento\Framework\Controller\Result\JSON
+     * @return \Magento\Framework\Controller\Result\Json
      */
     public function execute()
     {
@@ -111,9 +118,8 @@ class Validate extends \Magento\Customer\Controller\Adminhtml\Index
         }
         $resultJson = $this->resultJsonFactory->create();
         if ($response->getError()) {
-            $layout = $this->layoutFactory->create();
-            $layout->initMessages();
-            $response->setHtmlMessage($layout->getMessagesBlock()->getGroupedHtml());
+            $response->setError(true);
+            $response->setMessages($response->getMessages());
         }
 
         $resultJson->setData($response);

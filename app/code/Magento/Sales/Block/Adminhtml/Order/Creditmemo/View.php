@@ -72,7 +72,7 @@ class View extends \Magento\Backend\Block\Widget\Form\Container
                     'label' => __('Send Email'),
                     'class' => 'send-email',
                     'onclick' => 'confirmSetLocation(\'' . __(
-                        'Are you sure you want to send a Credit memo email to customer?'
+                        'Are you sure you want to send a credit memo email to customer?'
                     ) . '\', \'' . $this->getEmailUrl() . '\')'
                 ]
             );
@@ -125,19 +125,23 @@ class View extends \Magento\Backend\Block\Widget\Form\Container
     /**
      * Retrieve text for header
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getHeaderText()
     {
         if ($this->getCreditmemo()->getEmailSent()) {
-            $emailSent = __('The credit memo email was sent');
+            $emailSent = __('The credit memo email was sent.');
         } else {
-            $emailSent = __('the credit memo email is not sent');
+            $emailSent = __('The credit memo email wasn\'t sent.');
         }
         return __(
             'Credit Memo #%1 | %3 | %2 (%4)',
             $this->getCreditmemo()->getIncrementId(),
-            $this->formatDate($this->getCreditmemo()->getCreatedAtDate(), 'medium', true),
+            $this->formatDate(
+                $this->_localeDate->date(new \DateTime($this->getCreditmemo()->getCreatedAt())),
+                \IntlDateFormatter::MEDIUM,
+                true
+            ),
             $this->getCreditmemo()->getStateName(),
             $emailSent
         );

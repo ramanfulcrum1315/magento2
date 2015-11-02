@@ -48,7 +48,7 @@ class Checkbox extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Abstra
      */
     public function getValues()
     {
-        if (is_null($this->_values)) {
+        if ($this->_values === null) {
             $this->_values = $this->getColumn()->getData('values') ? $this->getColumn()->getData('values') : [];
         }
         return $this->_values;
@@ -113,8 +113,11 @@ class Checkbox extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Abstra
         $html .= 'value="' . $this->escapeHtml($value) . '" ';
         $html .= 'class="' .
             ($this->getColumn()->getInlineCss() ? $this->getColumn()->getInlineCss() : 'checkbox') .
+            ' admin__control-checkbox' .
             '"';
         $html .= $checked . $this->getDisabled() . '/>';
+        $html .= '<label></label>';
+        /* ToDo UI: add class="admin__field-label" after some refactoring _fields.less */
         return $html;
     }
 
@@ -138,11 +141,11 @@ class Checkbox extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Abstra
         if ($this->getColumn()->getDisabled()) {
             $disabled = ' disabled="disabled"';
         }
-        $html = '<input type="checkbox" ';
+        $html = '<th class="data-grid-th data-grid-actions-cell"><input type="checkbox" ';
         $html .= 'name="' . $this->getColumn()->getFieldName() . '" ';
         $html .= 'onclick="' . $this->getColumn()->getGrid()->getJsObjectName() . '.checkCheckboxes(this)" ';
-        $html .= 'class="checkbox"' . $checked . $disabled . ' ';
-        $html .= 'title="' . __('Select All') . '"/>';
+        $html .= 'class="admin__control-checkbox"' . $checked . $disabled . ' ';
+        $html .= 'title="' . __('Select All') . '"/><label></label></th>';
         return $html;
     }
 }

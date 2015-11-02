@@ -10,34 +10,32 @@ namespace Magento\Framework\Url;
 class SecurityInfo implements \Magento\Framework\Url\SecurityInfoInterface
 {
     /**
-     * @var \Magento\Framework\App\Config\ScopeConfigInterface
-     */
-    protected $_scopeConfig;
-
-    /**
      * List of secure url patterns
      *
      * @var array
      */
-    protected $_secureUrlList = [];
+    protected $secureUrlsList = [];
+
+    /**
+     * List of patterns excluded form secure url list
+     */
+    protected $excludedUrlsList = [];
 
     /**
      * List of already checked urls
      *
      * @var array
      */
-    protected $_secureUrlCache = [];
+    protected $secureUrlsCache = [];
 
     /**
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param array $secureUrlList
+     * @param string[] $secureUrlList
+     * @param string[] $excludedUrlList
      */
-    public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        array $secureUrlList = []
-    ) {
-        $this->_scopeConfig = $scopeConfig;
-        $this->_secureUrlList = $secureUrlList;
+    public function __construct($secureUrlList = [], $excludedUrlList = [])
+    {
+        $this->secureUrlsList = $secureUrlList;
+        $this->excludedUrlsList = $excludedUrlList;
     }
 
     /**
@@ -48,23 +46,20 @@ class SecurityInfo implements \Magento\Framework\Url\SecurityInfoInterface
      */
     public function isSecure($url)
     {
-        if (!$this->_scopeConfig->getValue(
-            \Magento\Store\Model\Store::XML_PATH_SECURE_IN_FRONTEND,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
-        )
-        ) {
-            return false;
-        }
-
-        if (!isset($this->_secureUrlCache[$url])) {
-            $this->_secureUrlCache[$url] = false;
-            foreach ($this->_secureUrlList as $match) {
+        if (!isset($this->secureUrlsCache[$url])) {
+            $this->secureUrlsCache[$url] = false;
+            foreach ($this->excludedUrlsList as $match) {
                 if (strpos($url, (string)$match) === 0) {
-                    $this->_secureUrlCache[$url] = true;
+                    return $this->secureUrlsCache[$url];
+                }
+            }
+            foreach ($this->secureUrlsList as $match) {
+                if (strpos($url, (string)$match) === 0) {
+                    $this->secureUrlsCache[$url] = true;
                     break;
                 }
             }
         }
-        return $this->_secureUrlCache[$url];
+        return $this->secureUrlsCache[$url];
     }
 }

@@ -64,13 +64,13 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     protected $_weeeConfig;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * @param \Magento\Framework\App\Helper\Context $context
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Weee\Model\Tax $weeeTax
      * @param \Magento\Weee\Model\Config $weeeConfig
      * @param \Magento\Tax\Helper\Data $taxData
@@ -78,7 +78,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Weee\Model\Tax $weeeTax,
         \Magento\Weee\Model\Config $weeeConfig,
         \Magento\Tax\Helper\Data $taxData,
@@ -243,7 +243,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
                 break;
         }
 
-        if (is_null($compareTo)) {
+        if ($compareTo === null) {
             return $type;
         } else {
             if (is_array($compareTo)) {
@@ -301,15 +301,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
 
-        /**
-         * if order item data is old enough then weee_tax_applied cab be
-         * not valid serialized data
-         */
+        // if order item data is old enough then weee_tax_applied might not be valid
         $data = $item->getWeeeTaxApplied();
         if (empty($data)) {
             return [];
         }
-        return unserialize($item->getWeeeTaxApplied());
+        return \Zend_Json::decode($item->getWeeeTaxApplied());
     }
 
     /**
@@ -321,7 +318,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function setApplied($item, $value)
     {
-        $item->setWeeeTaxApplied(serialize($value));
+        $item->setWeeeTaxApplied(\Zend_Json::encode($value));
         return $this;
     }
 
@@ -400,12 +397,12 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
      *
      * @param \Magento\Framework\Object[] $attributes Result from getProductWeeeAttributes()
      * @return float
-     * @throws \Magento\Framework\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getAmountInclTaxes($attributes)
     {
         if (!is_array($attributes)) {
-            throw new \Magento\Framework\Exception('$attributes must be an array');
+            throw new \Magento\Framework\Exception\LocalizedException(__('$attributes must be an array'));
         }
 
         $amount = 0;

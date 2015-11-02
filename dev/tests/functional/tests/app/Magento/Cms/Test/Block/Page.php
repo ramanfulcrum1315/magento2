@@ -15,6 +15,13 @@ use Magento\Mtf\Client\Locator;
 class Page extends Block
 {
     /**
+     * Selector for initial script.
+     *
+     * @var string
+     */
+    protected $initialScript = 'script[type="text/x-magento-init"]';
+
+    /**
      * Cms page content class.
      *
      * @var string
@@ -26,7 +33,7 @@ class Page extends Block
      *
      * @var string
      */
-    protected $cmsPageTitle = ".page-title";
+    protected $cmsPageTitle = ".page-title-wrapper";
 
     /**
      * Cms page text locator.
@@ -79,11 +86,9 @@ class Page extends Block
     public function waitUntilTextIsVisible($text)
     {
         $text = sprintf($this->textSelector, $text);
-        $browser = $this->browser;
         $this->_rootElement->waitUntil(
-            function () use ($browser, $text) {
-                $blockText = $browser->find($text, Locator::SELECTOR_XPATH);
-                return $blockText->isVisible() == true ? false : null;
+            function () use ($text) {
+                return $this->browser->find($text, Locator::SELECTOR_XPATH)->isVisible() == true ? false : null;
             }
         );
     }
@@ -99,12 +104,22 @@ class Page extends Block
     public function isWidgetVisible($widgetType, $widgetText)
     {
         if (isset($this->widgetSelectors[$widgetType])) {
-            return $this->_rootElement->find(
-                sprintf($this->widgetSelectors[$widgetType], $widgetText),
-                Locator::SELECTOR_XPATH
-            )->isVisible();
+            return $this->_rootElement
+                ->find(sprintf($this->widgetSelectors[$widgetType], $widgetText), Locator::SELECTOR_XPATH)
+                ->isVisible();
         } else {
             throw new \Exception('Determine how to find the widget on the page.');
         }
+    }
+
+    /**
+     * Waiting page initialization.
+     *
+     * @return void
+     */
+    public function waitPageInit()
+    {
+        $this->waitForElementNotVisible($this->initialScript);
+        sleep(3); // TODO: remove after resolving an issue with ajax on Frontend.
     }
 }

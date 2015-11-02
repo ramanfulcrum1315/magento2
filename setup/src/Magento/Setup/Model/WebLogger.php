@@ -8,6 +8,7 @@ namespace Magento\Setup\Model;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Filesystem;
+use Magento\Framework\Setup\LoggerInterface;
 
 /**
  * Web UI Logger
@@ -63,7 +64,7 @@ class WebLogger implements LoggerInterface
     public function logSuccess($message)
     {
         $this->terminateLine();
-        $this->writeToFile('<span class="text-success">[SUCCESS] ' . $message . '</span><br/>');
+        $this->writeToFile('<span class="text-success">[SUCCESS] ' . $message . '</span><br>');
     }
 
     /**
@@ -72,7 +73,7 @@ class WebLogger implements LoggerInterface
     public function logError(\Exception $e)
     {
         $this->terminateLine();
-        $this->writeToFile('<span class="text-danger">[ERROR] ' . $e . '<span><br/>');
+        $this->writeToFile('<span class="text-danger">[ERROR] ' . $e . '<span><br>');
     }
 
     /**
@@ -81,7 +82,7 @@ class WebLogger implements LoggerInterface
     public function log($message)
     {
         $this->terminateLine();
-        $this->writeToFile('<span class="text-info">' . $message . '</span><br/>');
+        $this->writeToFile('<span class="text-info">' . $message . '</span><br>');
     }
 
     /**
@@ -99,7 +100,7 @@ class WebLogger implements LoggerInterface
     public function logMeta($message)
     {
         $this->terminateLine();
-        $this->writeToFile('<span class="hidden">' . $message . '</span><br/>');
+        $this->writeToFile('<span class="hidden">' . $message . '</span><br>');
     }
 
     /**
@@ -145,7 +146,7 @@ class WebLogger implements LoggerInterface
     {
         if ($this->isInline) {
             $this->isInline = false;
-            $this->writeToFile('</br>');
+            $this->writeToFile('<br>');
         }
     }
 }

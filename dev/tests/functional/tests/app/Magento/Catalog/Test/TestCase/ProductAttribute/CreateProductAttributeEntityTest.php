@@ -6,14 +6,10 @@
 
 namespace Magento\Catalog\Test\TestCase\ProductAttribute;
 
-use Magento\Catalog\Test\Fixture\CatalogProductAttribute;
-use Magento\Mtf\ObjectManager;
 use Magento\Mtf\TestCase\Scenario;
 
 /**
- * Test Creation for CreateProductAttributeEntity
- *
- * Test Flow:
+ * Steps:
  * 1. Log in to Backend.
  * 2. Navigate to Stores > Attributes > Product.
  * 3. Start to create new Product Attribute.
@@ -32,34 +28,12 @@ class CreateProductAttributeEntityTest extends Scenario
     /* end tags */
 
     /**
-     * CatalogProductAttribute object.
-     *
-     * @var CatalogProductAttribute
-     */
-    protected $attribute;
-
-    /**
      * Run CreateProductAttributeEntity test.
      *
-     * @param CatalogProductAttribute $productAttribute
      * @return array
      */
-    public function testCreateProductAttribute(CatalogProductAttribute $productAttribute)
+    public function testCreateProductAttribute()
     {
-        $this->attribute = $productAttribute;
         $this->executeScenario();
-    }
-
-    /**
-     * Delete attribute after test.
-     *
-     * @return void
-     */
-    public function tearDown()
-    {
-        ObjectManager::getInstance()->create(
-            'Magento\Catalog\Test\TestStep\DeleteAttributeStep',
-            ['attribute' => $this->attribute]
-        )->run();
     }
 }

@@ -6,7 +6,6 @@
 namespace Magento\Sales\Service\V1;
 
 use Magento\TestFramework\TestCase\WebapiAbstract;
-use Magento\Webapi\Model\Rest\Config;
 
 /**
  * Class ShipmentListTest
@@ -44,14 +43,14 @@ class ShipmentListTest extends WebapiAbstract
             'Magento\Framework\Api\FilterBuilder'
         );
 
-        $searchCriteriaBuilder->addFilter([$filterBuilder->setField('shipment_status')->setValue(1)->create()]);
+        $searchCriteriaBuilder->addFilters([$filterBuilder->setField('shipment_status')->setValue(1)->create()]);
         $searchData = $searchCriteriaBuilder->create()->__toArray();
 
         $requestData = ['criteria' => $searchData];
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . '?' . http_build_query($requestData),
-                'httpMethod' => Config::HTTP_METHOD_GET,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => self::SERVICE_READ_NAME,

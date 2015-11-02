@@ -5,18 +5,13 @@
  */
 namespace Magento\Sales\Model\Order\Invoice;
 
-use Magento\Framework\Api\AttributeDataBuilder;
+use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Sales\Api\Data\InvoiceCommentInterface;
 use Magento\Sales\Model\AbstractModel;
 
 /**
  * @method \Magento\Sales\Model\Resource\Order\Invoice\Comment _getResource()
  * @method \Magento\Sales\Model\Resource\Order\Invoice\Comment getResource()
- * @method \Magento\Sales\Model\Order\Invoice\Comment setParentId(int $value)
- * @method \Magento\Sales\Model\Order\Invoice\Comment setIsCustomerNotified(int $value)
- * @method \Magento\Sales\Model\Order\Invoice\Comment setIsVisibleOnFront(int $value)
- * @method \Magento\Sales\Model\Order\Invoice\Comment setComment(string $value)
- * @method \Magento\Sales\Model\Order\Invoice\Comment setCreatedAt(string $value)
  */
 class Comment extends AbstractModel implements InvoiceCommentInterface
 {
@@ -28,42 +23,36 @@ class Comment extends AbstractModel implements InvoiceCommentInterface
     protected $_invoice;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Api\MetadataServiceInterface $metadataService
-     * @param AttributeDataBuilder $customAttributeBuilder
-     * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
-     * @param \Magento\Framework\Stdlib\DateTime $dateTime
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
+     * @param AttributeValueFactory $customAttributeFactory
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\MetadataServiceInterface $metadataService,
-        AttributeDataBuilder $customAttributeBuilder,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
-        \Magento\Framework\Stdlib\DateTime $dateTime,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
+        AttributeValueFactory $customAttributeFactory,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
             $context,
             $registry,
-            $metadataService,
-            $customAttributeBuilder,
-            $localeDate,
-            $dateTime,
+            $extensionFactory,
+            $customAttributeFactory,
             $resource,
             $resourceCollection,
             $data
@@ -137,6 +126,14 @@ class Comment extends AbstractModel implements InvoiceCommentInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function setCreatedAt($createdAt)
+    {
+        return $this->setData(InvoiceCommentInterface::CREATED_AT, $createdAt);
+    }
+
+    /**
      * Returns is_customer_notified
      *
      * @return int
@@ -165,4 +162,60 @@ class Comment extends AbstractModel implements InvoiceCommentInterface
     {
         return $this->getData(InvoiceCommentInterface::PARENT_ID);
     }
+
+    //@codeCoverageIgnoreStart
+    /**
+     * {@inheritdoc}
+     */
+    public function setParentId($id)
+    {
+        return $this->setData(InvoiceCommentInterface::PARENT_ID, $id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsCustomerNotified($isCustomerNotified)
+    {
+        return $this->setData(InvoiceCommentInterface::IS_CUSTOMER_NOTIFIED, $isCustomerNotified);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsVisibleOnFront($isVisibleOnFront)
+    {
+        return $this->setData(InvoiceCommentInterface::IS_VISIBLE_ON_FRONT, $isVisibleOnFront);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setComment($comment)
+    {
+        return $this->setData(InvoiceCommentInterface::COMMENT, $comment);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Magento\Sales\Api\Data\InvoiceCommentExtensionInterface|null
+     */
+    public function getExtensionAttributes()
+    {
+        return $this->_getExtensionAttributes();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param \Magento\Sales\Api\Data\InvoiceCommentExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\InvoiceCommentExtensionInterface $extensionAttributes
+    ) {
+        return $this->_setExtensionAttributes($extensionAttributes);
+    }
+    //@codeCoverageIgnoreEnd
 }

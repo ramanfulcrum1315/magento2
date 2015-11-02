@@ -157,7 +157,7 @@ class Observer
     {
         $this->_localeResolver->emulate(0);
         $currentDate = $this->_localeDate->date();
-        $date = $currentDate->subHour(25);
+        $date = $currentDate->modify('-25 hours');
         $this->_reportRule->aggregate($date);
         $this->_localeResolver->revert();
         return $this;
@@ -190,7 +190,7 @@ class Observer
         if ($disabledRulesCount) {
             $this->messageManager->addWarning(
                 __(
-                    '%1 Shopping Cart Price Rules based on "%2" attribute have been disabled.',
+                    '%1 Cart Price Rules based on "%2" attribute have been disabled.',
                     $disabledRulesCount,
                     $attributeCode
                 )

@@ -16,33 +16,6 @@ use Magento\Customer\Api\CustomerRepositoryInterface;
 class Edit extends \Magento\Customer\Block\Account\Dashboard
 {
     /**
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Magento\Customer\Model\Session $customerSession
-     * @param \Magento\Newsletter\Model\SubscriberFactory $subscriberFactory
-     * @param CustomerRepositoryInterface $customerRepository
-     * @param AccountManagementInterface $customerAccountManagement
-     * @param array $data
-     */
-    public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Customer\Model\Session $customerSession,
-        \Magento\Newsletter\Model\SubscriberFactory $subscriberFactory,
-        CustomerRepositoryInterface $customerRepository,
-        AccountManagementInterface $customerAccountManagement,
-        array $data = []
-    ) {
-        parent::__construct(
-            $context,
-            $customerSession,
-            $subscriberFactory,
-            $customerRepository,
-            $customerAccountManagement,
-            $data
-        );
-        $this->_isScopePrivate = true;
-    }
-
-    /**
      * Retrieve form data
      *
      * @return array
@@ -50,7 +23,7 @@ class Edit extends \Magento\Customer\Block\Account\Dashboard
     protected function getFormData()
     {
         $data = $this->getData('form_data');
-        if (is_null($data)) {
+        if ($data === null) {
             $formData = $this->customerSession->getCustomerFormData(true);
             $data = [];
             if ($formData) {

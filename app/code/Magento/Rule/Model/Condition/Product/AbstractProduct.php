@@ -153,7 +153,7 @@ abstract class AbstractProduct extends \Magento\Rule\Model\Condition\AbstractCon
      */
     protected function _addSpecialAttributes(array &$attributes)
     {
-        $attributes['attribute_set_id'] = __('Attribute Set');
+        $attributes['attribute_set_id'] = __('Product Template');
         $attributes['category_ids'] = __('Category');
     }
 
@@ -276,7 +276,7 @@ abstract class AbstractProduct extends \Magento\Rule\Model\Condition\AbstractCon
     public function getValueOption($option = null)
     {
         $this->_prepareValueOptions();
-        return $this->getData('value_option' . (!is_null($option) ? '/' . $option : ''));
+        return $this->getData('value_option' . ($option !== null ? '/' . $option : ''));
     }
 
     /**
@@ -413,27 +413,6 @@ abstract class AbstractProduct extends \Magento\Rule\Model\Condition\AbstractCon
             default:
                 return 'text';
         }
-    }
-
-    /**
-     * Retrieve value element
-     *
-     * @return \Magento\Framework\Data\Form\Element\AbstractElement
-     */
-    public function getValueElement()
-    {
-        $element = parent::getValueElement();
-        if (is_object($this->getAttributeObject())) {
-            switch ($this->getAttributeObject()->getFrontendInput()) {
-                case 'date':
-                    $element->setImage($this->_assetRepo->getUrl('images/grid-cal.png'));
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        return $element;
     }
 
     /**
@@ -583,7 +562,7 @@ abstract class AbstractProduct extends \Magento\Rule\Model\Condition\AbstractCon
                 }
             }
 
-            if (is_null($oldAttrValue)) {
+            if ($oldAttrValue === null) {
                 $model->unsetData($attrCode);
             } else {
                 $model->setData($attrCode, $oldAttrValue);

@@ -7,15 +7,15 @@
 define([
     "jquery",
     "jquery/ui",
+    'Magento_Ui/js/modal/modal',
     "mage/translate"
 ], function($){
     "use strict";
-
     $.widget('mage.orderEditDialog', {
         options: {
             url:     null,
             message: null,
-            dialog:  null
+            modal:  null
         },
 
         /**
@@ -26,10 +26,10 @@ define([
         },
 
         /**
-         * Show dialog
+         * Show modal
          */
         showDialog: function() {
-            this.options.dialog.html(this.options.message).dialog('open');
+            this.options.dialog.html(this.options.message).modal('openModal');
         },
 
         /**
@@ -40,33 +40,26 @@ define([
         },
 
         /**
-         * Prepare dialog
+         * Prepare modal
          * @protected
          */
         _prepareDialog: function() {
             var self = this;
 
-            this.options.dialog = $('<div class="ui-dialog-content ui-widget-content"></div>')
-                .dialog({
-                    autoOpen:    false,
-                    title:       $.mage.__('Edit Order'),
-                    modal:       true,
-                    resizable:   false,
-                    width:       500,
-                    buttons: [{
-                        text: $.mage.__('Ok'),
-                        click: function(){
-                            self.redirect();
-                        }
-                    }, {
-                        text: $.mage.__('Cancel'),
-                        click: function(){
-                            $(this).dialog('close');
-                        }
-                    }]
-                });
+            this.options.dialog = $('<div class="ui-dialog-content ui-widget-content"></div>').modal({
+                type: 'popup',
+                modalClass: 'edit-order-popup',
+                title: $.mage.__('Edit Order'),
+                buttons: [{
+                    text: $.mage.__('Ok'),
+                    'class': 'action-primary',
+                    click: function(){
+                        self.redirect();
+                    }
+                }]
+            });
         }
     });
-    
+
     return $.mage.orderEditDialog;
 });

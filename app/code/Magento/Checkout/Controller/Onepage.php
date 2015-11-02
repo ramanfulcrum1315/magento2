@@ -7,7 +7,7 @@ namespace Magento\Checkout\Controller;
 
 use Magento\Customer\Api\AccountManagementInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
-use Magento\Framework\App\Action\NotFoundException;
+use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\App\RequestInterface;
 
 /**
@@ -42,7 +42,7 @@ class Onepage extends Action
     protected $_translateInline;
 
     /**
-     * @var \Magento\Core\App\Action\FormKeyValidator
+     * @var \Magento\Framework\Data\Form\FormKey\Validator
      */
     protected $_formKeyValidator;
 
@@ -62,16 +62,41 @@ class Onepage extends Action
     protected $quoteRepository;
 
     /**
+     * @var \Magento\Framework\View\Result\PageFactory
+     */
+    protected $resultPageFactory;
+
+    /**
+     * @var \Magento\Framework\View\Result\LayoutFactory
+     */
+    protected $resultLayoutFactory;
+
+    /**
+     * @var \Magento\Framework\Controller\Result\RawFactory
+     */
+    protected $resultRawFactory;
+
+    /**
+     * @var \Magento\Framework\Controller\Result\JsonFactory
+     */
+    protected $resultJsonFactory;
+
+    /**
      * @param \Magento\Framework\App\Action\Context $context
      * @param \Magento\Customer\Model\Session $customerSession
      * @param CustomerRepositoryInterface $customerRepository
      * @param AccountManagementInterface $accountManagement
      * @param \Magento\Framework\Registry $coreRegistry
      * @param \Magento\Framework\Translate\InlineInterface $translateInline
-     * @param \Magento\Core\App\Action\FormKeyValidator $formKeyValidator
+     * @param \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Framework\View\LayoutFactory $layoutFactory
      * @param \Magento\Quote\Model\QuoteRepository $quoteRepository
+     * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
+     * @param \Magento\Framework\View\Result\LayoutFactory $resultLayoutFactory
+     * @param \Magento\Framework\Controller\Result\RawFactory $resultRawFactory
+     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
+     *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -81,10 +106,14 @@ class Onepage extends Action
         AccountManagementInterface $accountManagement,
         \Magento\Framework\Registry $coreRegistry,
         \Magento\Framework\Translate\InlineInterface $translateInline,
-        \Magento\Core\App\Action\FormKeyValidator $formKeyValidator,
+        \Magento\Framework\Data\Form\FormKey\Validator $formKeyValidator,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\View\LayoutFactory $layoutFactory,
-        \Magento\Quote\Model\QuoteRepository $quoteRepository
+        \Magento\Quote\Model\QuoteRepository $quoteRepository,
+        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
+        \Magento\Framework\View\Result\LayoutFactory $resultLayoutFactory,
+        \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
+        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
     ) {
         $this->_coreRegistry = $coreRegistry;
         $this->_translateInline = $translateInline;
@@ -92,7 +121,16 @@ class Onepage extends Action
         $this->scopeConfig = $scopeConfig;
         $this->layoutFactory = $layoutFactory;
         $this->quoteRepository = $quoteRepository;
-        parent::__construct($context, $customerSession, $customerRepository, $accountManagement);
+        $this->resultPageFactory = $resultPageFactory;
+        $this->resultLayoutFactory = $resultLayoutFactory;
+        $this->resultRawFactory = $resultRawFactory;
+        $this->resultJsonFactory = $resultJsonFactory;
+        parent::__construct(
+            $context,
+            $customerSession,
+            $customerRepository,
+            $accountManagement
+        );
     }
 
     /**
@@ -100,12 +138,15 @@ class Onepage extends Action
      *
      * @param RequestInterface $request
      * @return \Magento\Framework\App\ResponseInterface
-     * @throws \Magento\Framework\App\Action\NotFoundException
+     * @throws \Magento\Framework\Exception\NotFoundException
      */
     public function dispatch(RequestInterface $request)
     {
         $this->_request = $request;
-        $this->_preDispatchValidateCustomer();
+        $result = $this->_preDispatchValidateCustomer();
+        if ($result instanceof \Magento\Framework\Controller\ResultInterface) {
+            return $result;
+        }
 
         /** @var \Magento\Quote\Model\Quote $quote */
         $quote = $this->_objectManager->get('Magento\Checkout\Model\Session')->getQuote();
@@ -114,18 +155,20 @@ class Onepage extends Action
         }
 
         if (!$this->_canShowForUnregisteredUsers()) {
-            throw new NotFoundException();
+            throw new NotFoundException(__('Page not found.'));
         }
         return parent::dispatch($request);
     }
 
     /**
-     * @return $this
+     * @return \Magento\Framework\Controller\Result\Raw
      */
     protected function _ajaxRedirectResponse()
     {
-        $this->getResponse()->setHeader('HTTP/1.1', '403 Session Expired')->setHeader('Login-Required', 'true');
-        return $this;
+        $resultRaw = $this->resultRawFactory->create();
+        $resultRaw->setStatusHeader(403, '1.1', 'Session Expired')
+            ->setHeader('Login-Required', 'true');
+        return $resultRaw;
     }
 
     /**
@@ -137,20 +180,13 @@ class Onepage extends Action
     {
         $quote = $this->getOnepage()->getQuote();
         if (!$quote->hasItems() || $quote->getHasError() || !$quote->validateMinimumAmount()) {
-            $this->_ajaxRedirectResponse();
             return true;
         }
         $action = $this->getRequest()->getActionName();
-        if ($this->_objectManager->get(
-            'Magento\Checkout\Model\Session'
-        )->getCartWasUpdated(
-            true
-        ) && !in_array(
-            $action,
-            ['index', 'progress']
-        )
+        if ($this->_objectManager->get('Magento\Checkout\Model\Session')->getCartWasUpdated(true)
+            &&
+            !in_array($action, ['index', 'progress'])
         ) {
-            $this->_ajaxRedirectResponse();
             return true;
         }
 

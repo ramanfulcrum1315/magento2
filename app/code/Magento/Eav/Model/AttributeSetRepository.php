@@ -42,29 +42,37 @@ class AttributeSetRepository implements AttributeSetRepositoryInterface
     private $eavConfig;
 
     /**
-     * @var \Magento\Eav\Api\Data\AttributeSetSearchResultsDataBuilder
+     * @var \Magento\Eav\Api\Data\AttributeSetSearchResultsInterfaceFactory
      */
-    private $searchResultsBuilder;
+    private $searchResultsFactory;
+
+    /**
+     * @var \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface
+     */
+    protected $joinProcessor;
 
     /**
      * @param AttributeSetResource $attributeSetResource
      * @param AttributeSetFactory $attributeSetFactory
      * @param CollectionFactory $collectionFactory
      * @param Config $eavConfig
-     * @param \Magento\Eav\Api\Data\AttributeSetSearchResultsDataBuilder $searchResultBuilder
+     * @param \Magento\Eav\Api\Data\AttributeSetSearchResultsInterfaceFactory $searchResultFactory
+     * @param \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
      */
     public function __construct(
         AttributeSetResource $attributeSetResource,
         AttributeSetFactory $attributeSetFactory,
         CollectionFactory $collectionFactory,
         EavConfig $eavConfig,
-        \Magento\Eav\Api\Data\AttributeSetSearchResultsDataBuilder $searchResultBuilder
+        \Magento\Eav\Api\Data\AttributeSetSearchResultsInterfaceFactory $searchResultFactory,
+        \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
     ) {
         $this->attributeSetResource = $attributeSetResource;
         $this->attributeSetFactory = $attributeSetFactory;
         $this->collectionFactory = $collectionFactory;
         $this->eavConfig = $eavConfig;
-        $this->searchResultsBuilder = $searchResultBuilder;
+        $this->searchResultsFactory = $searchResultFactory;
+        $this->joinProcessor = $joinProcessor;
     }
 
     /**
@@ -75,7 +83,7 @@ class AttributeSetRepository implements AttributeSetRepositoryInterface
         try {
             $this->attributeSetResource->save($attributeSet);
         } catch (\Exception $exception) {
-            throw new CouldNotSaveException('There was an error saving attribute set.');
+            throw new CouldNotSaveException(__('There was an error saving attribute set.'));
         }
         return $attributeSet;
     }
@@ -87,21 +95,23 @@ class AttributeSetRepository implements AttributeSetRepositoryInterface
     {
         /** @var \Magento\Eav\Model\Resource\Entity\Attribute\Set\Collection $collection */
         $collection = $this->collectionFactory->create();
+        $this->joinProcessor->process($collection);
 
         /** The only possible/meaningful search criteria for attribute set is entity type code */
         $entityTypeCode = $this->getEntityTypeCode($searchCriteria);
 
-        if (!is_null($entityTypeCode)) {
+        if ($entityTypeCode !== null) {
             $collection->setEntityTypeFilter($this->eavConfig->getEntityType($entityTypeCode)->getId());
         }
 
         $collection->setCurPage($searchCriteria->getCurrentPage());
         $collection->setPageSize($searchCriteria->getPageSize());
 
-        $this->searchResultsBuilder->setSearchCriteria($searchCriteria);
-        $this->searchResultsBuilder->setItems($collection->getItems());
-        $this->searchResultsBuilder->setTotalCount($collection->getSize());
-        return $this->searchResultsBuilder->create();
+        $searchResults = $this->searchResultsFactory->create();
+        $searchResults->setSearchCriteria($searchCriteria);
+        $searchResults->setItems($collection->getItems());
+        $searchResults->setTotalCount($collection->getSize());
+        return $searchResults;
     }
 
     /**
@@ -145,9 +155,9 @@ class AttributeSetRepository implements AttributeSetRepositoryInterface
         try {
             $this->attributeSetResource->delete($attributeSet);
         } catch (\Magento\Framework\Exception\StateException $exception) {
-            throw new CouldNotDeleteException('Default attribute set can not be deleted');
+            throw new CouldNotDeleteException(__('Default attribute set can not be deleted'));
         } catch (\Exception $exception) {
-            throw new CouldNotDeleteException('There was an error deleting attribute set.');
+            throw new CouldNotDeleteException(__('There was an error deleting attribute set.'));
         }
         return true;
     }

@@ -64,9 +64,9 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
     protected $_countryCollectionFactory;
 
     /**
-     * @var \Magento\Core\Helper\Data
+     * @var \Magento\Directory\Helper\Data
      */
-    protected $_coreData;
+    protected $directoryHelper;
 
     /**
      * @var CustomerRepositoryInterface
@@ -90,7 +90,7 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
 
     /**
      * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param \Magento\Core\Helper\Data $coreData
+     * @param \Magento\Directory\Helper\Data $directoryHelper
      * @param \Magento\Framework\App\Cache\Type\Config $configCacheType
      * @param \Magento\Customer\Model\Session $customerSession
      * @param \Magento\Checkout\Model\Session $resourceSession
@@ -105,7 +105,7 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
-        \Magento\Core\Helper\Data $coreData,
+        \Magento\Directory\Helper\Data $directoryHelper,
         \Magento\Framework\App\Cache\Type\Config $configCacheType,
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Checkout\Model\Session $resourceSession,
@@ -117,7 +117,7 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
         \Magento\Customer\Model\Address\Mapper $addressMapper,
         array $data = []
     ) {
-        $this->_coreData = $coreData;
+        $this->directoryHelper = $directoryHelper;
         $this->_configCacheType = $configCacheType;
         $this->_customerSession = $customerSession;
         $this->_checkoutSession = $resourceSession;
@@ -139,7 +139,7 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
      */
     public function getConfig($path)
     {
-        return $this->_scopeConfig->getValue($path, \Magento\Framework\Store\ScopeInterface::SCOPE_STORE);
+        return $this->_scopeConfig->getValue($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -188,6 +188,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
 
     /**
      * @return Collection
+     * @deprecated
+     * @removeCandidate
      */
     public function getCountryCollection()
     {
@@ -199,6 +201,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
 
     /**
      * @return RegionCollection
+     * @deprecated
+     * @removeCandidate
      */
     public function getRegionCollection()
     {
@@ -212,6 +216,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
 
     /**
      * @return int
+     * @deprecated
+     * @removeCandidate
      */
     public function customerHasAddresses()
     {
@@ -225,6 +231,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
     /**
      * @param string $type
      * @return string
+     * @deprecated
+     * @removeCandidate
      */
     public function getAddressesHtmlSelect($type)
     {
@@ -277,12 +285,14 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
     /**
      * @param string $type
      * @return string
+     * @deprecated
+     * @removeCandidate
      */
     public function getCountryHtmlSelect($type)
     {
         $countryId = $this->getAddress()->getCountryId();
-        if (is_null($countryId)) {
-            $countryId = $this->_coreData->getDefaultCountry();
+        if ($countryId === null) {
+            $countryId = $this->directoryHelper->getDefaultCountry();
         }
         $select = $this->getLayout()->createBlock(
             'Magento\Framework\View\Element\Html\Select'
@@ -305,6 +315,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
     /**
      * @param string $type
      * @return string
+     * @deprecated
+     * @removeCandidate
      */
     public function getRegionHtmlSelect($type)
     {
@@ -329,6 +341,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
 
     /**
      * @return mixed
+     * @deprecated
+     * @removeCandidate
      */
     public function getCountryOptions()
     {
@@ -349,6 +363,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
      * Get checkout steps codes
      *
      * @return string[]
+     * @deprecated
+     * @removeCandidate
      */
     protected function _getStepCodes()
     {
@@ -359,6 +375,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
      * Retrieve is allow and show block
      *
      * @return bool
+     * @deprecated
+     * @removeCandidate
      */
     public function isShow()
     {
@@ -370,6 +388,8 @@ abstract class AbstractOnepage extends \Magento\Framework\View\Element\Template
      *
      * @param \Magento\Quote\Model\Quote\Address\Rate $rate
      * @return string
+     * @deprecated
+     * @removeCandidate
      */
     public function getShippingPriceHtml(\Magento\Quote\Model\Quote\Address\Rate $rate)
     {

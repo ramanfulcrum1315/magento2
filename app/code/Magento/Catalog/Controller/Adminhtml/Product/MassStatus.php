@@ -8,6 +8,7 @@ namespace Magento\Catalog\Controller\Adminhtml\Product;
 
 use Magento\Backend\App\Action;
 use Magento\Catalog\Controller\Adminhtml\Product;
+use Magento\Framework\Controller\ResultFactory;
 
 class MassStatus extends \Magento\Catalog\Controller\Adminhtml\Product
 {
@@ -17,25 +18,17 @@ class MassStatus extends \Magento\Catalog\Controller\Adminhtml\Product
     protected $_productPriceIndexerProcessor;
 
     /**
-     * @var \Magento\Backend\Model\View\Result\RedirectFactory
-     */
-    protected $resultRedirectFactory;
-
-    /**
      * @param Action\Context $context
      * @param Builder $productBuilder
      * @param \Magento\Catalog\Model\Indexer\Product\Price\Processor $productPriceIndexerProcessor
-     * @param \Magento\Backend\Model\View\Result\RedirectFactory $resultRedirectFactory
      */
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
         Product\Builder $productBuilder,
-        \Magento\Catalog\Model\Indexer\Product\Price\Processor $productPriceIndexerProcessor,
-        \Magento\Backend\Model\View\Result\RedirectFactory $resultRedirectFactory
+        \Magento\Catalog\Model\Indexer\Product\Price\Processor $productPriceIndexerProcessor
     ) {
         $this->_productPriceIndexerProcessor = $productPriceIndexerProcessor;
         parent::__construct($context, $productBuilder);
-        $this->resultRedirectFactory = $resultRedirectFactory;
     }
 
     /**
@@ -44,13 +37,13 @@ class MassStatus extends \Magento\Catalog\Controller\Adminhtml\Product
      * @param array $productIds
      * @param int $status
      * @return void
-     * @throws \Magento\Framework\Model\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function _validateMassStatus(array $productIds, $status)
     {
         if ($status == \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED) {
             if (!$this->_objectManager->create('Magento\Catalog\Model\Product')->isProductsHasSku($productIds)) {
-                throw new \Magento\Framework\Model\Exception(
+                throw new \Magento\Framework\Exception\LocalizedException(
                     __('Please make sure to define SKU values for all processed products.')
                 );
             }
@@ -74,14 +67,14 @@ class MassStatus extends \Magento\Catalog\Controller\Adminhtml\Product
                 ->updateAttributes($productIds, ['status' => $status], $storeId);
             $this->messageManager->addSuccess(__('A total of %1 record(s) have been updated.', count($productIds)));
             $this->_productPriceIndexerProcessor->reindexList($productIds);
-        } catch (\Magento\Core\Model\Exception $e) {
-            $this->messageManager->addError($e->getMessage());
-        } catch (\Magento\Framework\Model\Exception $e) {
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->messageManager->addError($e->getMessage());
         } catch (\Exception $e) {
             $this->_getSession()->addException($e, __('Something went wrong while updating the product(s) status.'));
         }
 
-        return $this->resultRedirectFactory->create()->setPath('catalog/*/', ['store' => $storeId]);
+        /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultFactory->create(ResultFactory::TYPE_REDIRECT);
+        return $resultRedirect->setPath('catalog/*/', ['store' => $storeId]);
     }
 }

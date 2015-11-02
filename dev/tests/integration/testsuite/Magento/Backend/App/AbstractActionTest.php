@@ -9,7 +9,7 @@ namespace Magento\Backend\App;
  * Test class for \Magento\Backend\Controller\AbstractAction.
  * @magentoAppArea adminhtml
  */
-class AbstractActionTest extends \Magento\Backend\Utility\Controller
+class AbstractActionTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     /**
      * Check redirection to startup page for logged user
@@ -53,7 +53,7 @@ class AbstractActionTest extends \Magento\Backend\Utility\Controller
             ],
         ];
 
-        $this->getRequest()->setPost($postLogin);
+        $this->getRequest()->setPostValue($postLogin);
         $this->dispatch('backend/admin/system_account/index');
 
         $expected = 'backend/admin/system_account/index';

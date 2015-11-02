@@ -54,9 +54,9 @@ class Edit extends \Magento\Backend\Block\Widget\Form\Container
                 $this->addButton(
                     'save_in_new_set',
                     [
-                        'label' => __('Save in New Attribute Set'),
+                        'label' => __('Save in New Product Template'),
                         'class' => 'save',
-                        'onclick' => 'saveAttributeInNewSet(\'' . __('Enter Name for New Attribute Set') . '\')'
+                        'onclick' => 'saveAttributeInNewSet(\'' . __('Enter Name for New Product Template') . '\')'
                     ],
                     100
                 );
@@ -106,7 +106,7 @@ class Edit extends \Magento\Backend\Block\Widget\Form\Container
     /**
      * Retrieve header text
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getHeaderText()
     {

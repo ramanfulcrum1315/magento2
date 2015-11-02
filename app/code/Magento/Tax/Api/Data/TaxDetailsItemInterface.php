@@ -6,44 +6,26 @@
 
 namespace Magento\Tax\Api\Data;
 
+/**
+ * Tax details items interface.
+ * @api
+ */
 interface TaxDetailsItemInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
-    /**#@+
-     * Constants defined for keys of array, makes typos less likely
-     */
-    const KEY_CODE = 'code';
-
-    const KEY_TYPE = 'type';
-
-    const KEY_TAX_PERCENT = 'tax_percent';
-
-    const KEY_PRICE = 'price';
-
-    const KEY_PRICE_INCL_TAX = 'price_incl_tax';
-
-    const KEY_ROW_TOTAL = 'row_total';
-
-    const KEY_ROW_TOTAL_INCL_TAX = 'row_total_incl_tax';
-
-    const KEY_ROW_TAX = 'row_tax';
-
-    const KEY_TAXABLE_AMOUNT = 'taxable_amount';
-
-    const KEY_DISCOUNT_AMOUNT = 'discount_amount';
-
-    const KEY_DISCOUNT_TAX_COMPENSATION_AMOUNT = 'discount_tax_compensation_amount';
-
-    const KEY_APPLIED_TAXES = 'applied_taxes';
-
-    const KEY_ASSOCIATED_ITEM_CODE = 'associated_item_code';
-    /**#@-*/
-
     /**
      * Get code (sku or shipping code)
      *
      * @return string|null
      */
     public function getCode();
+
+    /**
+     * Set code (sku or shipping code)
+     *
+     * @param string $code
+     * @return $this
+     */
+    public function setCode($code);
 
     /**
      * Get type (shipping, product, weee, gift wrapping, etc
@@ -53,11 +35,27 @@ interface TaxDetailsItemInterface extends \Magento\Framework\Api\ExtensibleDataI
     public function getType();
 
     /**
+     * Set type (shipping, product, weee, gift wrapping, etc
+     *
+     * @param string $type
+     * @return $this
+     */
+    public function setType($type);
+
+    /**
      * Get tax_percent
      *
      * @return float
      */
     public function getTaxPercent();
+
+    /**
+     * Set tax_percent
+     *
+     * @param float $taxPercent
+     * @return $this
+     */
+    public function setTaxPercent($taxPercent);
 
     /**
      * Get price
@@ -67,11 +65,27 @@ interface TaxDetailsItemInterface extends \Magento\Framework\Api\ExtensibleDataI
     public function getPrice();
 
     /**
+     * Set price
+     *
+     * @param float $price
+     * @return $this
+     */
+    public function setPrice($price);
+
+    /**
      * Get price including tax
      *
      * @return float
      */
     public function getPriceInclTax();
+
+    /**
+     * Set price including tax
+     *
+     * @param float $priceInclTax
+     * @return $this
+     */
+    public function setPriceInclTax($priceInclTax);
 
     /**
      * Get row total
@@ -81,11 +95,27 @@ interface TaxDetailsItemInterface extends \Magento\Framework\Api\ExtensibleDataI
     public function getRowTotal();
 
     /**
+     * Set row total
+     *
+     * @param float $rowTotal
+     * @return $this
+     */
+    public function setRowTotal($rowTotal);
+
+    /**
      * Get row total including tax
      *
      * @return float
      */
     public function getRowTotalInclTax();
+
+    /**
+     * Set row total including tax
+     *
+     * @param float $rowTotalInclTax
+     * @return $this
+     */
+    public function setRowTotalInclTax($rowTotalInclTax);
 
     /**
      * Get row tax amount
@@ -95,11 +125,27 @@ interface TaxDetailsItemInterface extends \Magento\Framework\Api\ExtensibleDataI
     public function getRowTax();
 
     /**
+     * Set row tax amount
+     *
+     * @param float $rowTax
+     * @return $this
+     */
+    public function setRowTax($rowTax);
+
+    /**
      * Get taxable amount
      *
      * @return float
      */
     public function getTaxableAmount();
+
+    /**
+     * Set taxable amount
+     *
+     * @param float $taxableAmount
+     * @return $this
+     */
+    public function setTaxableAmount($taxableAmount);
 
     /**
      * Get discount amount
@@ -109,11 +155,27 @@ interface TaxDetailsItemInterface extends \Magento\Framework\Api\ExtensibleDataI
     public function getDiscountAmount();
 
     /**
+     * Set discount amount
+     *
+     * @param float $discountAmount
+     * @return $this
+     */
+    public function setDiscountAmount($discountAmount);
+
+    /**
      * Get discount tax compensation amount
      *
      * @return float
      */
     public function getDiscountTaxCompensationAmount();
+
+    /**
+     * Set discount tax compensation amount
+     *
+     * @param float $discountTaxCompensationAmount
+     * @return $this
+     */
+    public function setDiscountTaxCompensationAmount($discountTaxCompensationAmount);
 
     /**
      * Get applied taxes
@@ -123,9 +185,40 @@ interface TaxDetailsItemInterface extends \Magento\Framework\Api\ExtensibleDataI
     public function getAppliedTaxes();
 
     /**
+     * Set applied taxes
+     *
+     * @param \Magento\Tax\Api\Data\AppliedTaxInterface[] $appliedTaxes
+     * @return $this
+     */
+    public function setAppliedTaxes(array $appliedTaxes = null);
+
+    /**
      * Return associated item code if this item is associated with another item, null otherwise
      *
-     * @return mixed|null
+     * @return int|null
      */
     public function getAssociatedItemCode();
+
+    /**
+     * Set associated item code
+     *
+     * @param int $associatedItemCode
+     * @return $this
+     */
+    public function setAssociatedItemCode($associatedItemCode);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Tax\Api\Data\TaxDetailsItemExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Tax\Api\Data\TaxDetailsItemExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(\Magento\Tax\Api\Data\TaxDetailsItemExtensionInterface $extensionAttributes);
 }

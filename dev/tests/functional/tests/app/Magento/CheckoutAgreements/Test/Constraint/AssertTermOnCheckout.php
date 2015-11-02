@@ -22,10 +22,6 @@ use Magento\Mtf\ObjectManager;
  */
 class AssertTermOnCheckout extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Notification message
      */
@@ -71,20 +67,20 @@ class AssertTermOnCheckout extends AbstractConstraint
         );
         $product = $createProductsStep->run();
 
-        $billingAddress = $fixtureFactory->createByCode('addressInjectable', ['dataSet' => 'default']);
+        $billingAddress = $fixtureFactory->createByCode('address', ['dataset' => 'default']);
 
         $browser->open($_ENV['app_frontend_url'] . $product['products'][0]->getUrlKey() . '.html');
         $catalogProductView->getViewBlock()->clickAddToCartButton();
+        $catalogProductView->getMessagesBlock()->waitSuccessMessage();
+        $checkoutCart->open();
         $checkoutCart->getCartBlock()->getOnepageLinkBlock()->proceedToCheckout();
-        $checkoutOnepage->getLoginBlock()->guestCheckout();
         $checkoutOnepage->getLoginBlock()->clickContinue();
         $checkoutOnepage->getBillingBlock()->fill($billingAddress);
         $checkoutOnepage->getBillingBlock()->clickContinue();
         $checkoutOnepage->getShippingMethodBlock()->selectShippingMethod($shipping);
         $checkoutOnepage->getShippingMethodBlock()->clickContinue();
-        $checkoutOnepage->getPaymentMethodsBlock()->selectPaymentMethod($payment);
-        $checkoutOnepage->getPaymentMethodsBlock()->clickContinue();
-        $checkoutOnepage->getAgreementReview()->placeOrder();
+        $checkoutOnepage->getPaymentBlock()->selectPaymentMethod($payment);
+        $checkoutOnepage->getPaymentBlock()->getSelectedPaymentMethodBlock()->clickPlaceOrder();
 
         \PHPUnit_Framework_Assert::assertEquals(
             self::NOTIFICATION_MESSAGE,

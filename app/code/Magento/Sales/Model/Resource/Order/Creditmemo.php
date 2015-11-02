@@ -6,10 +6,10 @@
 namespace Magento\Sales\Model\Resource\Order;
 
 use Magento\Framework\App\Resource as AppResource;
-use Magento\Sales\Model\Increment as SalesIncrement;
+use Magento\SalesSequence\Model\Manager;
 use Magento\Sales\Model\Resource\Attribute;
-use Magento\Sales\Model\Resource\Entity as SalesResource;
-use Magento\Sales\Model\Resource\Order\Creditmemo\Grid as CreditmemoGrid;
+use Magento\Sales\Model\Resource\EntityAbstract as SalesResource;
+use Magento\Framework\Model\Resource\Db\VersionControl\Snapshot;
 use Magento\Sales\Model\Spi\CreditmemoResourceInterface;
 
 /**
@@ -37,23 +37,6 @@ class Creditmemo extends SalesResource implements CreditmemoResourceInterface
     }
 
     /**
-     * Constructor
-     *
-     * @param AppResource $resource
-     * @param Attribute $attribute
-     * @param SalesIncrement $salesIncrement
-     * @param CreditmemoGrid $gridAggregator
-     */
-    public function __construct(
-        AppResource $resource,
-        Attribute $attribute,
-        SalesIncrement $salesIncrement,
-        CreditmemoGrid $gridAggregator
-    ) {
-        parent::__construct($resource, $attribute, $salesIncrement, $gridAggregator);
-    }
-
-    /**
      * Perform actions before object save
      *
      * @param \Magento\Framework\Model\AbstractModel|\Magento\Framework\Object $object
@@ -68,29 +51,5 @@ class Creditmemo extends SalesResource implements CreditmemoResourceInterface
         }
 
         return parent::_beforeSave($object);
-    }
-
-    /**
-     * Perform actions after object save
-     *
-     * @param \Magento\Framework\Model\AbstractModel $object
-     * @return $this
-     */
-    protected function _afterSave(\Magento\Framework\Model\AbstractModel $object)
-    {
-        /** @var \Magento\Sales\Model\Order\Creditmemo $object */
-        if (null !== $object->getItems()) {
-            foreach ($object->getItems() as $item) {
-                $item->setParentId($object->getId());
-                $item->save();
-            }
-        }
-
-        if (null !== $object->getComments()) {
-            foreach ($object->getComments() as $comment) {
-                $comment->save();
-            }
-        }
-        return parent::_afterSave($object);
     }
 }

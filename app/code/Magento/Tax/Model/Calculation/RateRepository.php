@@ -13,8 +13,9 @@ use Magento\Framework\Api\Search\FilterGroup;
 use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\SortOrder;
 use Magento\Framework\Exception\InputException;
-use Magento\Framework\Model\Exception as ModelException;
-use Magento\Tax\Api\Data\TaxRateInterface as TaxRateDataObject;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Tax\Model\Calculation\Rate;
 use Magento\Tax\Model\Calculation\Rate\Converter;
 use Magento\Tax\Model\Resource\Calculation\Rate\Collection;
 
@@ -33,13 +34,6 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
     protected $converter;
 
     /**
-     * Tax rate data object builder
-     *
-     * @var  \Magento\Tax\Api\Data\TaxRateDataBuilder
-     */
-    protected $rateBuilder;
-
-    /**
      * Tax rate registry
      *
      * @var  RateRegistry
@@ -47,9 +41,9 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
     protected $rateRegistry;
 
     /**
-     * @var \Magento\Tax\Api\Data\TaxRuleSearchResultsDataBuilder
+     * @var \Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory
      */
-    private $taxRateSearchResultsBuilder;
+    private $taxRateSearchResultsFactory;
 
     /**
      * @var RateFactory
@@ -72,33 +66,38 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
     protected $resourceModel;
 
     /**
-     * @param \Magento\Tax\Api\Data\TaxRateDataBuilder $rateBuilder
+     * @var \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface
+     */
+    protected $joinProcessor;
+
+    /**
      * @param Converter $converter
      * @param RateRegistry $rateRegistry
-     * @param \Magento\Tax\Api\Data\TaxRuleSearchResultsDataBuilder $taxRateSearchResultsBuilder
+     * @param \Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory $taxRateSearchResultsFactory
      * @param RateFactory $rateFactory
      * @param CountryFactory $countryFactory
      * @param RegionFactory $regionFactory
      * @param \Magento\Tax\Model\Resource\Calculation\Rate $rateResource
+     * @param \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
      */
     public function __construct(
-        \Magento\Tax\Api\Data\TaxRateDataBuilder $rateBuilder,
         Converter $converter,
         RateRegistry $rateRegistry,
-        \Magento\Tax\Api\Data\TaxRuleSearchResultsDataBuilder $taxRateSearchResultsBuilder,
+        \Magento\Tax\Api\Data\TaxRuleSearchResultsInterfaceFactory $taxRateSearchResultsFactory,
         RateFactory $rateFactory,
         CountryFactory $countryFactory,
         RegionFactory $regionFactory,
-        \Magento\Tax\Model\Resource\Calculation\Rate $rateResource
+        \Magento\Tax\Model\Resource\Calculation\Rate $rateResource,
+        \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
     ) {
-        $this->rateBuilder = $rateBuilder;
         $this->converter = $converter;
         $this->rateRegistry = $rateRegistry;
-        $this->taxRateSearchResultsBuilder = $taxRateSearchResultsBuilder;
+        $this->taxRateSearchResultsFactory = $taxRateSearchResultsFactory;
         $this->rateFactory = $rateFactory;
         $this->countryFactory = $countryFactory;
         $this->regionFactory = $regionFactory;
         $this->resourceModel = $rateResource;
+        $this->joinProcessor = $joinProcessor;
     }
 
     /**
@@ -114,12 +113,8 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
         try {
             $this->resourceModel->save($taxRate);
             $taxRate->saveTitles($taxRateTitles);
-        } catch (ModelException $e) {
-            if ($e->getCode() == ModelException::ERROR_CODE_ENTITY_ALREADY_EXISTS) {
-                throw new InputException($e->getMessage());
-            } else {
-                throw $e;
-            }
+        } catch (LocalizedException $e) {
+            throw $e;
         }
         $this->rateRegistry->registerTaxRate($taxRate);
         return $taxRate;
@@ -159,6 +154,7 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
     {
         /** @var \Magento\Tax\Model\Resource\Calculation\Rate\Collection $collection */
         $collection = $this->rateFactory->create()->getCollection();
+        $this->joinProcessor->process($collection);
         $collection->joinRegionTable();
 
         //Add filters from root filter group to the collection
@@ -186,11 +182,10 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
             $taxRate[] = $taxRateModel;
         }
 
-        return $this->taxRateSearchResultsBuilder
+        return $this->taxRateSearchResultsFactory->create()
             ->setItems($taxRate)
             ->setTotalCount($collection->getSize())
-            ->setSearchCriteria($searchCriteria)
-            ->create();
+            ->setSearchCriteria($searchCriteria);
     }
 
     /**
@@ -224,7 +219,7 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
     protected function translateField($field)
     {
         switch ($field) {
-            case TaxRateDataObject::KEY_REGION_NAME:
+            case Rate::KEY_REGION_NAME:
                 return 'region_table.code';
             default:
                 return "main_table." . $field;
@@ -247,17 +242,19 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
 
         $countryCode = $taxRate->getTaxCountryId();
         if (!\Zend_Validate::is($countryCode, 'NotEmpty')) {
-            $exception->addError(InputException::REQUIRED_FIELD, ['fieldName' => 'country_id']);
+            $exception->addError(__(InputException::REQUIRED_FIELD, ['fieldName' => 'country_id']));
         } elseif (!\Zend_Validate::is(
             $this->countryFactory->create()->loadByCode($countryCode)->getId(),
             'NotEmpty'
         )) {
             $exception->addError(
-                InputException::INVALID_FIELD_VALUE,
-                [
-                    'fieldName' => 'country_id',
-                    'value' => $countryCode
-                ]
+                __(
+                    InputException::INVALID_FIELD_VALUE,
+                    [
+                        'fieldName' => 'country_id',
+                        'value' => $countryCode
+                    ]
+                )
             );
         }
 
@@ -270,17 +267,19 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
             )
         ) {
             $exception->addError(
-                InputException::INVALID_FIELD_VALUE,
-                ['fieldName' => 'region_id', 'value' => $regionCode]
+                __(
+                    InputException::INVALID_FIELD_VALUE,
+                    ['fieldName' => 'region_id', 'value' => $regionCode]
+                )
             );
         }
 
         if (!\Zend_Validate::is($taxRate->getRate(), 'NotEmpty')) {
-            $exception->addError(InputException::REQUIRED_FIELD, ['fieldName' => 'percentage_rate']);
+            $exception->addError(__(InputException::REQUIRED_FIELD, ['fieldName' => 'percentage_rate']));
         }
 
         if (!\Zend_Validate::is(trim($taxRate->getCode()), 'NotEmpty')) {
-            $exception->addError(InputException::REQUIRED_FIELD, ['fieldName' => 'code']);
+            $exception->addError(__(InputException::REQUIRED_FIELD, ['fieldName' => 'code']));
         }
 
         if ($taxRate->getZipIsRange()) {
@@ -291,17 +290,19 @@ class RateRepository implements \Magento\Tax\Api\TaxRateRepositoryInterface
             foreach ($zipRangeFromTo as $key => $value) {
                 if (!is_numeric($value) || $value < 0) {
                     $exception->addError(
-                        InputException::INVALID_FIELD_VALUE,
-                        ['fieldName' => $key, 'value' => $value]
+                        __(
+                            InputException::INVALID_FIELD_VALUE,
+                            ['fieldName' => $key, 'value' => $value]
+                        )
                     );
                 }
             }
             if ($zipRangeFromTo['zip_from'] > $zipRangeFromTo['zip_to']) {
-                $exception->addError('Range To should be equal or greater than Range From.');
+                $exception->addError(__('Range To should be equal or greater than Range From.'));
             }
         } else {
             if (!\Zend_Validate::is(trim($taxRate->getTaxPostcode()), 'NotEmpty')) {
-                $exception->addError(InputException::REQUIRED_FIELD, ['fieldName' => 'postcode']);
+                $exception->addError(__(InputException::REQUIRED_FIELD, ['fieldName' => 'postcode']));
             }
         }
 

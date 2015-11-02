@@ -65,7 +65,7 @@ class Quote extends \Magento\Framework\Session\SessionManager
     protected $quoteRepository;
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
@@ -83,11 +83,13 @@ class Quote extends \Magento\Framework\Session\SessionManager
      * @param \Magento\Framework\Session\StorageInterface $storage
      * @param \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager
      * @param \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMetadataFactory
+     * @param \Magento\Framework\App\State $appState
      * @param CustomerRepositoryInterface $customerRepository
      * @param \Magento\Quote\Model\QuoteRepository $quoteRepository
      * @param \Magento\Sales\Model\OrderFactory $orderFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param GroupManagementInterface $groupManagement
+     * @throws \Magento\Framework\Exception\SessionException
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
@@ -99,10 +101,11 @@ class Quote extends \Magento\Framework\Session\SessionManager
         \Magento\Framework\Session\StorageInterface $storage,
         \Magento\Framework\Stdlib\CookieManagerInterface $cookieManager,
         \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMetadataFactory,
+        \Magento\Framework\App\State $appState,
         CustomerRepositoryInterface $customerRepository,
         \Magento\Quote\Model\QuoteRepository $quoteRepository,
         \Magento\Sales\Model\OrderFactory $orderFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         GroupManagementInterface $groupManagement
     ) {
         $this->customerRepository = $customerRepository;
@@ -118,9 +121,9 @@ class Quote extends \Magento\Framework\Session\SessionManager
             $validator,
             $storage,
             $cookieManager,
-            $cookieMetadataFactory
+            $cookieMetadataFactory,
+            $appState
         );
-        $this->start();
         if ($this->_storeManager->hasSingleStore()) {
             $this->setStoreId($this->_storeManager->getStore(true)->getId());
         }
@@ -147,7 +150,7 @@ class Quote extends \Magento\Framework\Session\SessionManager
                     $this->_quote->setStoreId($this->getStoreId());
                 }
 
-                if ($this->getCustomerId()) {
+                if ($this->getCustomerId() && $this->getCustomerId() != $this->_quote->getCustomerId()) {
                     $customer = $this->customerRepository->getById($this->getCustomerId());
                     $this->_quote->assignCustomer($customer);
                 }
@@ -166,7 +169,7 @@ class Quote extends \Magento\Framework\Session\SessionManager
      */
     public function getStore()
     {
-        if (is_null($this->_store)) {
+        if ($this->_store === null) {
             $this->_store = $this->_storeManager->getStore($this->getStoreId());
             $currencyId = $this->getCurrencyId();
             if ($currencyId) {
@@ -183,7 +186,7 @@ class Quote extends \Magento\Framework\Session\SessionManager
      */
     public function getOrder()
     {
-        if (is_null($this->_order)) {
+        if ($this->_order === null) {
             $this->_order = $this->_orderFactory->create();
             if ($this->getOrderId()) {
                 $this->_order->load($this->getOrderId());

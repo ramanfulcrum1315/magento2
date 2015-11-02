@@ -7,9 +7,8 @@
 namespace Magento\Customer\Controller\Account;
 
 use Magento\Customer\Api\CustomerRepositoryInterface;
-use Magento\Customer\Api\Data\CustomerDataBuilder;
+use Magento\Framework\Api\DataObjectHelper;
 use Magento\Customer\Model\Session;
-use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Framework\App\Action\Context;
 
@@ -18,28 +17,26 @@ class Edit extends \Magento\Customer\Controller\Account
     /** @var CustomerRepositoryInterface  */
     protected $customerRepository;
 
-    /** @var CustomerDataBuilder */
-    protected $customerBuilder;
+    /** @var DataObjectHelper */
+    protected $dataObjectHelper;
 
     /**
      * @param Context $context
      * @param Session $customerSession
-     * @param RedirectFactory $resultRedirectFactory
      * @param PageFactory $resultPageFactory
      * @param CustomerRepositoryInterface $customerRepository
-     * @param CustomerDataBuilder $customerBuilder
+     * @param DataObjectHelper $dataObjectHelper
      */
     public function __construct(
         Context $context,
         Session $customerSession,
-        RedirectFactory $resultRedirectFactory,
         PageFactory $resultPageFactory,
         CustomerRepositoryInterface $customerRepository,
-        CustomerDataBuilder $customerBuilder
+        DataObjectHelper $dataObjectHelper
     ) {
         $this->customerRepository = $customerRepository;
-        $this->customerBuilder = $customerBuilder;
-        parent::__construct($context, $customerSession, $resultRedirectFactory, $resultPageFactory);
+        $this->dataObjectHelper = $dataObjectHelper;
+        parent::__construct($context, $customerSession, $resultPageFactory);
     }
 
     /**
@@ -51,7 +48,6 @@ class Edit extends \Magento\Customer\Controller\Account
     {
         /** @var \Magento\Framework\View\Result\Page $resultPage */
         $resultPage = $this->resultPageFactory->create();
-        $resultPage->getLayout()->initMessages();
 
         $block = $resultPage->getLayout()->getBlock('customer_edit');
         if ($block) {
@@ -62,8 +58,11 @@ class Edit extends \Magento\Customer\Controller\Account
         $customerId = $this->_getSession()->getCustomerId();
         $customerDataObject = $this->customerRepository->getById($customerId);
         if (!empty($data)) {
-            $customerDataObject = $this->customerBuilder->mergeDataObjectWithArray($customerDataObject, $data)
-                ->create();
+            $this->dataObjectHelper->populateWithArray(
+                $customerDataObject,
+                $data,
+                '\Magento\Customer\Api\Data\CustomerInterface'
+            );
         }
         $this->_getSession()->setCustomerData($customerDataObject);
         $this->_getSession()->setChangePassword($this->getRequest()->getParam('changepass') == 1);

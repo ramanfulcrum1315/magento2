@@ -15,14 +15,10 @@ use Magento\Mtf\Constraint\AbstractConstraint;
  */
 class AssertUrlRewriteDeletedMessage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * Message that displayed after delete url rewrite
      */
-    const SUCCESS_DELETE_MESSAGE = 'The URL Rewrite has been deleted.';
+    const SUCCESS_DELETE_MESSAGE = 'You deleted the URL rewrite.';
 
     /**
      * Assert that delete message is displayed

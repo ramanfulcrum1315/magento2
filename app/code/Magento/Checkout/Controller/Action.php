@@ -54,7 +54,7 @@ abstract class Action extends \Magento\Framework\App\Action\Action
      *
      * @param bool $redirect - stop dispatch and redirect?
      * @param bool $addErrors - add error messages?
-     * @return bool
+     * @return bool|\Magento\Framework\Controller\Result\Redirect
      */
     protected function _preDispatchValidateCustomer($redirect = true, $addErrors = true)
     {
@@ -73,8 +73,8 @@ abstract class Action extends \Magento\Framework\App\Action\Action
                     }
                 }
                 if ($redirect) {
-                    $this->_redirect('customer/account/edit');
                     $this->_actionFlag->set('', self::FLAG_NO_DISPATCH, true);
+                    return $this->resultRedirectFactory->create()->setPath('customer/account/edit');
                 }
                 return false;
             }

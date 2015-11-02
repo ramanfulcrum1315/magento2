@@ -27,7 +27,7 @@ class MassMarkAsRead extends \Magento\AdminNotification\Controller\Adminhtml\Not
                 $this->messageManager->addSuccess(
                     __('A total of %1 record(s) have been marked as Read.', count($ids))
                 );
-            } catch (\Magento\Framework\Model\Exception $e) {
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->messageManager->addError($e->getMessage());
             } catch (\Exception $e) {
                 $this->messageManager->addException(
@@ -37,5 +37,13 @@ class MassMarkAsRead extends \Magento\AdminNotification\Controller\Adminhtml\Not
             }
         }
         $this->_redirect('adminhtml/*/');
+    }
+
+    /**
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return $this->_authorization->isAllowed('Magento_AdminNotification::mark_as_read');
     }
 }

@@ -5,7 +5,7 @@
  */
 namespace Magento\Catalog\Model\Attribute\Backend;
 
-use Magento\Core\Model\Layout\Update\ValidatorFactory;
+use Magento\Framework\View\Model\Layout\Update\ValidatorFactory;
 use Magento\Eav\Model\Entity\Attribute\Exception;
 
 /**
@@ -48,13 +48,13 @@ class Customlayoutupdate extends \Magento\Eav\Model\Entity\Attribute\Backend\Abs
             return true;
         }
 
-        /** @var $validator \Magento\Core\Model\Layout\Update\Validator */
+        /** @var $validator \Magento\Framework\View\Model\Layout\Update\Validator */
         $validator = $this->_layoutUpdateValidatorFactory->create();
         if (!$validator->isValid($xml)) {
             $messages = $validator->getMessages();
             //Add first message to exception
-            $massage = array_shift($messages);
-            $eavExc = new Exception($massage);
+            $message = array_shift($messages);
+            $eavExc = new Exception(__($message));
             $eavExc->setAttributeCode($attributeName);
             throw $eavExc;
         }

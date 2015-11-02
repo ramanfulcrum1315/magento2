@@ -5,7 +5,7 @@
  */
 namespace Magento\Sales\Model\Order\Status;
 
-use Magento\Framework\Api\AttributeDataBuilder;
+use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Sales\Api\Data\OrderStatusHistoryInterface;
 use Magento\Sales\Model\AbstractModel;
 
@@ -14,11 +14,7 @@ use Magento\Sales\Model\AbstractModel;
  *
  * @method \Magento\Sales\Model\Resource\Order\Status\History _getResource()
  * @method \Magento\Sales\Model\Resource\Order\Status\History getResource()
- * @method \Magento\Sales\Model\Order\Status\History setParentId(int $value)
- * @method \Magento\Sales\Model\Order\Status\History setIsVisibleOnFront(int $value)
- * @method \Magento\Sales\Model\Order\Status\History setComment(string $value)
- * @method \Magento\Sales\Model\Order\Status\History setStatus(string $value)
- * @method \Magento\Sales\Model\Order\Status\History setCreatedAt(string $value)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class History extends AbstractModel implements OrderStatusHistoryInterface
 {
@@ -42,42 +38,36 @@ class History extends AbstractModel implements OrderStatusHistoryInterface
     protected $_eventObject = 'status_history';
 
     /**
-     * @var \Magento\Framework\Store\StoreManagerInterface
+     * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
 
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Api\MetadataServiceInterface $metadataService
-     * @param AttributeDataBuilder $customAttributeBuilder
-     * @param \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate
-     * @param \Magento\Framework\Stdlib\DateTime $dateTime
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
+     * @param AttributeValueFactory $customAttributeFactory
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\MetadataServiceInterface $metadataService,
-        AttributeDataBuilder $customAttributeBuilder,
-        \Magento\Framework\Stdlib\DateTime\TimezoneInterface $localeDate,
-        \Magento\Framework\Stdlib\DateTime $dateTime,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
+        AttributeValueFactory $customAttributeFactory,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
             $context,
             $registry,
-            $metadataService,
-            $customAttributeBuilder,
-            $localeDate,
-            $dateTime,
+            $extensionFactory,
+            $customAttributeFactory,
             $resource,
             $resourceCollection,
             $data
@@ -116,7 +106,7 @@ class History extends AbstractModel implements OrderStatusHistoryInterface
      */
     public function setIsCustomerNotified($flag = null)
     {
-        if (is_null($flag)) {
+        if ($flag === null) {
             $flag = self::CUSTOMER_NOTIFICATION_NOT_APPLICABLE;
         }
 
@@ -135,6 +125,8 @@ class History extends AbstractModel implements OrderStatusHistoryInterface
 
     /**
      * Retrieve order instance
+     *
+     * @codeCoverageIgnore
      *
      * @return \Magento\Sales\Model\Order
      */
@@ -185,6 +177,7 @@ class History extends AbstractModel implements OrderStatusHistoryInterface
         return $this;
     }
 
+    //@codeCoverageIgnoreStart
     /**
      * Returns comment
      *
@@ -203,6 +196,14 @@ class History extends AbstractModel implements OrderStatusHistoryInterface
     public function getCreatedAt()
     {
         return $this->getData(OrderStatusHistoryInterface::CREATED_AT);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setCreatedAt($createdAt)
+    {
+        return $this->setData(OrderStatusHistoryInterface::CREATED_AT, $createdAt);
     }
 
     /**
@@ -264,4 +265,67 @@ class History extends AbstractModel implements OrderStatusHistoryInterface
     {
         return $this->getData(OrderStatusHistoryInterface::STATUS);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setParentId($id)
+    {
+        return $this->setData(OrderStatusHistoryInterface::PARENT_ID, $id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setIsVisibleOnFront($isVisibleOnFront)
+    {
+        return $this->setData(OrderStatusHistoryInterface::IS_VISIBLE_ON_FRONT, $isVisibleOnFront);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setComment($comment)
+    {
+        return $this->setData(OrderStatusHistoryInterface::COMMENT, $comment);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setStatus($status)
+    {
+        return $this->setData(OrderStatusHistoryInterface::STATUS, $status);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setEntityName($entityName)
+    {
+        return $this->setData(OrderStatusHistoryInterface::ENTITY_NAME, $entityName);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Magento\Sales\Api\Data\OrderStatusHistoryExtensionInterface|null
+     */
+    public function getExtensionAttributes()
+    {
+        return $this->_getExtensionAttributes();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param \Magento\Sales\Api\Data\OrderStatusHistoryExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\OrderStatusHistoryExtensionInterface $extensionAttributes
+    ) {
+        return $this->_setExtensionAttributes($extensionAttributes);
+    }
+    //@codeCoverageIgnoreEnd
 }

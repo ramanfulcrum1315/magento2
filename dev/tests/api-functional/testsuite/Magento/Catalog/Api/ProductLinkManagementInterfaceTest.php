@@ -8,7 +8,6 @@ namespace Magento\Catalog\Api;
 
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\TestCase\WebapiAbstract;
-use Magento\Webapi\Model\Rest\Config as RestConfig;
 
 class ProductLinkManagementInterfaceTest extends WebapiAbstract
 {
@@ -68,7 +67,7 @@ class ProductLinkManagementInterfaceTest extends WebapiAbstract
         $serviceInfo = [
             'rest' => [
                 'resourcePath' => self::RESOURCE_PATH . $productSku . '/links/' . $linkType,
-                'httpMethod' => RestConfig::HTTP_METHOD_GET,
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_GET,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -77,7 +76,7 @@ class ProductLinkManagementInterfaceTest extends WebapiAbstract
             ],
         ];
 
-        $actual = $this->_webApiCall($serviceInfo, ['productSku' => $productSku, 'type' => $linkType]);
+        $actual = $this->_webApiCall($serviceInfo, ['sku' => $productSku, 'type' => $linkType]);
 
         $this->assertEquals('simple', $actual[0]['linked_product_type']);
         $this->assertEquals('simple', $actual[0]['linked_product_sku']);
@@ -96,14 +95,14 @@ class ProductLinkManagementInterfaceTest extends WebapiAbstract
             'linked_product_type' => 'virtual',
             'linked_product_sku' => 'virtual-product',
             'position' => 100,
-            'product_sku' => 'simple',
+            'sku' => 'simple',
             'link_type' => 'related',
         ];
 
         $serviceInfo = [
             'rest' => [
-                'resourcePath' => self::RESOURCE_PATH . $productSku . '/links/' . $linkType,
-                'httpMethod' => RestConfig::HTTP_METHOD_POST,
+                'resourcePath' => self::RESOURCE_PATH . $productSku . '/links',
+                'httpMethod' => \Magento\Framework\Webapi\Rest\Request::HTTP_METHOD_POST,
             ],
             'soap' => [
                 'service' => self::SERVICE_NAME,
@@ -113,7 +112,7 @@ class ProductLinkManagementInterfaceTest extends WebapiAbstract
         ];
 
         $arguments = [
-            'productSku' => $productSku,
+            'sku' => $productSku,
             'items' => [$linkData],
             'type' => $linkType,
         ];

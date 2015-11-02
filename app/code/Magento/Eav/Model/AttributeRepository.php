@@ -33,9 +33,9 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
     protected $attributeCollectionFactory;
 
     /**
-     * @var \Magento\Eav\Api\Data\AttributeSearchResultsDataBuilder
+     * @var \Magento\Eav\Api\Data\AttributeSearchResultsInterfaceFactory
      */
-    protected $searchResultsBuilder;
+    protected $searchResultsFactory;
 
     /**
      * @var Entity\AttributeFactory
@@ -43,24 +43,32 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
     protected $attributeFactory;
 
     /**
+     * @var \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface
+     */
+    protected $joinProcessor;
+
+    /**
      * @param Config $eavConfig
      * @param Resource\Entity\Attribute $eavResource
      * @param Resource\Entity\Attribute\CollectionFactory $attributeCollectionFactory
-     * @param \Magento\Eav\Api\Data\AttributeSearchResultsDataBuilder $searchResultsBuilder
+     * @param \Magento\Eav\Api\Data\AttributeSearchResultsInterfaceFactory $searchResultsFactory
      * @param Entity\AttributeFactory $attributeFactory
+     * @param \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
      */
     public function __construct(
         \Magento\Eav\Model\Config $eavConfig,
         \Magento\Eav\Model\Resource\Entity\Attribute $eavResource,
         \Magento\Eav\Model\Resource\Entity\Attribute\CollectionFactory $attributeCollectionFactory,
-        \Magento\Eav\Api\Data\AttributeSearchResultsDataBuilder $searchResultsBuilder,
-        \Magento\Eav\Model\Entity\AttributeFactory $attributeFactory
+        \Magento\Eav\Api\Data\AttributeSearchResultsInterfaceFactory $searchResultsFactory,
+        \Magento\Eav\Model\Entity\AttributeFactory $attributeFactory,
+        \Magento\Framework\Api\ExtensionAttribute\JoinProcessorInterface $joinProcessor
     ) {
         $this->eavConfig = $eavConfig;
         $this->eavResource = $eavResource;
         $this->attributeCollectionFactory = $attributeCollectionFactory;
-        $this->searchResultsBuilder = $searchResultsBuilder;
+        $this->searchResultsFactory = $searchResultsFactory;
         $this->attributeFactory = $attributeFactory;
+        $this->joinProcessor = $joinProcessor;
     }
 
     /**
@@ -71,7 +79,7 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
         try {
             $this->eavResource->save($attribute);
         } catch (\Exception $e) {
-            throw new StateException('Cannot save attribute');
+            throw new StateException(__('Cannot save attribute'));
         }
         return $attribute;
     }
@@ -87,6 +95,7 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
 
         /** @var \Magento\Eav\Model\Resource\Entity\Attribute\Collection $attributeCollection */
         $attributeCollection = $this->attributeCollectionFactory->create();
+        $this->joinProcessor->process($attributeCollection);
         $attributeCollection->addFieldToFilter('entity_type_code', ['eq' => $entityTypeCode]);
         $attributeCollection->join(
             ['entity_type' => $attributeCollection->getTable('eav_entity_type')],
@@ -98,8 +107,10 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
             'main_table.attribute_id = eav_entity_attribute.attribute_id',
             []
         );
+        $entityType = $this->eavConfig->getEntityType($entityTypeCode);
+        $additionalTable = $entityType->getAdditionalAttributeTable();
         $attributeCollection->join(
-            ['additional_table' => $attributeCollection->getTable('catalog_eav_attribute')],
+            ['additional_table' => $attributeCollection->getTable($additionalTable)],
             'main_table.attribute_id = additional_table.attribute_id',
             []
         );
@@ -127,10 +138,11 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
         foreach ($attributeCollection as $attribute) {
             $attributes[] = $this->get($entityTypeCode, $attribute->getAttributeCode());
         }
-        $this->searchResultsBuilder->setSearchCriteria($searchCriteria);
-        $this->searchResultsBuilder->setItems($attributes);
-        $this->searchResultsBuilder->setTotalCount($totalCount);
-        return $this->searchResultsBuilder->create();
+        $searchResults = $this->searchResultsFactory->create();
+        $searchResults->setSearchCriteria($searchCriteria);
+        $searchResults->setItems($attributes);
+        $searchResults->setTotalCount($totalCount);
+        return $searchResults;
     }
 
     /**
@@ -141,10 +153,9 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
         /** @var \Magento\Eav\Api\Data\AttributeInterface $attribute */
         $attribute = $this->eavConfig->getAttribute($entityTypeCode, $attributeCode);
         if (!$attribute || !$attribute->getAttributeId()) {
-            throw new NoSuchEntityException(sprintf(
-                'Attribute with attributeCode "%s" does not exist.',
-                $attributeCode
-            ));
+            throw new NoSuchEntityException(
+                __('Attribute with attributeCode "%1" does not exist.', $attributeCode)
+            );
         }
         return $attribute;
     }
@@ -157,7 +168,7 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
         try {
             $this->eavResource->delete($attribute);
         } catch (\Exception $e) {
-            throw new StateException('Cannot delete attribute.');
+            throw new StateException(__('Cannot delete attribute.'));
         }
         return true;
     }
@@ -172,7 +183,7 @@ class AttributeRepository implements \Magento\Eav\Api\AttributeRepositoryInterfa
         $this->eavResource->load($attribute, $attributeId);
 
         if (!$attribute->getAttributeId()) {
-            throw new NoSuchEntityException(sprintf('Attribute with id "%s" does not exist.', $attributeId));
+            throw new NoSuchEntityException(__('Attribute with id "%1" does not exist.', $attributeId));
         }
 
         $this->delete($attribute);

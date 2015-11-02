@@ -20,7 +20,7 @@ class Price extends \Magento\Catalog\Model\Resource\Product\Indexer\Price\Defaul
      */
     public function reindexAll()
     {
-        $this->useIdxTable(true);
+        $this->tableStrategy->setUseIdxTable(true);
 
         $this->beginTransaction();
         try {
@@ -54,10 +54,7 @@ class Price extends \Magento\Catalog\Model\Resource\Product\Indexer\Price\Defaul
      */
     protected function _getBundlePriceTable()
     {
-        if ($this->useIdxTable()) {
-            return $this->getTable('catalog_product_index_price_bundle_idx');
-        }
-        return $this->getTable('catalog_product_index_price_bundle_tmp');
+        return $this->tableStrategy->getTableName('catalog_product_index_price_bundle');
     }
 
     /**
@@ -67,10 +64,7 @@ class Price extends \Magento\Catalog\Model\Resource\Product\Indexer\Price\Defaul
      */
     protected function _getBundleSelectionTable()
     {
-        if ($this->useIdxTable()) {
-            return $this->getTable('catalog_product_index_price_bundle_sel_idx');
-        }
-        return $this->getTable('catalog_product_index_price_bundle_sel_tmp');
+        return $this->tableStrategy->getTableName('catalog_product_index_price_bundle_sel');
     }
 
     /**
@@ -80,10 +74,7 @@ class Price extends \Magento\Catalog\Model\Resource\Product\Indexer\Price\Defaul
      */
     protected function _getBundleOptionTable()
     {
-        if ($this->useIdxTable()) {
-            return $this->getTable('catalog_product_index_price_bundle_opt_idx');
-        }
-        return $this->getTable('catalog_product_index_price_bundle_opt_tmp');
+        return $this->tableStrategy->getTableName('catalog_product_index_price_bundle_opt');
     }
 
     /**
@@ -256,7 +247,7 @@ class Price extends \Magento\Catalog\Model\Resource\Product\Indexer\Price\Defaul
             ]
         );
 
-        if (!is_null($entityIds)) {
+        if ($entityIds !== null) {
             $select->where('e.entity_id IN(?)', $entityIds);
         }
 
@@ -528,27 +519,6 @@ class Price extends \Magento\Catalog\Model\Resource\Product\Indexer\Price\Defaul
         $this->_prepareBundlePriceTable();
         $this->_prepareBundlePriceByType(\Magento\Bundle\Model\Product\Price::PRICE_TYPE_FIXED, $entityIds);
         $this->_prepareBundlePriceByType(\Magento\Bundle\Model\Product\Price::PRICE_TYPE_DYNAMIC, $entityIds);
-
-        /**
-         * Add possibility modify prices from external events
-         */
-        $select = $this->_getWriteAdapter()->select()->join(
-            ['wd' => $this->_getWebsiteDateTable()],
-            'i.website_id = wd.website_id',
-            []
-        );
-        $this->_eventManager->dispatch(
-            'prepare_catalog_product_price_index_table',
-            [
-                'index_table' => ['i' => $this->_getBundlePriceTable()],
-                'select' => $select,
-                'entity_id' => 'i.entity_id',
-                'customer_group_id' => 'i.customer_group_id',
-                'website_id' => 'i.website_id',
-                'website_date' => 'wd.website_date',
-                'update_fields' => ['price', 'min_price', 'max_price']
-            ]
-        );
 
         $this->_calculateBundleOptionPrice();
         $this->_applyCustomOption();

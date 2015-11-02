@@ -61,7 +61,7 @@ class View extends AbstractConfigureBlock
      *
      * @var string
      */
-    protected $productName = '.page-title.product h1.title .base';
+    protected $productName = '.page-title-wrapper.product h1.page-title .base';
 
     /**
      * Product sku element.
@@ -83,20 +83,6 @@ class View extends AbstractConfigureBlock
      * @var string
      */
     protected $productShortDescription = '.product.attibute.overview';
-
-    /**
-     * Click for Price link on Product page.
-     *
-     * @var string
-     */
-    protected $clickForPrice = '[id*=msrp-popup]';
-
-    /**
-     * MAP popup on Product page.
-     *
-     * @var string
-     */
-    protected $mapPopup = '#map-popup-click-for-price';
 
     /**
      * Stock Availability control.
@@ -127,7 +113,7 @@ class View extends AbstractConfigureBlock
     protected $clickAddToCompare = '.action.tocompare';
 
     /**
-     * "Add to Wishlist" button.
+     * Locator value for "Add to Wish List" button.
      *
      * @var string
      */
@@ -143,7 +129,7 @@ class View extends AbstractConfigureBlock
     /**
      * Get block price.
      *
-     * @return \Magento\Catalog\Test\Block\Product\Price
+     * @return Price
      */
     public function getPriceBlock()
     {
@@ -161,11 +147,8 @@ class View extends AbstractConfigureBlock
      */
     public function addToCart(FixtureInterface $product)
     {
-        $checkoutData = null;
-        if ($product instanceof InjectableFixture) {
-            /** @var CatalogProductSimple $product */
-            $checkoutData = $product->getCheckoutData();
-        }
+        /** @var CatalogProductSimple $product */
+        $checkoutData = $product->getCheckoutData();
 
         $this->fillOptions($product);
         if (isset($checkoutData['qty'])) {
@@ -226,6 +209,7 @@ class View extends AbstractConfigureBlock
     public function paypalCheckout()
     {
         $this->_rootElement->find($this->paypalCheckout, Locator::SELECTOR_CSS)->click();
+        $this->waitForElementNotVisible($this->paypalCheckout);
     }
 
     /**
@@ -246,26 +230,6 @@ class View extends AbstractConfigureBlock
     public function getProductSku()
     {
         return $this->_rootElement->find($this->productSku, Locator::SELECTOR_CSS)->getText();
-    }
-
-    /**
-     * Return product price excluding tax displayed on page.
-     *
-     * @return string
-     */
-    public function getProductPriceExcludingTax()
-    {
-        return $this->getPriceBlock()->getPriceExcludingTax();
-    }
-
-    /**
-     * Return product price including tax displayed on page.
-     *
-     * @return string
-     */
-    public function getProductPriceIncludingTax()
-    {
-        return $this->getPriceBlock()->getPriceIncludingTax();
     }
 
     /**
@@ -336,22 +300,11 @@ class View extends AbstractConfigureBlock
     }
 
     /**
-     * Open MAP block on Product View page.
-     *
-     * @return void
-     */
-    public function openMapBlockOnProductPage()
-    {
-        $this->_rootElement->find($this->clickForPrice, Locator::SELECTOR_CSS)->click();
-        $this->waitForElementVisible($this->mapPopup, Locator::SELECTOR_CSS);
-    }
-
-    /**
      * Check 'Add to card' button visible.
      *
      * @return bool
      */
-    public function checkAddToCardButton()
+    public function isVisibleAddToCardButton()
     {
         return $this->_rootElement->find($this->addToCart, Locator::SELECTOR_CSS)->isVisible();
     }
@@ -373,9 +326,9 @@ class View extends AbstractConfigureBlock
      */
     public function clickAddToCompare()
     {
-        /** @var \Magento\Core\Test\Block\Messages $messageBlock */
+        /** @var \Magento\Backend\Test\Block\Messages $messageBlock */
         $messageBlock = $this->blockFactory->create(
-            'Magento\Core\Test\Block\Messages',
+            'Magento\Backend\Test\Block\Messages',
             ['element' => $this->browser->find($this->messageBlock)]
         );
         $this->_rootElement->find($this->clickAddToCompare, Locator::SELECTOR_CSS)->click();
@@ -400,7 +353,7 @@ class View extends AbstractConfigureBlock
     }
 
     /**
-     * Click "Add to Wishlist" button.
+     * Click "Add to Wish List".
      *
      * @return void
      */

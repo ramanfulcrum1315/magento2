@@ -17,7 +17,7 @@ class Save extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote
      */
     public function execute()
     {
-        if ($this->getRequest()->getPost()) {
+        if ($this->getRequest()->getPostValue()) {
             try {
                 /** @var $model \Magento\SalesRule\Model\Rule */
                 $model = $this->_objectManager->create('Magento\SalesRule\Model\Rule');
@@ -25,7 +25,7 @@ class Save extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote
                     'adminhtml_controller_salesrule_prepare_save',
                     ['request' => $this->getRequest()]
                 );
-                $data = $this->getRequest()->getPost();
+                $data = $this->getRequest()->getPostValue();
                 $inputFilter = new \Zend_Filter_Input(
                     ['from_date' => $this->_dateFilter, 'to_date' => $this->_dateFilter],
                     [],
@@ -36,7 +36,7 @@ class Save extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote
                 if ($id) {
                     $model->load($id);
                     if ($id != $model->getId()) {
-                        throw new \Magento\Framework\Model\Exception(__('The wrong rule is specified.'));
+                        throw new \Magento\Framework\Exception\LocalizedException(__('The wrong rule is specified.'));
                     }
                 }
 
@@ -75,7 +75,7 @@ class Save extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote
                 $session->setPageData($model->getData());
 
                 $model->save();
-                $this->messageManager->addSuccess(__('The rule has been saved.'));
+                $this->messageManager->addSuccess(__('You saved the rule.'));
                 $session->setPageData(false);
                 if ($this->getRequest()->getParam('back')) {
                     $this->_redirect('sales_rule/*/edit', ['id' => $model->getId()]);
@@ -83,7 +83,7 @@ class Save extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote
                 }
                 $this->_redirect('sales_rule/*/');
                 return;
-            } catch (\Magento\Framework\Model\Exception $e) {
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->messageManager->addError($e->getMessage());
                 $id = (int)$this->getRequest()->getParam('rule_id');
                 if (!empty($id)) {
@@ -94,7 +94,7 @@ class Save extends \Magento\SalesRule\Controller\Adminhtml\Promo\Quote
                 return;
             } catch (\Exception $e) {
                 $this->messageManager->addError(
-                    __('An error occurred while saving the rule data. Please review the log and try again.')
+                    __('Something went wrong while saving the rule data. Please review the error log.')
                 );
                 $this->_objectManager->get('Psr\Log\LoggerInterface')->critical($e);
                 $this->_objectManager->get('Magento\Backend\Model\Session')->setPageData($data);

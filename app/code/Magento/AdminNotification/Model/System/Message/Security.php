@@ -4,9 +4,9 @@
  * See COPYING.txt for license details.
  */
 
-// @codingStandardsIgnoreFile
-
 namespace Magento\AdminNotification\Model\System\Message;
+
+use Magento\Store\Model\Store;
 
 class Security implements \Magento\Framework\Notification\MessageInterface
 {
@@ -24,6 +24,7 @@ class Security implements \Magento\Framework\Notification\MessageInterface
 
     /**
      * Time out for HTTP verification request
+     *
      * @var int
      */
     private $_verificationTimeOut = 2;
@@ -93,7 +94,7 @@ class Security implements \Magento\Framework\Notification\MessageInterface
      */
     private function _isFileAccessible()
     {
-        $unsecureBaseURL = $this->_config->getValue(\Magento\Store\Model\Store::XML_PATH_UNSECURE_BASE_URL, 'default');
+        $unsecureBaseURL = $this->_config->getValue(Store::XML_PATH_UNSECURE_BASE_URL, 'default');
 
         /** @var $http \Magento\Framework\HTTP\Adapter\Curl */
         $http = $this->_curlFactory->create();
@@ -129,12 +130,13 @@ class Security implements \Magento\Framework\Notification\MessageInterface
     /**
      * Retrieve message text
      *
-     * @return string
+     * @return \Magento\Framework\Phrase
      */
     public function getText()
     {
         return __(
-            'Your web server is configured incorrectly. As a result, configuration files with sensitive information are accessible from the outside. Please contact your hosting provider.'
+            'Your web server is set up incorrectly and allows unauthorized access to sensitive files. '
+            . 'Please contact your hosting provider.'
         );
     }
 

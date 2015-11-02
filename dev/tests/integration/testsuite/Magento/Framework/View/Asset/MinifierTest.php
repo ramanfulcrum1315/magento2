@@ -36,8 +36,8 @@ class MinifierTest extends \PHPUnit_Framework_TestCase
      */
     public function testCssMinifierLibrary()
     {
-        /** @var \Magento\Core\Model\Asset\Config $config */
-        $config = $this->objectManager->get('\Magento\Core\Model\Asset\Config');
+        /** @var \Magento\Framework\View\Asset\Config $config */
+        $config = $this->objectManager->get('Magento\Framework\View\Asset\Config');
         $adapterClass = $config->getAssetMinificationAdapter('css');
 
         /** @var \Magento\Framework\Code\Minifier\AdapterInterface $adapter */
@@ -58,7 +58,7 @@ class MinifierTest extends \PHPUnit_Framework_TestCase
      * @param string $requestedFilePath
      * @param string $testFile
      * @param callable $assertionCallback
-     * @throws \Magento\Framework\Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     protected function _testCssMinification($requestedUri, $requestedFilePath, $testFile, $assertionCallback)
     {
@@ -208,14 +208,17 @@ class MinifierTest extends \PHPUnit_Framework_TestCase
             ->method('create')
             ->will($this->returnValue($this->objectManager));
 
-        $logger = $this->objectManager->create(
-            'Magento\Tools\View\Deployer\Log',
-            ['verbosity' => \Magento\Tools\View\Deployer\Log::SILENT]
+        $output = $this->objectManager->create(
+            'Symfony\Component\Console\Output\ConsoleOutput'
         );
 
-        $filesUtil = $this->getMock('\Magento\Framework\Test\Utility\Files', [], [], '', false);
+        $filesUtil = $this->getMock('\Magento\Framework\App\Utility\Files', [], [], '', false);
         $filesUtil->expects($this->any())
             ->method('getStaticLibraryFiles')
+            ->will($this->returnValue([]));
+
+        $filesUtil->expects($this->any())
+            ->method('getPhtmlFiles')
             ->will($this->returnValue([]));
 
         $filesUtil->expects($this->any())
@@ -226,10 +229,10 @@ class MinifierTest extends \PHPUnit_Framework_TestCase
                 ]
             ));
 
-        /** @var \Magento\Tools\View\Deployer $deployer */
+        /** @var \Magento\Setup\ModelDeployer $deployer */
         $deployer = $this->objectManager->create(
-            'Magento\Tools\View\Deployer',
-            ['filesUtil' => $filesUtil, 'logger' => $logger, 'isDryRun' => false]
+            'Magento\Setup\Model\Deployer',
+            ['filesUtil' => $filesUtil, 'output' => $output, 'isDryRun' => false]
         );
 
         $deployer->deploy($omFactory, ['en_US']);

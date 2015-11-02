@@ -5,7 +5,7 @@
  */
 namespace Magento\Customer\Controller\Adminhtml;
 
-use Magento\Customer\Api\Data\GroupDataBuilder;
+use Magento\Customer\Api\Data\GroupInterfaceFactory;
 use Magento\Customer\Api\GroupRepositoryInterface;
 
 /**
@@ -26,14 +26,9 @@ class Group extends \Magento\Backend\App\Action
     protected $groupRepository;
 
     /**
-     * @var GroupDataBuilder
+     * @var GroupInterfaceFactory
      */
-    protected $groupDataBuilder;
-
-    /**
-     * @var \Magento\Backend\Model\View\Result\RedirectFactory
-     */
-    protected $resultRedirectFactory;
+    protected $groupDataFactory;
 
     /**
      * @var \Magento\Backend\Model\View\Result\ForwardFactory
@@ -51,8 +46,7 @@ class Group extends \Magento\Backend\App\Action
      * @param \Magento\Backend\App\Action\Context $context
      * @param \Magento\Framework\Registry $coreRegistry
      * @param GroupRepositoryInterface $groupRepository
-     * @param GroupDataBuilder $groupDataBuilder
-     * @param \Magento\Backend\Model\View\Result\RedirectFactory $resultRedirectFactory
+     * @param GroupInterfaceFactory $groupDataFactory
      * @param \Magento\Backend\Model\View\Result\ForwardFactory $resultForwardFactory
      * @param \Magento\Framework\View\Result\PageFactory $resultPageFactory
      */
@@ -60,16 +54,14 @@ class Group extends \Magento\Backend\App\Action
         \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\Registry $coreRegistry,
         GroupRepositoryInterface $groupRepository,
-        GroupDataBuilder $groupDataBuilder,
-        \Magento\Backend\Model\View\Result\RedirectFactory $resultRedirectFactory,
+        GroupInterfaceFactory $groupDataFactory,
         \Magento\Backend\Model\View\Result\ForwardFactory $resultForwardFactory,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory
     ) {
         $this->_coreRegistry = $coreRegistry;
         $this->groupRepository = $groupRepository;
-        $this->groupDataBuilder = $groupDataBuilder;
+        $this->groupDataFactory = $groupDataFactory;
         parent::__construct($context);
-        $this->resultRedirectFactory = $resultRedirectFactory;
         $this->resultForwardFactory = $resultForwardFactory;
         $this->resultPageFactory = $resultPageFactory;
     }

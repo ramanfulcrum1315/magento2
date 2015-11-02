@@ -17,7 +17,7 @@
 <?php $class = ($_option->getIsRequire()) ? ' required' : ''; ?>
 
 <div class="field file<?php echo $class; ?>">
-    <label class="label">
+    <label class="label" for="<?php echo $_fileName; ?>" id="<?php echo $_fileName; ?>-label">
         <span><?php echo  $block->escapeHtml($_option->getTitle()) ?></span>
         <?php echo $block->getFormatedPrice() ?>
     </label>
@@ -34,7 +34,7 @@
     </div>
     <?php endif; ?>
     <div class="control" id="input-box-<?php echo $_fileName ?>"
-             data-mage-init='{"fileOption":{
+             data-mage-init='{"priceOptionFile":{
                 "fileName":"<?php echo $_fileName ?>",
                 "fileNamed":"<?php echo $_fileNamed ?>",
                 "fieldNameAction":"<?php echo $_fieldNameAction ?>",
@@ -44,12 +44,13 @@
             <?php echo $_fileExists ? 'style="display:none"' : '' ?>>
         <input type="file"
                name="<?php echo $_fileName; ?>"
+               id="<?php echo $_fileName; ?>"
                class="product-custom-option<?php echo $_option->getIsRequire() ? ' required' : '' ?>"
                <?php echo $_fileExists ? 'disabled="disabled"' : '' ?> />
         <input type="hidden" name="<?php echo $_fieldNameAction; ?>" value="<?php echo $_fieldValueAction; ?>" />
         <?php if ($_option->getFileExtension()): ?>
             <p class="note">
-                <?php echo __('Allowed file extensions to upload')?>: <strong><?php echo $_option->getFileExtension() ?></strong>
+                <?php echo __('Compatible file extensions to upload')?>: <strong><?php echo $_option->getFileExtension() ?></strong>
             </p>
         <?php endif; ?>
         <?php if ($_option->getImageSizeX() > 0): ?>

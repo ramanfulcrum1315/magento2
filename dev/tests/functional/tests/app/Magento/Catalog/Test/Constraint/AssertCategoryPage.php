@@ -18,10 +18,6 @@ use Magento\Mtf\Fixture\FixtureFactory;
  */
 class AssertCategoryPage extends AbstractConstraint
 {
-    /* tags */
-    const SEVERITY = 'low';
-    /* end tags */
-
     /**
      * CMS Block display mode
      *
@@ -42,7 +38,7 @@ class AssertCategoryPage extends AbstractConstraint
     /**
      * Browser instance
      *
-     * @var Browser
+     * @var BrowserInterface
      */
     protected $browser;
 
@@ -82,7 +78,7 @@ class AssertCategoryPage extends AbstractConstraint
         $product = $fixtureFactory->createByCode(
             'catalogProductSimple',
             [
-                'dataSet' => 'default',
+                'dataset' => 'default',
                 'data' => [
                     'category_ids' => [
                         'category' => $initialCategory,

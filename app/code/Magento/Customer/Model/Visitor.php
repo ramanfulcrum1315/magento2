@@ -61,7 +61,7 @@ class Visitor extends \Magento\Framework\Model\AbstractModel
      * @param \Magento\Framework\Session\SessionManagerInterface $session
      * @param \Magento\Framework\HTTP\Header $httpHeader
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
      * @param \Magento\Framework\Stdlib\DateTime $dateTime
      * @param array $ignoredUserAgents
@@ -78,7 +78,7 @@ class Visitor extends \Magento\Framework\Model\AbstractModel
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Framework\Stdlib\DateTime $dateTime,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $ignoredUserAgents = [],
         array $ignores = [],
         array $data = []
@@ -133,12 +133,15 @@ class Visitor extends \Magento\Framework\Model\AbstractModel
         if ($this->skipRequestLogging || $this->isModuleIgnored($observer)) {
             return $this;
         }
+
         if ($this->session->getVisitorData()) {
             $this->setData($this->session->getVisitorData());
         }
+
+        $this->setLastVisitAt((new \DateTime())->format(\Magento\Framework\Stdlib\DateTime::DATETIME_PHP_FORMAT));
+
         if (!$this->getId()) {
             $this->setSessionId($this->session->getSessionId());
-            $this->setLastVisitAt($this->dateTime->now());
             $this->save();
             $this->_eventManager->dispatch('visitor_init', ['visitor' => $this]);
             $this->session->setVisitorData($this->getData());
@@ -264,7 +267,7 @@ class Visitor extends \Magento\Framework\Model\AbstractModel
     {
         return $this->scopeConfig->getValue(
             \Magento\Framework\Session\Config::XML_PATH_COOKIE_LIFETIME,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         ) + 86400;
     }
 

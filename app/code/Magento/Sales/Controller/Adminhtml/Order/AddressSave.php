@@ -17,7 +17,7 @@ class AddressSave extends \Magento\Sales\Controller\Adminhtml\Order
     {
         $addressId = $this->getRequest()->getParam('address_id');
         $address = $this->_objectManager->create('Magento\Sales\Model\Order\Address')->load($addressId);
-        $data = $this->getRequest()->getPost();
+        $data = $this->getRequest()->getPostValue();
         $resultRedirect = $this->resultRedirectFactory->create();
         if ($data && $address->getId()) {
             $address->addData($data);
@@ -25,14 +25,22 @@ class AddressSave extends \Magento\Sales\Controller\Adminhtml\Order
                 $address->save();
                 $this->messageManager->addSuccess(__('You updated the order address.'));
                 return $resultRedirect->setPath('sales/*/view', ['order_id' => $address->getParentId()]);
-            } catch (\Magento\Framework\Model\Exception $e) {
+            } catch (\Magento\Framework\Exception\LocalizedException $e) {
                 $this->messageManager->addError($e->getMessage());
             } catch (\Exception $e) {
-                $this->messageManager->addException($e, __('Something went wrong updating the order address.'));
+                $this->messageManager->addException($e, __('We can\'t update the order address right now.'));
             }
             return $resultRedirect->setPath('sales/*/address', ['address_id' => $address->getId()]);
         } else {
             return $resultRedirect->setPath('sales/*/');
         }
+    }
+
+    /**
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return $this->_authorization->isAllowed('Magento_Sales::actions_edit');
     }
 }

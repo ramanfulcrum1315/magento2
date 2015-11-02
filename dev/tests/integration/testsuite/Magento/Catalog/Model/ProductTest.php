@@ -202,7 +202,7 @@ class ProductTest extends \PHPUnit_Framework_TestCase
     protected function _undo($duplicate)
     {
         \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
-            'Magento\Framework\Store\StoreManagerInterface'
+            'Magento\Store\Model\StoreManagerInterface'
         )->getStore()->setId(
             \Magento\Store\Model\Store::DEFAULT_STORE_ID
         );
@@ -418,5 +418,16 @@ class ProductTest extends \PHPUnit_Framework_TestCase
         foreach ($validationResult as $error) {
             $this->assertTrue($error);
         }
+    }
+
+    /**
+     * @magentoDataFixture Magento/Catalog/_files/product_simple.php
+     * @magentoAppIsolation enabled
+     */
+    public function testGetOptions()
+    {
+        $this->_model->load(1);
+        $options = $this->_model->getOptions();
+        $this->assertEquals(4, count($options));
     }
 }

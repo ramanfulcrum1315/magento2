@@ -97,12 +97,15 @@ class Layout
             'processorFactory' => $objectManager->get('Magento\Framework\View\Layout\ProcessorFactory'),
             'eventManager' => $objectManager->get('Magento\Framework\Event\ManagerInterface'),
             'structure' => $objectManager->create('Magento\Framework\View\Layout\Data\Structure', []),
-            'scheduledStructure' => $objectManager->create('Magento\Framework\View\Layout\ScheduledStructure', []),
             'messageManager' => $objectManager->get('Magento\Framework\Message\ManagerInterface'),
             'themeResolver' => $objectManager->get('Magento\Framework\View\Design\Theme\ResolverInterface'),
-            'pageConfigStructure' => $objectManager->create('Magento\Framework\View\Page\Config\Structure'),
             'reader' => $objectManager->get('commonRenderPool'),
             'generatorPool' => $objectManager->get('Magento\Framework\View\Layout\GeneratorPool'),
+            'cache' => $objectManager->get('Magento\Framework\App\Cache\Type\Layout'),
+            'readerContextFactory' => $objectManager->get('Magento\Framework\View\Layout\Reader\ContextFactory'),
+            'generatorContextFactory' => $objectManager->get('Magento\Framework\View\Layout\Generator\ContextFactory'),
+            'appState' => $objectManager->get('Magento\Framework\App\State'),
+            'logger' => $objectManager->get('Psr\Log\LoggerInterface'),
         ];
     }
 }

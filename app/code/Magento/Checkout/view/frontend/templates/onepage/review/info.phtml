@@ -7,6 +7,11 @@
 // @codingStandardsIgnoreFile
 
 /** @var $block \Magento\Checkout\Block\Onepage\Review\Info */
+
+/**
+ * @deprecated
+ * @removeCandidate
+ */
 ?>
 <?php echo $block->getChildHtml('items_before'); ?>
 <div id="checkout-review-table-wrapper" class="order-review-wrapper table-wrapper">
@@ -36,6 +41,15 @@
     <?php echo $block->getChildHtml('agreements') ?>
     <div class="actions-toolbar" id="review-buttons-container">
         <div class="primary"><?php echo $block->getChildHtml('button') ?></div>
-        <div class="secondary"><?php echo __('Forgot an Item?') ?> <a href="<?php echo $block->getUrl('checkout/cart') ?>" class="action edit"><span><?php echo __('Edit Your Cart') ?></span></a></div>
+        <div class="secondary">
+            <span id="checkout-review-edit-label">
+                <?php echo __('Forgot an Item?') ?>
+            </span>
+            <a href="<?php echo $block->getUrl('checkout/cart') ?>"
+               aria-describedby="checkout-review-edit-label"
+               class="action edit">
+                <span><?php echo __('Edit Your Cart') ?></span>
+            </a>
+        </div>
     </div>
 </div>

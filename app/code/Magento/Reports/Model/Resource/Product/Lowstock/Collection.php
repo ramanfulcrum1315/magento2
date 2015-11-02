@@ -55,7 +55,7 @@ class Collection extends \Magento\Reports\Model\Resource\Product\Collection
      * @param \Magento\Eav\Model\EntityFactory $eavEntityFactory
      * @param \Magento\Catalog\Model\Resource\Helper $resourceHelper
      * @param \Magento\Framework\Validator\UniversalFactory $universalFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Module\Manager $moduleManager
      * @param \Magento\Catalog\Model\Indexer\Product\Flat\State $catalogProductFlatState
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
@@ -68,6 +68,7 @@ class Collection extends \Magento\Reports\Model\Resource\Product\Collection
      * @param \Magento\Catalog\Model\Resource\Product $product
      * @param \Magento\Reports\Model\Event\TypeFactory $eventTypeFactory
      * @param \Magento\Catalog\Model\Product\Type $productType
+     * @param \Magento\Quote\Model\Resource\Quote\Collection $quoteResource
      * @param \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry
      * @param \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration
      * @param \Magento\CatalogInventory\Model\Resource\Stock\Item $itemResource
@@ -85,7 +86,7 @@ class Collection extends \Magento\Reports\Model\Resource\Product\Collection
         \Magento\Eav\Model\EntityFactory $eavEntityFactory,
         \Magento\Catalog\Model\Resource\Helper $resourceHelper,
         \Magento\Framework\Validator\UniversalFactory $universalFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Module\Manager $moduleManager,
         \Magento\Catalog\Model\Indexer\Product\Flat\State $catalogProductFlatState,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -98,6 +99,7 @@ class Collection extends \Magento\Reports\Model\Resource\Product\Collection
         \Magento\Catalog\Model\Resource\Product $product,
         \Magento\Reports\Model\Event\TypeFactory $eventTypeFactory,
         \Magento\Catalog\Model\Product\Type $productType,
+        \Magento\Quote\Model\Resource\Quote\Collection $quoteResource,
         \Magento\CatalogInventory\Api\StockRegistryInterface $stockRegistry,
         \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
         \Magento\CatalogInventory\Model\Resource\Stock\Item $itemResource,
@@ -126,6 +128,7 @@ class Collection extends \Magento\Reports\Model\Resource\Product\Collection
             $product,
             $eventTypeFactory,
             $productType,
+            $quoteResource,
             $connection
         );
         $this->stockRegistry = $stockRegistry;
@@ -245,7 +248,7 @@ class Collection extends \Magento\Reports\Model\Resource\Product\Collection
     public function filterByProductType($typeFilter)
     {
         if (!is_string($typeFilter) && !is_array($typeFilter)) {
-            new \Magento\Framework\Model\Exception(__('The product type filter specified is incorrect.'));
+            new \Magento\Framework\Exception\LocalizedException(__('The product type filter specified is incorrect.'));
         }
         $this->addAttributeToFilter('type_id', $typeFilter);
         return $this;
@@ -294,7 +297,7 @@ class Collection extends \Magento\Reports\Model\Resource\Product\Collection
             (int)$this->stockConfiguration->getNotifyStockQty($storeId),
             $this->_getInventoryItemField('notify_stock_qty')
         );
-        $this->getSelect()->where('qty < ?', $notifyStockExpr);
+        $this->getSelect()->where($this->_getInventoryItemField('qty') . ' < ?', $notifyStockExpr);
         return $this;
     }
 }

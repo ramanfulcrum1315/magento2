@@ -13,12 +13,23 @@ use Magento\Tax\Api\Data\QuoteDetailsInterface;
  */
 class QuoteDetails extends AbstractExtensibleModel implements QuoteDetailsInterface
 {
+    /**#@+
+     * Constants defined for keys of array, makes typos less likely
+     */
+    const KEY_BILLING_ADDRESS        = 'billing_address';
+    const KEY_SHIPPING_ADDRESS       = 'shipping_address';
+    const KEY_CUSTOMER_TAX_CLASS_KEY = 'customer_tax_class_key';
+    const KEY_ITEMS                  = 'items';
+    const KEY_CUSTOMER_TAX_CLASS_ID  = 'customer_tax_class_id';
+    const KEY_CUSTOMER_ID            = 'customer_id';
+    /**#@-*/
+
     /**
      * {@inheritdoc}
      */
     public function getBillingAddress()
     {
-        return $this->getData(QuoteDetailsInterface::KEY_BILLING_ADDRESS);
+        return $this->getData(self::KEY_BILLING_ADDRESS);
     }
 
     /**
@@ -26,7 +37,7 @@ class QuoteDetails extends AbstractExtensibleModel implements QuoteDetailsInterf
      */
     public function getShippingAddress()
     {
-        return $this->getData(QuoteDetailsInterface::KEY_SHIPPING_ADDRESS);
+        return $this->getData(self::KEY_SHIPPING_ADDRESS);
     }
 
     /**
@@ -34,7 +45,7 @@ class QuoteDetails extends AbstractExtensibleModel implements QuoteDetailsInterf
      */
     public function getCustomerTaxClassKey()
     {
-        return $this->getData(QuoteDetailsInterface::KEY_CUSTOMER_TAX_CLASS_KEY);
+        return $this->getData(self::KEY_CUSTOMER_TAX_CLASS_KEY);
     }
 
     /**
@@ -42,7 +53,7 @@ class QuoteDetails extends AbstractExtensibleModel implements QuoteDetailsInterf
      */
     public function getCustomerId()
     {
-        return $this->getData(QuoteDetailsInterface::KEY_CUSTOMER_ID);
+        return $this->getData(self::KEY_CUSTOMER_ID);
     }
 
     /**
@@ -50,7 +61,7 @@ class QuoteDetails extends AbstractExtensibleModel implements QuoteDetailsInterf
      */
     public function getItems()
     {
-        return $this->getData(QuoteDetailsInterface::KEY_ITEMS);
+        return $this->getData(self::KEY_ITEMS);
     }
 
     /**
@@ -58,6 +69,93 @@ class QuoteDetails extends AbstractExtensibleModel implements QuoteDetailsInterf
      */
     public function getCustomerTaxClassId()
     {
-        return $this->getData(QuoteDetailsInterface::CUSTOMER_TAX_CLASS_ID);
+        return $this->getData(self::KEY_CUSTOMER_TAX_CLASS_ID);
+    }
+
+    /**
+     * Set customer billing address
+     *
+     * @param \Magento\Customer\Api\Data\AddressInterface $billingAddress
+     * @return $this
+     */
+    public function setBillingAddress(\Magento\Customer\Api\Data\AddressInterface $billingAddress = null)
+    {
+        return $this->setData(self::KEY_BILLING_ADDRESS, $billingAddress);
+    }
+
+    /**
+     * Set customer shipping address
+     *
+     * @param \Magento\Customer\Api\Data\AddressInterface $shippingAddress
+     * @return $this
+     */
+    public function setShippingAddress(\Magento\Customer\Api\Data\AddressInterface $shippingAddress = null)
+    {
+        return $this->setData(self::KEY_SHIPPING_ADDRESS, $shippingAddress);
+    }
+
+    /**
+     * Set customer tax class key
+     *
+     * @param \Magento\Tax\Api\Data\TaxClassKeyInterface $customerTaxClassKey
+     * @return $this
+     */
+    public function setCustomerTaxClassKey(\Magento\Tax\Api\Data\TaxClassKeyInterface $customerTaxClassKey = null)
+    {
+        return $this->setData(self::KEY_CUSTOMER_TAX_CLASS_KEY, $customerTaxClassKey);
+    }
+
+    /**
+     * Set customer id
+     *
+     * @param int $customerId
+     * @return $this
+     */
+    public function setCustomerId($customerId)
+    {
+        return $this->setData(self::KEY_CUSTOMER_ID, $customerId);
+    }
+
+    /**
+     * Set customer data
+     *
+     * @param \Magento\Tax\Api\Data\QuoteDetailsItemInterface[] $items
+     * @return $this
+     */
+    public function setItems(array $items = null)
+    {
+        return $this->setData(self::KEY_ITEMS, $items);
+    }
+
+    /**
+     * Set customer tax class id
+     *
+     * @param int $customerTaxClassId
+     * @return $this
+     */
+    public function setCustomerTaxClassId($customerTaxClassId)
+    {
+        return $this->setData(self::KEY_CUSTOMER_TAX_CLASS_ID, $customerTaxClassId);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Magento\Tax\Api\Data\QuoteDetailsExtensionInterface|null
+     */
+    public function getExtensionAttributes()
+    {
+        return $this->_getExtensionAttributes();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param \Magento\Tax\Api\Data\QuoteDetailsExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(\Magento\Tax\Api\Data\QuoteDetailsExtensionInterface $extensionAttributes)
+    {
+        return $this->_setExtensionAttributes($extensionAttributes);
     }
 }

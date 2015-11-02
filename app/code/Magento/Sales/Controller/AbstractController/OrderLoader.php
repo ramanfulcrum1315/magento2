@@ -39,9 +39,9 @@ class OrderLoader implements OrderLoaderInterface
     protected $resultForwardFactory;
 
     /**
-     * @var Redirect
+     * @var RedirectFactory
      */
-    protected $resultRedirectFactory;
+    protected $redirectFactory;
 
     /**
      * @param \Magento\Sales\Model\OrderFactory $orderFactory
@@ -49,7 +49,7 @@ class OrderLoader implements OrderLoaderInterface
      * @param Registry $registry
      * @param \Magento\Framework\UrlInterface $url
      * @param ForwardFactory $resultForwardFactory
-     * @param RedirectFactory $resultRedirectFactory
+     * @param RedirectFactory $redirectFactory
      */
     public function __construct(
         \Magento\Sales\Model\OrderFactory $orderFactory,
@@ -57,14 +57,14 @@ class OrderLoader implements OrderLoaderInterface
         Registry $registry,
         \Magento\Framework\UrlInterface $url,
         ForwardFactory $resultForwardFactory,
-        RedirectFactory $resultRedirectFactory
+        RedirectFactory $redirectFactory
     ) {
         $this->orderFactory = $orderFactory;
         $this->orderAuthorization = $orderAuthorization;
         $this->registry = $registry;
         $this->url = $url;
         $this->resultForwardFactory = $resultForwardFactory;
-        $this->resultRedirectFactory = $resultRedirectFactory;
+        $this->redirectFactory = $redirectFactory;
     }
 
     /**
@@ -87,7 +87,7 @@ class OrderLoader implements OrderLoaderInterface
             return true;
         }
         /** @var \Magento\Framework\Controller\Result\Redirect $resultRedirect */
-        $resultRedirect = $this->resultRedirectFactory->create();
+        $resultRedirect = $this->redirectFactory->create();
         return $resultRedirect->setUrl($this->url->getUrl('*/*/history'));
     }
 }

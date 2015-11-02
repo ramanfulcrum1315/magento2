@@ -13,6 +13,8 @@ use Magento\Customer\Api\GroupManagementInterface;
 
 /**
  * Catalog product abstract group price backend attribute model
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 abstract class AbstractGroupPrice extends Price
 {
@@ -45,23 +47,25 @@ abstract class AbstractGroupPrice extends Price
 
     /**
      * @param \Magento\Directory\Model\CurrencyFactory $currencyFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Catalog\Helper\Data $catalogData
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $config
+     * @param \Magento\Framework\Locale\FormatInterface $localeFormat
      * @param \Magento\Catalog\Model\Product\Type $catalogProductType
      * @param GroupManagementInterface $groupManagement
      */
     public function __construct(
         \Magento\Directory\Model\CurrencyFactory $currencyFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Catalog\Helper\Data $catalogData,
         \Magento\Framework\App\Config\ScopeConfigInterface $config,
+        \Magento\Framework\Locale\FormatInterface $localeFormat,
         \Magento\Catalog\Model\Product\Type $catalogProductType,
         GroupManagementInterface $groupManagement
     ) {
         $this->_catalogProductType = $catalogProductType;
         $this->_groupManagement = $groupManagement;
-        parent::__construct($currencyFactory, $storeManager, $catalogData, $config);
+        parent::__construct($currencyFactory, $storeManager, $catalogData, $config, $localeFormat);
     }
 
     /**
@@ -134,8 +138,8 @@ abstract class AbstractGroupPrice extends Price
      * Validate group price data
      *
      * @param \Magento\Catalog\Model\Product $object
-     * @throws \Magento\Framework\Model\Exception
-     * @return bool
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return \Magento\Framework\Phrase|bool
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
@@ -161,10 +165,10 @@ abstract class AbstractGroupPrice extends Price
                 )
             );
             if (isset($duplicates[$compare])) {
-                throw new \Magento\Framework\Model\Exception($this->_getDuplicateErrorMessage());
+                throw new \Magento\Framework\Exception\LocalizedException(__($this->_getDuplicateErrorMessage()));
             }
 
-            if (!preg_match('/^\d*(\.|,)?\d{0,4}$/i', $priceRow['price']) || $priceRow['price'] < 0) {
+            if (!$this->isPositiveOrZero($priceRow['price'])) {
                 return __('Group price must be a number greater than 0.');
             }
 
@@ -209,7 +213,7 @@ abstract class AbstractGroupPrice extends Price
             $websiteCurrency = $rates[$priceRow['website_id']]['code'];
 
             if ($baseCurrency == $websiteCurrency && isset($duplicates[$globalCompare])) {
-                throw new \Magento\Framework\Model\Exception($this->_getDuplicateErrorMessage());
+                throw new \Magento\Framework\Exception\LocalizedException(__($this->_getDuplicateErrorMessage()));
             }
         }
 
@@ -300,12 +304,7 @@ abstract class AbstractGroupPrice extends Price
         $isGlobal = $this->getAttribute()->isScopeGlobal() || $websiteId == 0;
 
         $priceRows = $object->getData($this->getAttribute()->getName());
-        if (empty($priceRows)) {
-            if ($isGlobal) {
-                $this->_getResource()->deletePriceData($object->getId());
-            } else {
-                $this->_getResource()->deletePriceData($object->getId(), $websiteId);
-            }
+        if ($priceRows === null) {
             return $this;
         }
 
@@ -432,5 +431,15 @@ abstract class AbstractGroupPrice extends Price
         }
 
         return $data;
+    }
+
+    /**
+     * Get resource model instance
+     *
+     * @return \Magento\Catalog\Model\Resource\Product\Attribute\Backend\GroupPrice
+     */
+    public function getResource()
+    {
+        return $this->_getResource();
     }
 }

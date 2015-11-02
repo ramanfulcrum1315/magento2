@@ -5,55 +5,34 @@
  */
 namespace Magento\Sales\Model\Order\Invoice;
 
-use Magento\Framework\Api\AttributeDataBuilder;
-use Magento\Framework\Model\AbstractExtensibleModel;
+use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Sales\Api\Data\InvoiceItemInterface;
+use Magento\Sales\Model\AbstractModel;
 
 /**
  * @method \Magento\Sales\Model\Resource\Order\Invoice\Item _getResource()
  * @method \Magento\Sales\Model\Resource\Order\Invoice\Item getResource()
- * @method \Magento\Sales\Model\Order\Invoice\Item setParentId(int $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBasePrice(float $value)
  * @method float getBaseWeeeTaxRowDisposition()
  * @method \Magento\Sales\Model\Order\Invoice\Item setBaseWeeeTaxRowDisposition(float $value)
  * @method float getWeeeTaxAppliedRowAmount()
  * @method \Magento\Sales\Model\Order\Invoice\Item setWeeeTaxAppliedRowAmount(float $value)
  * @method float getBaseWeeeTaxAppliedAmount()
  * @method \Magento\Sales\Model\Order\Invoice\Item setBaseWeeeTaxAppliedAmount(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setTaxAmount(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBaseRowTotal(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setDiscountAmount(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setRowTotal(float $value)
  * @method float getWeeeTaxRowDisposition()
  * @method \Magento\Sales\Model\Order\Invoice\Item setWeeeTaxRowDisposition(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBaseDiscountAmount(float $value)
  * @method float getBaseWeeeTaxDisposition()
  * @method \Magento\Sales\Model\Order\Invoice\Item setBaseWeeeTaxDisposition(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setPriceInclTax(float $value)
  * @method float getWeeeTaxAppliedAmount()
  * @method \Magento\Sales\Model\Order\Invoice\Item setWeeeTaxAppliedAmount(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBaseTaxAmount(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBasePriceInclTax(float $value)
  * @method float getWeeeTaxDisposition()
  * @method \Magento\Sales\Model\Order\Invoice\Item setWeeeTaxDisposition(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBaseCost(float $value)
  * @method float getBaseWeeeTaxAppliedRowAmnt()
  * @method \Magento\Sales\Model\Order\Invoice\Item setBaseWeeeTaxAppliedRowAmnt(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setPrice(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBaseRowTotalInclTax(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setRowTotalInclTax(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setProductId(int $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setOrderItemId(int $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setAdditionalData(string $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setDescription(string $value)
  * @method string getWeeeTaxApplied()
  * @method \Magento\Sales\Model\Order\Invoice\Item setWeeeTaxApplied(string $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setSku(string $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setName(string $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setHiddenTaxAmount(float $value)
- * @method \Magento\Sales\Model\Order\Invoice\Item setBaseHiddenTaxAmount(float $value)
+ * @SuppressWarnings(PHPMD.ExcessivePublicCount)
  */
-class Item extends AbstractExtensibleModel implements InvoiceItemInterface
+class Item extends AbstractModel implements InvoiceItemInterface
 {
     /**
      * @var string
@@ -64,11 +43,6 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
      * @var string
      */
     protected $_eventObject = 'invoice_item';
-
-    /**
-     * @var \Magento\Sales\Model\Order\Invoice|null
-     */
-    protected $_invoice = null;
 
     /**
      * @var \Magento\Sales\Model\Order\Item|null
@@ -83,28 +57,28 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
     /**
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Api\MetadataServiceInterface $metadataService
-     * @param AttributeDataBuilder $customAttributeBuilder
+     * @param \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory
+     * @param AttributeValueFactory $customAttributeFactory
      * @param \Magento\Sales\Model\Order\ItemFactory $orderItemFactory
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      */
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\MetadataServiceInterface $metadataService,
-        AttributeDataBuilder $customAttributeBuilder,
+        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
+        AttributeValueFactory $customAttributeFactory,
         \Magento\Sales\Model\Order\ItemFactory $orderItemFactory,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
             $context,
             $registry,
-            $metadataService,
-            $customAttributeBuilder,
+            $extensionFactory,
+            $customAttributeFactory,
             $resource,
             $resourceCollection,
             $data
@@ -125,23 +99,24 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
     /**
      * Declare invoice instance
      *
-     * @param \Magento\Sales\Model\Order\Invoice $invoice
+     * @param \Magento\Sales\Api\Data\InvoiceInterface $invoice
      * @return $this
      */
-    public function setInvoice(\Magento\Sales\Model\Order\Invoice $invoice)
+    public function setInvoice(\Magento\Sales\Api\Data\InvoiceInterface $invoice)
     {
-        $this->_invoice = $invoice;
-        return $this;
+        return $this->setData(self::INVOICE, $invoice);
     }
 
     /**
      * Retrieve invoice instance
      *
+     * @codeCoverageIgnore
+     *
      * @return \Magento\Sales\Model\Order\Invoice
      */
     public function getInvoice()
     {
-        return $this->_invoice;
+        return $this->getData(self::INVOICE);
     }
 
     /**
@@ -164,7 +139,7 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
      */
     public function getOrderItem()
     {
-        if (is_null($this->_orderItem)) {
+        if ($this->_orderItem === null) {
             if ($this->getInvoice()) {
                 $this->_orderItem = $this->getInvoice()->getOrder()->getItemById($this->getOrderItemId());
             } else {
@@ -177,31 +152,14 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
     /**
      * Declare qty
      *
+     * @codeCoverageIgnore
+     *
      * @param float $qty
      * @return $this
-     * @throws \Magento\Framework\Model\Exception
      */
     public function setQty($qty)
     {
-        if ($this->getOrderItem()->getIsQtyDecimal()) {
-            $qty = (double)$qty;
-        } else {
-            $qty = (int)$qty;
-        }
-        $qty = $qty > 0 ? $qty : 0;
-        /**
-         * Check qty availability
-         */
-        $qtyToInvoice = sprintf("%F", $this->getOrderItem()->getQtyToInvoice());
-        $qty = sprintf("%F", $qty);
-        if ($qty <= $qtyToInvoice || $this->getOrderItem()->isDummy()) {
-            $this->setData('qty', $qty);
-        } else {
-            throw new \Magento\Framework\Model\Exception(
-                __('We found an invalid quantity to invoice item "%1".', $this->getName())
-            );
-        }
-        return $this;
+        return $this->setData(self::QTY, $qty);
     }
 
     /**
@@ -216,8 +174,12 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
 
         $orderItem->setTaxInvoiced($orderItem->getTaxInvoiced() + $this->getTaxAmount());
         $orderItem->setBaseTaxInvoiced($orderItem->getBaseTaxInvoiced() + $this->getBaseTaxAmount());
-        $orderItem->setHiddenTaxInvoiced($orderItem->getHiddenTaxInvoiced() + $this->getHiddenTaxAmount());
-        $orderItem->setBaseHiddenTaxInvoiced($orderItem->getBaseHiddenTaxInvoiced() + $this->getBaseHiddenTaxAmount());
+        $orderItem->setDiscountTaxCompensationInvoiced(
+            $orderItem->getDiscountTaxCompensationInvoiced() + $this->getDiscountTaxCompensationAmount()
+        );
+        $orderItem->setBaseDiscountTaxCompensationInvoiced(
+            $orderItem->getBaseDiscountTaxCompensationInvoiced() + $this->getBaseDiscountTaxCompensationAmount()
+        );
 
         $orderItem->setDiscountInvoiced($orderItem->getDiscountInvoiced() + $this->getDiscountAmount());
         $orderItem->setBaseDiscountInvoiced($orderItem->getBaseDiscountInvoiced() + $this->getBaseDiscountAmount());
@@ -239,8 +201,12 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
 
         $orderItem->setTaxInvoiced($orderItem->getTaxInvoiced() - $this->getTaxAmount());
         $orderItem->setBaseTaxInvoiced($orderItem->getBaseTaxInvoiced() - $this->getBaseTaxAmount());
-        $orderItem->setHiddenTaxInvoiced($orderItem->getHiddenTaxInvoiced() - $this->getHiddenTaxAmount());
-        $orderItem->setBaseHiddenTaxInvoiced($orderItem->getBaseHiddenTaxInvoiced() - $this->getBaseHiddenTaxAmount());
+        $orderItem->setDiscountTaxCompensationInvoiced(
+            $orderItem->getDiscountTaxCompensationInvoiced() - $this->getDiscountTaxCompensationAmount()
+        );
+        $orderItem->setBaseDiscountTaxCompensationInvoiced(
+            $orderItem->getBaseDiscountTaxCompensationInvoiced() - $this->getBaseDiscountTaxCompensationAmount()
+        );
 
         $orderItem->setDiscountInvoiced($orderItem->getDiscountInvoiced() - $this->getDiscountAmount());
         $orderItem->setBaseDiscountInvoiced($orderItem->getBaseDiscountInvoiced() - $this->getBaseDiscountAmount());
@@ -299,6 +265,7 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
         return false;
     }
 
+    //@codeCoverageIgnoreStart
     /**
      * Returns additional_data
      *
@@ -330,13 +297,13 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
     }
 
     /**
-     * Returns base_hidden_tax_amount
+     * Returns base_discount_tax_compensation_amount
      *
      * @return float
      */
-    public function getBaseHiddenTaxAmount()
+    public function getBaseDiscountTaxCompensationAmount()
     {
-        return $this->getData(InvoiceItemInterface::BASE_HIDDEN_TAX_AMOUNT);
+        return $this->getData(InvoiceItemInterface::BASE_DISCOUNT_TAX_COMPENSATION_AMOUNT);
     }
 
     /**
@@ -410,13 +377,13 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
     }
 
     /**
-     * Returns hidden_tax_amount
+     * Returns discount_tax_compensation_amount
      *
      * @return float
      */
-    public function getHiddenTaxAmount()
+    public function getDiscountTaxCompensationAmount()
     {
-        return $this->getData(InvoiceItemInterface::HIDDEN_TAX_AMOUNT);
+        return $this->getData(InvoiceItemInterface::DISCOUNT_TAX_COMPENSATION_AMOUNT);
     }
 
     /**
@@ -528,4 +495,202 @@ class Item extends AbstractExtensibleModel implements InvoiceItemInterface
     {
         return $this->getData(InvoiceItemInterface::TAX_AMOUNT);
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setParentId($id)
+    {
+        return $this->setData(InvoiceItemInterface::PARENT_ID, $id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBasePrice($price)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_PRICE, $price);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setTaxAmount($amount)
+    {
+        return $this->setData(InvoiceItemInterface::TAX_AMOUNT, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBaseRowTotal($amount)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_ROW_TOTAL, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setDiscountAmount($amount)
+    {
+        return $this->setData(InvoiceItemInterface::DISCOUNT_AMOUNT, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setRowTotal($amount)
+    {
+        return $this->setData(InvoiceItemInterface::ROW_TOTAL, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBaseDiscountAmount($amount)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_DISCOUNT_AMOUNT, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setPriceInclTax($amount)
+    {
+        return $this->setData(InvoiceItemInterface::PRICE_INCL_TAX, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBaseTaxAmount($amount)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_TAX_AMOUNT, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBasePriceInclTax($amount)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_PRICE_INCL_TAX, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBaseCost($baseCost)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_COST, $baseCost);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setPrice($price)
+    {
+        return $this->setData(InvoiceItemInterface::PRICE, $price);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBaseRowTotalInclTax($amount)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_ROW_TOTAL_INCL_TAX, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setRowTotalInclTax($amount)
+    {
+        return $this->setData(InvoiceItemInterface::ROW_TOTAL_INCL_TAX, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setProductId($id)
+    {
+        return $this->setData(InvoiceItemInterface::PRODUCT_ID, $id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setOrderItemId($id)
+    {
+        return $this->setData(InvoiceItemInterface::ORDER_ITEM_ID, $id);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setAdditionalData($additionalData)
+    {
+        return $this->setData(InvoiceItemInterface::ADDITIONAL_DATA, $additionalData);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setDescription($description)
+    {
+        return $this->setData(InvoiceItemInterface::DESCRIPTION, $description);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setSku($sku)
+    {
+        return $this->setData(InvoiceItemInterface::SKU, $sku);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setName($name)
+    {
+        return $this->setData(InvoiceItemInterface::NAME, $name);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setDiscountTaxCompensationAmount($amount)
+    {
+        return $this->setData(InvoiceItemInterface::DISCOUNT_TAX_COMPENSATION_AMOUNT, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBaseDiscountTaxCompensationAmount($amount)
+    {
+        return $this->setData(InvoiceItemInterface::BASE_DISCOUNT_TAX_COMPENSATION_AMOUNT, $amount);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Magento\Sales\Api\Data\InvoiceItemExtensionInterface|null
+     */
+    public function getExtensionAttributes()
+    {
+        return $this->_getExtensionAttributes();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param \Magento\Sales\Api\Data\InvoiceItemExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(\Magento\Sales\Api\Data\InvoiceItemExtensionInterface $extensionAttributes)
+    {
+        return $this->_setExtensionAttributes($extensionAttributes);
+    }
+    //@codeCoverageIgnoreEnd
 }

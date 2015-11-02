@@ -5,6 +5,9 @@
  */
 namespace Magento\CatalogSearch\Model\Indexer;
 
+use Magento\CatalogSearch\Model\Resource\Fulltext\Collection;
+use Magento\TestFramework\Helper\Bootstrap;
+
 /**
  * @magentoDbIsolation disabled
  * @magentoDataFixture Magento/CatalogSearch/_files/indexer_fulltext.php
@@ -59,32 +62,33 @@ class FulltextTest extends \PHPUnit_Framework_TestCase
     protected $productCherry;
 
     /**
-     * @var \Magento\CatalogSearch\Model\Resource\ResourceProvider
+     * @var  \Magento\Framework\Search\Request\Dimension
      */
-    protected $resourceProvider;
+    protected $dimension;
 
     protected function setUp()
     {
         /** @var \Magento\Indexer\Model\IndexerInterface indexer */
-        $this->indexer = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->create(
+        $this->indexer = Bootstrap::getObjectManager()->create(
             'Magento\Indexer\Model\Indexer'
         );
         $this->indexer->load('catalogsearch_fulltext');
 
-        $this->engine = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
+        $this->engine = Bootstrap::getObjectManager()->get(
             'Magento\CatalogSearch\Model\Resource\Engine'
         );
 
-        $this->resourceFulltext = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
+        $this->resourceFulltext = Bootstrap::getObjectManager()->get(
             'Magento\CatalogSearch\Model\Resource\Fulltext'
         );
 
-        $this->resourceProvider = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
-            '\Magento\CatalogSearch\Model\Resource\ResourceProvider'
+        $this->queryFactory = Bootstrap::getObjectManager()->get(
+            'Magento\Search\Model\QueryFactory'
         );
 
-        $this->queryFactory = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
-            'Magento\Search\Model\QueryFactory'
+        $this->dimension = Bootstrap::getObjectManager()->create(
+            '\Magento\Framework\Search\Request\Dimension',
+            ['name' => 'scope', 'value' => '1']
         );
 
         $this->productApple = $this->getProductBySku('fulltext-1');
@@ -96,8 +100,6 @@ class FulltextTest extends \PHPUnit_Framework_TestCase
 
     public function testReindexAll()
     {
-        $this->engine->cleanIndex();
-
         $this->indexer->reindexAll();
 
         $products = $this->search('Apple');
@@ -153,7 +155,7 @@ class FulltextTest extends \PHPUnit_Framework_TestCase
         ];
 
         /** @var \Magento\Catalog\Model\Product\Action $action */
-        $action = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
+        $action = Bootstrap::getObjectManager()->get(
             'Magento\Catalog\Model\Product\Action'
         );
         $action->updateAttributes($productIds, $attrData, 1);
@@ -210,7 +212,7 @@ class FulltextTest extends \PHPUnit_Framework_TestCase
         $query = $this->queryFactory->get();
         $query->unsetData()->setQueryText($text)->prepare();
         $products = [];
-        $collection = $this->resourceProvider->getResultCollection();
+        $collection = Bootstrap::getObjectManager()->create(Collection::class);
         $collection->addSearchFilter($text);
         foreach ($collection as $product) {
             $products[] = $product;
@@ -227,7 +229,7 @@ class FulltextTest extends \PHPUnit_Framework_TestCase
     protected function getProductBySku($sku)
     {
         /** @var \Magento\Catalog\Model\Product $product */
-        $product = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
+        $product = Bootstrap::getObjectManager()->get(
             'Magento\Catalog\Model\Product'
         );
         return $product->loadByAttribute('sku', $sku);

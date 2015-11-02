@@ -55,7 +55,7 @@ class Link extends \Magento\Framework\Model\AbstractModel
      * @param \Magento\Catalog\Model\Resource\Product\Link\CollectionFactory $linkCollectionFactory
      * @param \Magento\Catalog\Model\Resource\Product\Link\Product\CollectionFactory $productCollectionFactory
      * @param \Magento\Framework\Model\Resource\AbstractResource $resource
-     * @param \Magento\Framework\Data\Collection\Db $resourceCollection
+     * @param \Magento\Framework\Data\Collection\AbstractDb $resourceCollection
      * @param array $data
      */
     public function __construct(
@@ -64,7 +64,7 @@ class Link extends \Magento\Framework\Model\AbstractModel
         \Magento\Catalog\Model\Resource\Product\Link\CollectionFactory $linkCollectionFactory,
         \Magento\Catalog\Model\Resource\Product\Link\Product\CollectionFactory $productCollectionFactory,
         \Magento\Framework\Model\Resource\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\Db $resourceCollection = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         $this->_linkCollectionFactory = $linkCollectionFactory;
@@ -148,7 +148,7 @@ class Link extends \Magento\Framework\Model\AbstractModel
      */
     public function getAttributes($type = null)
     {
-        if (is_null($type)) {
+        if ($type === null) {
             $type = $this->getLinkTypeId();
         }
         if (!isset($this->_attributes[$type])) {
@@ -167,15 +167,15 @@ class Link extends \Magento\Framework\Model\AbstractModel
     public function saveProductRelations($product)
     {
         $data = $product->getRelatedLinkData();
-        if (!is_null($data)) {
+        if ($data !== null) {
             $this->_getResource()->saveProductLinks($product, $data, self::LINK_TYPE_RELATED);
         }
         $data = $product->getUpSellLinkData();
-        if (!is_null($data)) {
+        if ($data !== null) {
             $this->_getResource()->saveProductLinks($product, $data, self::LINK_TYPE_UPSELL);
         }
         $data = $product->getCrossSellLinkData();
-        if (!is_null($data)) {
+        if ($data !== null) {
             $this->_getResource()->saveProductLinks($product, $data, self::LINK_TYPE_CROSSSELL);
         }
         return $this;

@@ -23,12 +23,12 @@ class Chooser extends \Magento\Backend\Block\Widget\Grid\Extended
     protected $_pageFactory;
 
     /**
-     * @var \Magento\Cms\Model\Resource\Page\Grid\CollectionFactory
+     * @var \Magento\Cms\Model\Resource\Page\CollectionFactory
      */
     protected $_collectionFactory;
 
     /**
-     * @var \Magento\Core\Model\PageLayout\Config\Builder
+     * @var \Magento\Framework\View\Model\PageLayout\Config\BuilderInterface
      */
     protected $pageLayoutBuilder;
 
@@ -37,8 +37,8 @@ class Chooser extends \Magento\Backend\Block\Widget\Grid\Extended
      * @param \Magento\Backend\Helper\Data $backendHelper
      * @param \Magento\Cms\Model\Page $cmsPage
      * @param \Magento\Cms\Model\PageFactory $pageFactory
-     * @param \Magento\Cms\Model\Resource\Page\Grid\CollectionFactory $collectionFactory
-     * @param \Magento\Core\Model\PageLayout\Config\Builder $pageLayoutBuilder
+     * @param \Magento\Cms\Model\Resource\Page\CollectionFactory $collectionFactory
+     * @param \Magento\Framework\View\Model\PageLayout\Config\BuilderInterface $pageLayoutBuilder
      * @param array $data
      */
     public function __construct(
@@ -46,8 +46,8 @@ class Chooser extends \Magento\Backend\Block\Widget\Grid\Extended
         \Magento\Backend\Helper\Data $backendHelper,
         \Magento\Cms\Model\Page $cmsPage,
         \Magento\Cms\Model\PageFactory $pageFactory,
-        \Magento\Cms\Model\Resource\Page\Grid\CollectionFactory $collectionFactory,
-        \Magento\Core\Model\PageLayout\Config\Builder $pageLayoutBuilder,
+        \Magento\Cms\Model\Resource\Page\CollectionFactory $collectionFactory,
+        \Magento\Framework\View\Model\PageLayout\Config\BuilderInterface $pageLayoutBuilder,
         array $data = []
     ) {
         $this->pageLayoutBuilder = $pageLayoutBuilder;
@@ -98,7 +98,7 @@ class Chooser extends \Magento\Backend\Block\Widget\Grid\Extended
         if ($element->getValue()) {
             $page = $this->_pageFactory->create()->load((int)$element->getValue());
             if ($page->getId()) {
-                $chooser->setLabel($page->getTitle());
+                $chooser->setLabel($this->escapeHtml($page->getTitle()));
             }
         }
 
@@ -141,7 +141,7 @@ class Chooser extends \Magento\Backend\Block\Widget\Grid\Extended
     protected function _prepareCollection()
     {
         $collection = $this->_collectionFactory->create();
-        /* @var $collection \Magento\Cms\Model\Resource\Page\Grid\CollectionFactory */
+        /* @var $collection \Magento\Cms\Model\Resource\Page\CollectionFactory */
         $collection->setFirstStoreFlag(true);
         $this->setCollection($collection);
 

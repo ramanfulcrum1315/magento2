@@ -45,13 +45,14 @@ class Job extends \Magento\Framework\Object
      * Dispatch event "catalogrule_apply_all" and set success or error message depends on result
      *
      * @return \Magento\CatalogRule\Model\Rule\Job
+     * @api
      */
     public function applyAll()
     {
         try {
             $this->ruleProcessor->markIndexerAsInvalid();
             $this->setSuccess(__('Updated rules applied.'));
-        } catch (\Magento\Framework\Model\Exception $e) {
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->setError($e->getMessage());
         }
         return $this;

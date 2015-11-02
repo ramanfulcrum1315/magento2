@@ -7,6 +7,7 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
+    <preference for="Magento\Search\Api\SearchInterface" type="Magento\Search\Model\Search"/>
     <type name="Magento\Framework\Module\Setup\Migration">
         <arguments>
             <argument name="compositeModules" xsi:type="array">
@@ -16,10 +17,21 @@
     </type>
     <type name="Magento\Search\Model\AdapterFactory">
         <arguments>
-            <argument name="path" xsi:type="string">catalog/search/adapter</argument>
-            <argument name="scopeType" xsi:type="const">\Magento\Framework\App\ScopeInterface::SCOPE_DEFAULT</argument>
+            <argument name="adapters" xsi:type="array">
+                <item name="mysql" xsi:type="string">Magento\Framework\Search\Adapter\Mysql\Adapter</item>
+            </argument>
         </arguments>
     </type>
     <preference for="Magento\Search\Model\QueryFactoryInterface" type="Magento\Search\Model\QueryFactory" />
     <preference for="Magento\Search\Model\QueryInterface" type="Magento\Search\Model\Query" />
+    <type name="Magento\Search\Model\Adminhtml\System\Config\Source\Engine">
+        <arguments>
+            <argument name="engines" xsi:type="array">
+                <item name="mysql" xsi:type="string">MySQL</item>
+            </argument>
+        </arguments>
+    </type>
+    <preference for="Magento\Search\Model\AutocompleteInterface" type="Magento\Search\Model\Autocomplete" />
+    <preference for="Magento\Search\Model\Autocomplete\ItemInterface" type="Magento\Search\Model\Autocomplete\Item" />
+    <preference for="Magento\Framework\Search\SearchEngineInterface" type="Magento\Search\Model\SearchEngine"/>
 </config>

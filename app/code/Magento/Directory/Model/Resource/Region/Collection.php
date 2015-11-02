@@ -76,7 +76,7 @@ class Collection extends \Magento\Framework\Model\Resource\Db\Collection\Abstrac
     protected function _initSelect()
     {
         parent::_initSelect();
-        $locale = $this->_localeResolver->getLocaleCode();
+        $locale = $this->_localeResolver->getLocale();
 
         $this->addBindParam(':region_locale', $locale);
         $this->getSelect()->joinLeft(
@@ -192,7 +192,10 @@ class Collection extends \Magento\Framework\Model\Resource\Db\Collection\Abstrac
             ['title' => 'default_name', 'country_id' => 'country_id']
         );
         if (count($options) > 0) {
-            array_unshift($options, ['title ' => null, 'value' => null, 'label' => __('--Please select--')]);
+            array_unshift(
+                $options,
+                ['title ' => null, 'value' => null, 'label' => __('Please select a region, state or province.')]
+            );
         }
         return $options;
     }

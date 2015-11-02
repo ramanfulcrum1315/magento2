@@ -6,13 +6,13 @@
 /**
  * @var \Magento\Ui\Component\Form $block
  */
+echo $block->renderChildComponent('before_form');
 ?>
-<script data-mage-init='{ "Magento_Ui/js/core/app": "" }' type="application/json">
-    <?php echo $block->getRenderContext()->getConfigBuilder()->toJsonNew($block->getRenderContext()->getStorage()); ?>
-</script>
-<div data-role="spinner" data-component="<?php echo $block->getDataScope(); ?>.areas" class="grid-loading-mask">
+<div data-role="spinner" data-component="<?php echo $block->getName(); ?>.areas" class="admin__data-grid-loading-mask">
     <div class="grid-loader"></div>
 </div>
-<div data-bind="scope: '<?php echo $block->getDataScope(); ?>.areas'" class="entry-edit form-inline">
+<div data-bind="scope: '<?php echo $block->getName(); ?>.areas'" class="entry-edit form-inline">
     <!-- ko template: getTemplate() --><!-- /ko -->
 </div>
+<?php
+echo $block->renderChildComponent('after_form');

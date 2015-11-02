@@ -17,15 +17,17 @@ class Configurable extends \Magento\Framework\Model\Resource\Db\AbstractDb
     protected $_catalogProductRelation;
 
     /**
-     * @param \Magento\Framework\App\Resource $resource
+     * @param \Magento\Framework\Model\Resource\Db\Context $context
      * @param \Magento\Catalog\Model\Resource\Product\Relation $catalogProductRelation
+     * @param string|null $resourcePrefix
      */
     public function __construct(
-        \Magento\Framework\App\Resource $resource,
-        \Magento\Catalog\Model\Resource\Product\Relation $catalogProductRelation
+        \Magento\Framework\Model\Resource\Db\Context $context,
+        \Magento\Catalog\Model\Resource\Product\Relation $catalogProductRelation,
+        $resourcePrefix = null
     ) {
         $this->_catalogProductRelation = $catalogProductRelation;
-        parent::__construct($resource);
+        parent::__construct($context, $resourcePrefix);
     }
 
     /**
@@ -158,8 +160,7 @@ class Configurable extends \Magento\Framework\Model\Resource\Db\AbstractDb
                     'product_id' => 'super_attribute.product_id',
                     'attribute_code' => 'attribute.attribute_code',
                     'option_title' => 'option_value.value',
-                    'pricing_value' => 'attribute_pricing.pricing_value',
-                    'pricing_is_percent' => 'attribute_pricing.is_percent'
+                    'super_attribute_label' => 'attribute_label.value',
                 ]
             )->joinInner(
                 ['product_link' => $this->getTable('catalog_product_super_link')],
@@ -178,10 +179,6 @@ class Configurable extends \Magento\Framework\Model\Resource\Db\AbstractDb
                 implode(
                     ' AND ',
                     [
-                        $this->_getReadAdapter()->quoteInto(
-                            'entity_value.entity_type_id = ?',
-                            $product->getEntityTypeId()
-                        ),
                         'entity_value.attribute_id = super_attribute.attribute_id',
                         'entity_value.store_id = 0',
                         'entity_value.entity_id = product_link.product_id'
@@ -199,12 +196,12 @@ class Configurable extends \Magento\Framework\Model\Resource\Db\AbstractDb
                 ),
                 []
             )->joinLeft(
-                ['attribute_pricing' => $this->getTable('catalog_product_super_attribute_pricing')],
+                ['attribute_label' => $this->getTable('catalog_product_super_attribute_label')],
                 implode(
                     ' AND ',
                     [
-                        'super_attribute.product_super_attribute_id = attribute_pricing.product_super_attribute_id',
-                        'entity_value.value = attribute_pricing.value_index'
+                        'super_attribute.product_super_attribute_id = attribute_label.product_super_attribute_id',
+                        'attribute_label.store_id = ' . \Magento\Store\Model\Store::DEFAULT_STORE_ID
                     ]
                 ),
                 []

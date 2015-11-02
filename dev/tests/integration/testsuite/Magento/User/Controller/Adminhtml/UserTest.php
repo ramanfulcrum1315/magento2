@@ -10,7 +10,7 @@ use Magento\TestFramework\Bootstrap;
 /**
  * @magentoAppArea adminhtml
  */
-class UserTest extends \Magento\Backend\Utility\Controller
+class UserTest extends \Magento\TestFramework\TestCase\AbstractBackendController
 {
     public function testIndexAction()
     {
@@ -40,7 +40,7 @@ class UserTest extends \Magento\Backend\Utility\Controller
         $userId = $user->getId();
         $this->assertNotEmpty($userId, 'Broken fixture');
         $user->delete();
-        $this->getRequest()->setPost('user_id', $userId);
+        $this->getRequest()->setPostValue('user_id', $userId);
         $this->dispatch('backend/admin/user/save');
         $this->assertSessionMessages(
             $this->equalTo(['This user no longer exists.']),
@@ -55,7 +55,7 @@ class UserTest extends \Magento\Backend\Utility\Controller
     public function testSaveActionMissingCurrentAdminPassword()
     {
         $fixture = uniqid();
-        $this->getRequest()->setPost(
+        $this->getRequest()->setPostValue(
             [
                 'username' => $fixture,
                 'email' => "{$fixture}@example.com",
@@ -76,7 +76,7 @@ class UserTest extends \Magento\Backend\Utility\Controller
     public function testSaveAction()
     {
         $fixture = uniqid();
-        $this->getRequest()->setPost(
+        $this->getRequest()->setPostValue(
             [
                 'username' => $fixture,
                 'email' => "{$fixture}@example.com",
@@ -97,11 +97,37 @@ class UserTest extends \Magento\Backend\Utility\Controller
 
     /**
      * @magentoDbIsolation enabled
+     * @magentoDataFixture Magento/User/_files/user_with_role.php
+     */
+    public function testSaveActionDuplicateUser()
+    {
+        $this->getRequest()->setPostValue(
+            [
+                'username' => 'adminUser',
+                'email' => 'adminUser@example.com',
+                'firstname' => 'John',
+                'lastname' => 'Doe',
+                'password' => \Magento\TestFramework\Bootstrap::ADMIN_PASSWORD,
+                'password_confirmation' => \Magento\TestFramework\Bootstrap::ADMIN_PASSWORD,
+                \Magento\User\Block\User\Edit\Tab\Main::CURRENT_USER_PASSWORD_FIELD => Bootstrap::ADMIN_PASSWORD,
+            ]
+        );
+        $this->dispatch('backend/admin/user/save/active_tab/main_section');
+        $this->assertSessionMessages(
+            $this->equalTo(['A user with the same user name or email already exists.']),
+            \Magento\Framework\Message\MessageInterface::TYPE_ERROR
+        );
+        $this->assertRedirect($this->stringContains('backend/admin/user/edit/'));
+        $this->assertRedirect($this->matchesRegularExpression('/^((?!active_tab).)*$/'));
+    }
+
+    /**
+     * @magentoDbIsolation enabled
      * @dataProvider resetPasswordDataProvider
      */
     public function testSaveActionPasswordChange($postData, $isPasswordCorrect)
     {
-        $this->getRequest()->setPost($postData);
+        $this->getRequest()->setPostValue($postData);
         $this->dispatch('backend/admin/user/save');
 
         $objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
@@ -193,7 +219,7 @@ class UserTest extends \Magento\Backend\Utility\Controller
             'password_confirmation' => 'password123',
         ];
 
-        $this->getRequest()->setPost($data);
+        $this->getRequest()->setPostValue($data);
         $this->dispatch('backend/admin/user/validate');
         $body = $this->getResponse()->getBody();
 
@@ -214,11 +240,11 @@ class UserTest extends \Magento\Backend\Utility\Controller
         /**
          * set customer data
          */
-        $this->getRequest()->setPost($data);
+        $this->getRequest()->setPostValue($data);
         $this->dispatch('backend/admin/user/validate');
         $body = $this->getResponse()->getBody();
 
         $this->assertContains('{"error":1,"html_message":', $body);
-        $this->assertContains('Please correct this email address: \"example@domain.cim\"', $body);
+        $this->assertContains("'domain.cim' is not a valid hostname for email address 'example@domain.cim'", $body);
     }
 }

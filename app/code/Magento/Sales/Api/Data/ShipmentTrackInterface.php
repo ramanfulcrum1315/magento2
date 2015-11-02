@@ -11,6 +11,7 @@ namespace Magento\Sales\Api\Data;
  * A shipment is a delivery package that contains products. A shipment document accompanies the shipment. This
  * document lists the products and their quantities in the delivery package. Merchants and customers can track
  * shipments.
+ * @api
  */
 interface ShipmentTrackInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
@@ -72,9 +73,17 @@ interface ShipmentTrackInterface extends \Magento\Framework\Api\ExtensibleDataIn
     /**
      * Gets the created-at timestamp for the shipment package.
      *
-     * @return string Created-at timestamp.
+     * @return string|null Created-at timestamp.
      */
     public function getCreatedAt();
+
+    /**
+     * Sets the created-at timestamp for the shipment package.
+     *
+     * @param string $createdAt timestamp
+     * @return $this
+     */
+    public function setCreatedAt($createdAt);
 
     /**
      * Gets the description for the shipment package.
@@ -86,9 +95,17 @@ interface ShipmentTrackInterface extends \Magento\Framework\Api\ExtensibleDataIn
     /**
      * Gets the ID for the shipment package.
      *
-     * @return int Shipment package ID.
+     * @return int|null Shipment package ID.
      */
     public function getEntityId();
+
+    /**
+     * Sets entity ID.
+     *
+     * @param int $entityId
+     * @return $this
+     */
+    public function setEntityId($entityId);
 
     /**
      * Gets the order_id for the shipment package.
@@ -128,7 +145,7 @@ interface ShipmentTrackInterface extends \Magento\Framework\Api\ExtensibleDataIn
     /**
      * Gets the updated-at timestamp for the shipment package.
      *
-     * @return string Updated-at timestamp.
+     * @return string|null Updated-at timestamp.
      */
     public function getUpdatedAt();
 
@@ -138,4 +155,93 @@ interface ShipmentTrackInterface extends \Magento\Framework\Api\ExtensibleDataIn
      * @return float Weight.
      */
     public function getWeight();
+
+    /**
+     * Sets the updated-at timestamp for the shipment package.
+     *
+     * @param string $timestamp
+     * @return $this
+     */
+    public function setUpdatedAt($timestamp);
+
+    /**
+     * Sets the parent ID for the shipment package.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setParentId($id);
+
+    /**
+     * Sets the weight for the shipment package.
+     *
+     * @param float $weight
+     * @return $this
+     */
+    public function setWeight($weight);
+
+    /**
+     * Sets the quantity for the shipment package.
+     *
+     * @param float $qty
+     * @return $this
+     */
+    public function setQty($qty);
+
+    /**
+     * Sets the order_id for the shipment package.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setOrderId($id);
+
+    /**
+     * Sets the track number for the shipment package.
+     *
+     * @param string $trackNumber
+     * @return $this
+     */
+    public function setTrackNumber($trackNumber);
+
+    /**
+     * Sets the description for the shipment package.
+     *
+     * @param string $description
+     * @return $this
+     */
+    public function setDescription($description);
+
+    /**
+     * Sets the title for the shipment package.
+     *
+     * @param string $title
+     * @return $this
+     */
+    public function setTitle($title);
+
+    /**
+     * Sets the carrier code for the shipment package.
+     *
+     * @param string $code
+     * @return $this
+     */
+    public function setCarrierCode($code);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Sales\Api\Data\ShipmentTrackExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Sales\Api\Data\ShipmentTrackExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\ShipmentTrackExtensionInterface $extensionAttributes
+    );
 }

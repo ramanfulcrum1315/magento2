@@ -17,5 +17,10 @@
     </type>
     <type name="Magento\Framework\View\Layout">
         <plugin name="layout-model-caching-unique-name" type="Magento\PageCache\Model\Layout\LayoutPlugin"/>
+        <plugin name="core-session-depersonalize"
+                type="Magento\PageCache\Model\Layout\DepersonalizePlugin" sortOrder="1"/>
+    </type>
+    <type name="Magento\Framework\App\Response\Http">
+        <plugin name="response-http-page-cache" type="Magento\PageCache\Model\App\Response\HttpPlugin"/>
     </type>
 </config>

@@ -11,6 +11,7 @@ namespace Magento\Sales\Api\Data;
  * An order is a document that a web store issues to a customer. Magento generates a sales order that lists the product
  * items, billing and shipping addresses, and shipping and payment methods. A corresponding external document, known as
  * a purchase order, is emailed to the customer.
+ * @api
  */
 interface OrderStatusHistoryInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
@@ -60,21 +61,37 @@ interface OrderStatusHistoryInterface extends \Magento\Framework\Api\ExtensibleD
     /**
      * Gets the created-at timestamp for the order status history.
      *
-     * @return string Created-at timestamp.
+     * @return string|null Created-at timestamp.
      */
     public function getCreatedAt();
 
     /**
+     * Sets the created-at timestamp for the order status history.
+     *
+     * @param string $createdAt timestamp
+     * @return $this
+     */
+    public function setCreatedAt($createdAt);
+
+    /**
      * Gets the ID for the order status history.
      *
-     * @return int Order status history ID.
+     * @return int|null Order status history ID.
      */
     public function getEntityId();
 
     /**
+     * Sets entity ID.
+     *
+     * @param int $entityId
+     * @return $this
+     */
+    public function setEntityId($entityId);
+
+    /**
      * Gets the entity name for the order status history.
      *
-     * @return string Entity name.
+     * @return string|null Entity name.
      */
     public function getEntityName();
 
@@ -102,7 +119,72 @@ interface OrderStatusHistoryInterface extends \Magento\Framework\Api\ExtensibleD
     /**
      * Gets the status for the order status history.
      *
-     * @return string Status.
+     * @return string|null Status.
      */
     public function getStatus();
+
+    /**
+     * Sets the parent ID for the order status history.
+     *
+     * @param int $id
+     * @return $this
+     */
+    public function setParentId($id);
+
+    /**
+     * Sets the is-customer-notified flag value for the order status history.
+     *
+     * @param int $isCustomerNotified
+     * @return $this
+     */
+    public function setIsCustomerNotified($isCustomerNotified);
+
+    /**
+     * Sets the is-visible-on-storefront flag value for the order status history.
+     *
+     * @param int $isVisibleOnFront
+     * @return $this
+     */
+    public function setIsVisibleOnFront($isVisibleOnFront);
+
+    /**
+     * Sets the comment for the order status history.
+     *
+     * @param string $comment
+     * @return $this
+     */
+    public function setComment($comment);
+
+    /**
+     * Sets the status for the order status history.
+     *
+     * @param string $status
+     * @return $this
+     */
+    public function setStatus($status);
+
+    /**
+     * Sets the entity name for the order status history.
+     *
+     * @param string $entityName
+     * @return $this
+     */
+    public function setEntityName($entityName);
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Magento\Sales\Api\Data\OrderStatusHistoryExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Magento\Sales\Api\Data\OrderStatusHistoryExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\Sales\Api\Data\OrderStatusHistoryExtensionInterface $extensionAttributes
+    );
 }

@@ -256,6 +256,13 @@ class Collection extends \Magento\Catalog\Model\Resource\Collection\AbstractColl
     protected $_groupManagement;
 
     /**
+     * Need to add websites to result flag
+     *
+     * @var bool
+     */
+    protected $needToAddWebsiteNamesToResult;
+
+    /**
      * @param \Magento\Framework\Data\Collection\EntityFactory $entityFactory
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
@@ -265,7 +272,7 @@ class Collection extends \Magento\Catalog\Model\Resource\Collection\AbstractColl
      * @param \Magento\Eav\Model\EntityFactory $eavEntityFactory
      * @param \Magento\Catalog\Model\Resource\Helper $resourceHelper
      * @param \Magento\Framework\Validator\UniversalFactory $universalFactory
-     * @param \Magento\Framework\Store\StoreManagerInterface $storeManager
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Framework\Module\Manager $moduleManager
      * @param \Magento\Catalog\Model\Indexer\Product\Flat\State $catalogProductFlatState
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
@@ -289,7 +296,7 @@ class Collection extends \Magento\Catalog\Model\Resource\Collection\AbstractColl
         \Magento\Eav\Model\EntityFactory $eavEntityFactory,
         \Magento\Catalog\Model\Resource\Helper $resourceHelper,
         \Magento\Framework\Validator\UniversalFactory $universalFactory,
-        \Magento\Framework\Store\StoreManagerInterface $storeManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Module\Manager $moduleManager,
         \Magento\Catalog\Model\Indexer\Product\Flat\State $catalogProductFlatState,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
@@ -705,6 +712,33 @@ class Collection extends \Magento\Catalog\Model\Resource\Collection\AbstractColl
      * @return $this
      */
     public function addWebsiteNamesToResult()
+    {
+        $this->needToAddWebsiteNamesToResult = true;
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function load($printQuery = false, $logQuery = false)
+    {
+        if ($this->isLoaded()) {
+            return $this;
+        }
+        parent::load($printQuery, $logQuery);
+
+        if ($this->needToAddWebsiteNamesToResult) {
+            $this->doAddWebsiteNamesToResult();
+        }
+        return $this;
+    }
+
+    /**
+     * Processs adding product website names to result collection
+     *
+     * @return $this
+     */
+    protected function doAddWebsiteNamesToResult()
     {
         $productWebsites = [];
         foreach ($this as $product) {
@@ -1244,7 +1278,7 @@ class Collection extends \Magento\Catalog\Model\Resource\Collection\AbstractColl
         $this->_addUrlRewrite = true;
         $useCategoryUrl = $this->_scopeConfig->getValue(
             \Magento\Catalog\Helper\Product::XML_PATH_PRODUCT_URL_USE_CATEGORY,
-            \Magento\Framework\Store\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $this->getStoreId()
         );
         if ($useCategoryUrl) {

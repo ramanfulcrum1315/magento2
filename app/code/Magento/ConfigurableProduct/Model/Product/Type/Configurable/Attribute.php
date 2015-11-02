@@ -11,16 +11,23 @@ namespace Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 /**
  * @method Attribute _getResource()
  * @method Attribute getResource()
- * @method int getProductId()
- * @method Attribute setProductId(int $value)
- * @method Attribute setAttributeId(int $value)
- * @method Attribute setPosition(int $value)
  * @method Attribute setProductAttribute(\Magento\Eav\Model\Entity\Attribute\AbstractAttribute $value)
  * @method \Magento\Eav\Model\Entity\Attribute\AbstractAttribute getProductAttribute()
  */
 class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel implements
     \Magento\ConfigurableProduct\Api\Data\OptionInterface
 {
+    /**#@+
+     * Constants for field names
+     */
+    const KEY_ATTRIBUTE_ID = 'attribute_id';
+    const KEY_LABEL = 'label';
+    const KEY_POSITION = 'position';
+    const KEY_IS_USE_DEFAULT = 'is_use_default';
+    const KEY_VALUES = 'values';
+    const KEY_PRODUCT_ID = 'product_id';
+    /**#@-*/
+
     /**
      * Initialize resource model
      *
@@ -32,22 +39,14 @@ class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel impleme
     }
 
     /**
-     * Add price data to attribute
+     * Get attribute options
      *
-     * @param array $priceData
-     * @return $this
+     * @return array
      */
-    public function addPrice($priceData)
+    public function getOptions()
     {
-        $data = $this->getPrices();
-        if (is_null($data)) {
-            $data = [];
-        }
-        $data[] = $priceData;
-        $this->setPrices($data);
-        return $this;
+        return $this->getData('options');
     }
-
     /**
      * {@inheritdoc}
      */
@@ -55,11 +54,11 @@ class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel impleme
     {
         if ($this->getData('use_default') && $this->getProductAttribute()) {
             return $this->getProductAttribute()->getStoreLabel();
-        } elseif (is_null($this->getData('label')) && $this->getProductAttribute()) {
-            $this->setData('label', $this->getProductAttribute()->getStoreLabel());
+        } elseif ($this->getData(self::KEY_LABEL) === null && $this->getProductAttribute()) {
+            $this->setData(self::KEY_LABEL, $this->getProductAttribute()->getStoreLabel());
         }
 
-        return $this->getData('label');
+        return $this->getData(self::KEY_LABEL);
     }
 
     /**
@@ -71,7 +70,6 @@ class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel impleme
     {
         parent::afterSave();
         $this->_getResource()->saveLabel($this);
-        $this->_getResource()->savePrices($this);
         return $this;
     }
 
@@ -107,16 +105,7 @@ class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel impleme
      */
     public function getAttributeId()
     {
-        return $this->getData('attribute_id');
-    }
-
-    /**
-     * {@inheritdoc}
-     * @codeCoverageIgnore
-     */
-    public function getType()
-    {
-        return $this->getData('type');
+        return $this->getData(self::KEY_ATTRIBUTE_ID);
     }
 
     /**
@@ -125,7 +114,7 @@ class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel impleme
      */
     public function getPosition()
     {
-        return $this->getData('position');
+        return $this->getData(self::KEY_POSITION);
     }
 
     /**
@@ -134,7 +123,7 @@ class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel impleme
      */
     public function getIsUseDefault()
     {
-        return $this->getData('is_use_default');
+        return $this->getData(self::KEY_IS_USE_DEFAULT);
     }
 
     /**
@@ -143,6 +132,91 @@ class Attribute extends \Magento\Framework\Model\AbstractExtensibleModel impleme
      */
     public function getValues()
     {
-        return $this->getData('values');
+        return $this->getData(self::KEY_VALUES);
     }
+
+    //@codeCoverageIgnoreStart
+    /**
+     * @param string $attributeId
+     * @return $this
+     */
+    public function setAttributeId($attributeId)
+    {
+        return $this->setData(self::KEY_ATTRIBUTE_ID, $attributeId);
+    }
+
+    /**
+     * @param string $label
+     * @return $this
+     */
+    public function setLabel($label)
+    {
+        return $this->setData(self::KEY_LABEL, $label);
+    }
+
+    /**
+     * @param int $position
+     * @return $this
+     */
+    public function setPosition($position)
+    {
+        return $this->setData(self::KEY_POSITION, $position);
+    }
+
+    /**
+     * @param bool $isUseDefault
+     * @return $this
+     */
+    public function setIsUseDefault($isUseDefault)
+    {
+        return $this->setData(self::KEY_IS_USE_DEFAULT, $isUseDefault);
+    }
+
+    /**
+     * @param \Magento\ConfigurableProduct\Api\Data\OptionValueInterface[] $values
+     * @return $this
+     */
+    public function setValues(array $values = null)
+    {
+        return $this->setData(self::KEY_VALUES, $values);
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return \Magento\ConfigurableProduct\Api\Data\OptionExtensionInterface|null
+     */
+    public function getExtensionAttributes()
+    {
+        return $this->_getExtensionAttributes();
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @param \Magento\ConfigurableProduct\Api\Data\OptionExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(
+        \Magento\ConfigurableProduct\Api\Data\OptionExtensionInterface $extensionAttributes
+    ) {
+        return $this->_setExtensionAttributes($extensionAttributes);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getProductId()
+    {
+        return $this->getData(self::KEY_PRODUCT_ID);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setProductId($value)
+    {
+        return $this->setData(self::KEY_PRODUCT_ID, $value);
+    }
+    //@codeCoverageIgnoreEnd
 }

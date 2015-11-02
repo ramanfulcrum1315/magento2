@@ -33,6 +33,8 @@ class AbstractCart extends \Magento\Framework\View\Element\Template
     protected $_itemRenders = [];
 
     /**
+     * TODO: MAGETWO-34827: unused object?
+     *
      * @var \Magento\Customer\Model\Session
      */
     protected $_customerSession;
@@ -83,7 +85,7 @@ class AbstractCart extends \Magento\Framework\View\Element\Template
      */
     public function getItemRenderer($type = null)
     {
-        if (is_null($type)) {
+        if ($type === null) {
             $type = self::DEFAULT_TYPE;
         }
         $rendererList = $this->_getRendererList();

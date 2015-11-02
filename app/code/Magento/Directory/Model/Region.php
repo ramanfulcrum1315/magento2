@@ -41,13 +41,15 @@ class Region extends \Magento\Framework\Model\AbstractModel
     public function getName()
     {
         $name = $this->getData('name');
-        if (is_null($name)) {
+        if ($name === null) {
             $name = $this->getData('default_name');
         }
         return $name;
     }
 
     /**
+     * Load region by code
+     *
      * @param string $code
      * @param string $countryId
      * @return $this
@@ -61,6 +63,8 @@ class Region extends \Magento\Framework\Model\AbstractModel
     }
 
     /**
+     * Load region by name
+     *
      * @param string $name
      * @param string $countryId
      * @return $this
